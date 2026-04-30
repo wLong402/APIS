@@ -1,0 +1,607 @@
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$341
+{"task_id": "d10cab61-ac59-45a8-aa19-636557345438", "api_type": "trade", "start_time": "2025-12-10 00:00:00", "end_time": "2025-12-10 00:59:59", "expected_count": 1813, "actual_count": 813, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 16:40:21", "last_error": "数据不匹配: 预期 1813, 实际 813"}
+*2
+$3
+DEL
+$60
+data_pull:lock:trade:2025-12-15 10:00:00:2025-12-15 10:59:59
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "64a5c947-117c-4e17-8219-4645f86d8f2c", "api_type": "trade", "start_time": "2025-12-10 01:00:00", "end_time": "2025-12-10 01:59:59", "expected_count": 2541, "actual_count": 2041, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 16:44:10", "last_error": "数据不匹配: 预期 2541, 实际 2041"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "f184eb0f-97b2-44cb-806d-ff79cb1bb31f", "api_type": "trade", "start_time": "2025-12-10 18:00:00", "end_time": "2025-12-10 18:59:59", "expected_count": 7308, "actual_count": 7303, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 17:27:30", "last_error": "数据不匹配: 预期 7308, 实际 7303"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$339
+{"task_id": "4e5b0a44-0c87-492b-9a6c-7d816ab67f97", "api_type": "trade", "start_time": "2025-11-01 05:00:00", "end_time": "2025-11-01 05:59:59", "expected_count": 766, "actual_count": 266, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:10:38", "last_error": "数据不匹配: 预期 766, 实际 266"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "7c1575c7-ba43-4b18-97e8-c3714ad196f7", "api_type": "trade", "start_time": "2025-12-13 15:00:00", "end_time": "2025-12-13 15:59:59", "expected_count": 11565, "actual_count": 10565, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:11:13", "last_error": "数据不匹配: 预期 11565, 实际 10565"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "adc2e6e9-9111-4e89-ad25-3b8847b0b55d", "api_type": "trade", "start_time": "2025-11-01 08:00:00", "end_time": "2025-11-01 08:59:59", "expected_count": 4337, "actual_count": 3837, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:14:19", "last_error": "数据不匹配: 预期 4337, 实际 3837"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "4caeb858-7c39-4694-8373-ecbd8026de6d", "api_type": "trade", "start_time": "2025-11-01 09:00:00", "end_time": "2025-11-01 09:59:59", "expected_count": 7205, "actual_count": 6205, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:17:03", "last_error": "数据不匹配: 预期 7205, 实际 6205"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "8c96f44e-7ed1-428c-84bf-45ffb5e6804f", "api_type": "trade", "start_time": "2025-12-13 16:00:00", "end_time": "2025-12-13 16:59:59", "expected_count": 12659, "actual_count": 12159, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:17:26", "last_error": "数据不匹配: 预期 12659, 实际 12159"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "d44d6ba5-7cfc-470d-a3ca-e52acb5c719d", "api_type": "trade", "start_time": "2025-11-01 10:00:00", "end_time": "2025-11-01 10:59:59", "expected_count": 5612, "actual_count": 5112, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:19:50", "last_error": "数据不匹配: 预期 5612, 实际 5112"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "a509f28a-14fc-4c29-8309-11198cb1f870", "api_type": "trade", "start_time": "2025-11-01 11:00:00", "end_time": "2025-11-01 11:59:59", "expected_count": 4865, "actual_count": 3865, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:22:01", "last_error": "数据不匹配: 预期 4865, 实际 3865"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "b84760f2-bbc0-44bc-bea8-7c3a404e5b2f", "api_type": "trade", "start_time": "2025-12-13 17:00:00", "end_time": "2025-12-13 17:59:59", "expected_count": 13316, "actual_count": 12316, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:24:16", "last_error": "数据不匹配: 预期 13316, 实际 12316"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "2871be46-71ba-453b-912e-f1af559a37bc", "api_type": "trade", "start_time": "2025-12-13 18:00:00", "end_time": "2025-12-13 18:59:59", "expected_count": 9342, "actual_count": 9341, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:24:29", "last_error": "数据不匹配: 预期 9342, 实际 9341"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "51bc5543-952d-49be-a053-54fed122462f", "api_type": "trade", "start_time": "2025-12-13 18:00:00", "end_time": "2025-12-13 18:59:59", "expected_count": 9341, "actual_count": 8341, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:27:20", "last_error": "数据不匹配: 预期 9341, 实际 8341"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "a00cce96-ce0c-49cf-b8c7-8e34e8019214", "api_type": "trade", "start_time": "2025-11-01 18:00:00", "end_time": "2025-11-01 18:59:59", "expected_count": 5036, "actual_count": 4536, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:35:26", "last_error": "数据不匹配: 预期 5036, 实际 4536"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "c71eae2e-199e-4725-9410-9f13c943c173", "api_type": "trade", "start_time": "2025-12-13 20:00:00", "end_time": "2025-12-13 20:59:59", "expected_count": 7934, "actual_count": 6934, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:36:17", "last_error": "数据不匹配: 预期 7934, 实际 6934"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "e7073ff4-4ae9-44af-b7be-9b1125e4b9be", "api_type": "trade", "start_time": "2025-11-01 20:00:00", "end_time": "2025-11-01 20:59:59", "expected_count": 3859, "actual_count": 3359, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:38:10", "last_error": "数据不匹配: 预期 3859, 实际 3359"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "1e983b62-2f96-4408-b8df-480f40af6391", "api_type": "trade", "start_time": "2025-12-13 22:00:00", "end_time": "2025-12-13 22:59:59", "expected_count": 6172, "actual_count": 4672, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:41:40", "last_error": "数据不匹配: 预期 6172, 实际 4672"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "66095424-664a-47de-a4e6-2c295ef2a428", "api_type": "trade", "start_time": "2025-12-14 00:00:00", "end_time": "2025-12-14 00:59:59", "expected_count": 5658, "actual_count": 5158, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:46:29", "last_error": "数据不匹配: 预期 5658, 实际 5158"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "edc5c03a-7fee-430a-a7ea-3095c5765942", "api_type": "trade", "start_time": "2025-11-02 08:00:00", "end_time": "2025-11-02 08:59:59", "expected_count": 2898, "actual_count": 2500, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:46:46", "last_error": "数据不匹配: 预期 2898, 实际 2500"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "568299aa-dfcf-45ee-a0c1-12790c3353af", "api_type": "trade", "start_time": "2025-12-14 02:00:00", "end_time": "2025-12-14 02:59:59", "expected_count": 3866, "actual_count": 3366, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:49:25", "last_error": "数据不匹配: 预期 3866, 实际 3366"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "4c05ab23-ccf0-4bf9-a280-d907848a9029", "api_type": "trade", "start_time": "2025-11-02 10:00:00", "end_time": "2025-11-02 10:59:59", "expected_count": 5892, "actual_count": 4892, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:52:33", "last_error": "数据不匹配: 预期 5892, 实际 4892"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "67d49d5e-31d1-4cae-95da-459a3f387aa6", "api_type": "trade", "start_time": "2025-12-14 07:00:00", "end_time": "2025-12-14 07:59:59", "expected_count": 2157, "actual_count": 1657, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:54:31", "last_error": "数据不匹配: 预期 2157, 实际 1657"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "f7020902-72fc-4aa5-a89f-634474df82b6", "api_type": "trade", "start_time": "2025-11-02 12:00:00", "end_time": "2025-11-02 12:59:59", "expected_count": 3813, "actual_count": 3313, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 20:57:36", "last_error": "数据不匹配: 预期 3813, 实际 3313"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "6c5a8d1b-fcf4-4ae0-9c6b-e1be19802681", "api_type": "trade", "start_time": "2025-12-14 09:00:00", "end_time": "2025-12-14 09:59:59", "expected_count": 12413, "actual_count": 11913, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:02:54", "last_error": "数据不匹配: 预期 12413, 实际 11913"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "5dd393aa-8b58-492c-82a2-7a9deb08461f", "api_type": "trade", "start_time": "2025-11-02 16:00:00", "end_time": "2025-11-02 16:59:59", "expected_count": 3820, "actual_count": 3320, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:08:27", "last_error": "数据不匹配: 预期 3820, 实际 3320"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "582653ec-d51a-45b1-8669-2f8e80ecdcfe", "api_type": "trade", "start_time": "2025-12-14 10:00:00", "end_time": "2025-12-14 10:59:59", "expected_count": 14802, "actual_count": 14302, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:08:56", "last_error": "数据不匹配: 预期 14802, 实际 14302"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "fd64afbd-a6ee-47f4-ac4d-e2f28c18b312", "api_type": "trade", "start_time": "2025-11-02 20:00:00", "end_time": "2025-11-02 20:59:59", "expected_count": 3517, "actual_count": 3017, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:14:32", "last_error": "数据不匹配: 预期 3517, 实际 3017"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "50279913-9d68-44fc-b462-42db6d68c6ce", "api_type": "trade", "start_time": "2025-12-14 11:00:00", "end_time": "2025-12-14 11:59:59", "expected_count": 15644, "actual_count": 14644, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:16:34", "last_error": "数据不匹配: 预期 15644, 实际 14644"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "99416f5e-c6e7-4901-9db2-c5d535393c4e", "api_type": "trade", "start_time": "2025-11-02 23:00:00", "end_time": "2025-11-02 23:59:59", "expected_count": 1849, "actual_count": 1349, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:19:34", "last_error": "数据不匹配: 预期 1849, 实际 1349"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$341
+{"task_id": "75efba0a-ee1d-419e-a786-df17af25ffd9", "api_type": "trade", "start_time": "2025-11-03 06:00:00", "end_time": "2025-11-03 06:59:59", "expected_count": 1343, "actual_count": 843, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:24:47", "last_error": "数据不匹配: 预期 1343, 实际 843"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "e1b86bf2-0970-4e68-8120-3e7bf34d9dc7", "api_type": "trade", "start_time": "2025-12-14 14:00:00", "end_time": "2025-12-14 14:59:59", "expected_count": 13486, "actual_count": 12986, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:33:12", "last_error": "数据不匹配: 预期 13486, 实际 12986"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "c6d91ee4-0dbf-4bf4-b5db-745fcab302c1", "api_type": "trade", "start_time": "2025-11-03 12:00:00", "end_time": "2025-11-03 12:59:59", "expected_count": 2811, "actual_count": 2311, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:36:10", "last_error": "数据不匹配: 预期 2811, 实际 2311"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "36f9db47-2804-47c0-a0ea-1f82ee504854", "api_type": "trade", "start_time": "2025-11-03 13:00:00", "end_time": "2025-11-03 13:59:59", "expected_count": 4206, "actual_count": 3206, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:38:24", "last_error": "数据不匹配: 预期 4206, 实际 3206"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "dd28c23f-8482-4c49-b4d4-6e1025d89590", "api_type": "trade", "start_time": "2025-12-14 15:00:00", "end_time": "2025-12-14 15:59:59", "expected_count": 14497, "actual_count": 13997, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:39:11", "last_error": "数据不匹配: 预期 14497, 实际 13997"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "d3894eda-e396-4bbe-9233-2f68e50079ae", "api_type": "trade", "start_time": "2025-11-03 15:00:00", "end_time": "2025-11-03 15:59:59", "expected_count": 4795, "actual_count": 4295, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:42:01", "last_error": "数据不匹配: 预期 4795, 实际 4295"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "f3be5fa9-9a65-4e90-9af3-bc7bd21e2bf0", "api_type": "trade", "start_time": "2025-11-03 16:00:00", "end_time": "2025-11-03 16:59:59", "expected_count": 4489, "actual_count": 3989, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:45:09", "last_error": "数据不匹配: 预期 4489, 实际 3989"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "931d54c9-0d97-4dd7-931b-4e47db27df77", "api_type": "trade", "start_time": "2025-12-14 16:00:00", "end_time": "2025-12-14 16:59:59", "expected_count": 14835, "actual_count": 13835, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:47:41", "last_error": "数据不匹配: 预期 14835, 实际 13835"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "17ec0b33-4c6d-4819-8d8d-0a011bcac505", "api_type": "trade", "start_time": "2025-11-03 19:00:00", "end_time": "2025-11-03 19:59:59", "expected_count": 3695, "actual_count": 3195, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:52:26", "last_error": "数据不匹配: 预期 3695, 实际 3195"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "1ced6e26-8a1c-4270-b760-c3b171bfb257", "api_type": "trade", "start_time": "2025-12-14 17:00:00", "end_time": "2025-12-14 17:59:59", "expected_count": 14897, "actual_count": 13897, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:55:23", "last_error": "数据不匹配: 预期 14897, 实际 13897"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$339
+{"task_id": "aa4da05d-80e0-404e-8663-af1464be1b5e", "api_type": "trade", "start_time": "2025-11-04 01:00:00", "end_time": "2025-11-04 01:59:59", "expected_count": 792, "actual_count": 500, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 21:58:06", "last_error": "数据不匹配: 预期 792, 实际 500"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "e8679e48-68be-47e5-8159-9e6bac4b2a85", "api_type": "trade", "start_time": "2025-12-14 18:00:00", "end_time": "2025-12-14 18:59:59", "expected_count": 13769, "actual_count": 12769, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:01:01", "last_error": "数据不匹配: 预期 13769, 实际 12769"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "8d6bec95-ba9a-4bff-9ad9-07b056c02121", "api_type": "trade", "start_time": "2025-11-04 09:00:00", "end_time": "2025-11-04 09:59:59", "expected_count": 8061, "actual_count": 7561, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:04:13", "last_error": "数据不匹配: 预期 8061, 实际 7561"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "fb368de5-ea6d-4aaf-bcea-e42369f07269", "api_type": "trade", "start_time": "2025-12-14 19:00:00", "end_time": "2025-12-14 19:59:59", "expected_count": 12893, "actual_count": 12393, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:07:11", "last_error": "数据不匹配: 预期 12893, 实际 12393"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "a6d5c943-0906-48c5-ae6b-c24c9cce9d5c", "api_type": "trade", "start_time": "2025-11-04 12:00:00", "end_time": "2025-11-04 12:59:59", "expected_count": 2738, "actual_count": 2238, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:14:43", "last_error": "数据不匹配: 预期 2738, 实际 2238"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "fa8bde1c-8673-4824-82ae-0c104e307674", "api_type": "trade", "start_time": "2025-12-14 21:00:00", "end_time": "2025-12-14 21:59:59", "expected_count": 6909, "actual_count": 6409, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:20:23", "last_error": "数据不匹配: 预期 6909, 实际 6409"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "f9fd8b13-0637-4d10-b917-a9dc8473d598", "api_type": "trade", "start_time": "2025-12-14 22:00:00", "end_time": "2025-12-14 22:59:59", "expected_count": 6866, "actual_count": 5866, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:23:11", "last_error": "数据不匹配: 预期 6866, 实际 5866"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "8dc26565-f18d-43f7-9ff1-21fbf2b155f4", "api_type": "trade", "start_time": "2025-11-04 17:00:00", "end_time": "2025-11-04 17:59:59", "expected_count": 5430, "actual_count": 5000, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:26:20", "last_error": "数据不匹配: 预期 5430, 实际 5000"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "351d071b-0cd6-4663-89a9-2b188798d969", "api_type": "trade", "start_time": "2025-11-04 18:00:00", "end_time": "2025-11-04 18:59:59", "expected_count": 4898, "actual_count": 3898, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:28:45", "last_error": "数据不匹配: 预期 4898, 实际 3898"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "a52fc15f-0dd7-479e-a8e2-93e453b1a44c", "api_type": "trade", "start_time": "2025-11-04 20:00:00", "end_time": "2025-11-04 20:59:59", "expected_count": 3189, "actual_count": 2689, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:31:57", "last_error": "数据不匹配: 预期 3189, 实际 2689"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "7ad1cac4-baef-4a8a-9862-7a3ea04dd392", "api_type": "trade", "start_time": "2025-12-15 02:00:00", "end_time": "2025-12-15 02:59:59", "expected_count": 3403, "actual_count": 2903, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:32:22", "last_error": "数据不匹配: 预期 3403, 实际 2903"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "618d57c2-fb3a-4b4c-9bde-403ff93d33f9", "api_type": "trade", "start_time": "2025-12-15 03:00:00", "end_time": "2025-12-15 03:59:59", "expected_count": 3047, "actual_count": 2547, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:34:07", "last_error": "数据不匹配: 预期 3047, 实际 2547"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "ced73310-ec07-40f9-9572-f890eadad188", "api_type": "trade", "start_time": "2025-11-04 22:00:00", "end_time": "2025-11-04 22:59:59", "expected_count": 3012, "actual_count": 2512, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:34:11", "last_error": "数据不匹配: 预期 3012, 实际 2512"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "0499eddf-509a-465a-986f-3e9af9a03b16", "api_type": "trade", "start_time": "2025-12-15 04:00:00", "end_time": "2025-12-15 04:59:59", "expected_count": 3899, "actual_count": 3399, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:34:38", "last_error": "数据不匹配: 预期 3899, 实际 3399"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "612420dc-d291-455b-9745-2dad3cddba30", "api_type": "trade", "start_time": "2025-12-15 06:00:00", "end_time": "2025-12-15 06:59:59", "expected_count": 3172, "actual_count": 2672, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:37:26", "last_error": "数据不匹配: 预期 3172, 实际 2672"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "2b52ab2f-6df0-4724-9d61-dc99bc343974", "api_type": "trade", "start_time": "2025-12-15 08:00:00", "end_time": "2025-12-15 08:59:59", "expected_count": 7616, "actual_count": 7116, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:43:04", "last_error": "数据不匹配: 预期 7616, 实际 7116"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "bc66fc2c-2e37-44f0-9734-463acf04d7ff", "api_type": "trade", "start_time": "2025-11-05 06:00:00", "end_time": "2025-11-05 06:59:59", "expected_count": 6022, "actual_count": 5522, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:46:03", "last_error": "数据不匹配: 预期 6022, 实际 5522"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "0b3e0850-637c-4b29-9949-d6ee6bb7f4bd", "api_type": "trade", "start_time": "2025-12-15 09:00:00", "end_time": "2025-12-15 09:59:59", "expected_count": 16563, "actual_count": 16063, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:51:17", "last_error": "数据不匹配: 预期 16563, 实际 16063"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "7acba9d1-f6c5-424c-956d-354dbfaf85ab", "api_type": "trade", "start_time": "2025-11-05 09:00:00", "end_time": "2025-11-05 09:59:59", "expected_count": 8152, "actual_count": 7152, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 22:57:30", "last_error": "数据不匹配: 预期 8152, 实际 7152"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "eb4f61d0-0997-4b9e-a918-337e97e33098", "api_type": "trade", "start_time": "2025-11-05 10:00:00", "end_time": "2025-11-05 10:59:59", "expected_count": 8628, "actual_count": 8128, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 23:06:49", "last_error": "数据不匹配: 预期 8628, 实际 8128"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "d34d9f75-cd21-41df-975f-109ec2e92bc8", "api_type": "trade", "start_time": "2025-12-15 11:00:00", "end_time": "2025-12-15 11:59:59", "expected_count": 17053, "actual_count": 14553, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 23:11:08", "last_error": "数据不匹配: 预期 17053, 实际 14553"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "e301d5ef-3a3d-4b24-958a-11da8945dee4", "api_type": "trade", "start_time": "2025-11-05 11:00:00", "end_time": "2025-11-05 11:59:59", "expected_count": 6569, "actual_count": 6069, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 23:11:12", "last_error": "数据不匹配: 预期 6569, 实际 6069"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "04d66f38-f9d3-431b-b96f-841f1cfac115", "api_type": "trade", "start_time": "2025-12-15 12:00:00", "end_time": "2025-12-15 12:59:59", "expected_count": 8316, "actual_count": 7816, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 23:19:20", "last_error": "数据不匹配: 预期 8316, 实际 7816"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "f9f28779-958d-42b6-af27-1f47e1435a7b", "api_type": "trade", "start_time": "2025-11-05 14:00:00", "end_time": "2025-11-05 14:59:59", "expected_count": 5167, "actual_count": 4667, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 23:25:18", "last_error": "数据不匹配: 预期 5167, 实际 4667"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "4c48779a-64a8-4262-9563-451b28d9fc99", "api_type": "trade", "start_time": "2025-12-15 13:00:00", "end_time": "2025-12-15 13:59:59", "expected_count": 11230, "actual_count": 10730, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 23:26:29", "last_error": "数据不匹配: 预期 11230, 实际 10730"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "7ecb161e-e46d-420e-b51a-7559c013b675", "api_type": "trade", "start_time": "2025-11-05 17:00:00", "end_time": "2025-11-05 17:59:59", "expected_count": 4339, "actual_count": 4000, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 23:33:37", "last_error": "数据不匹配: 预期 4339, 实际 4000"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "1e4b05fe-3277-4318-8ef9-d2fea8000de8", "api_type": "trade", "start_time": "2025-11-05 19:00:00", "end_time": "2025-11-05 19:59:59", "expected_count": 5039, "actual_count": 4539, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 23:38:02", "last_error": "数据不匹配: 预期 5039, 实际 4539"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "3dbc9ba4-0dc5-403f-977b-73c5f8020955", "api_type": "trade", "start_time": "2025-12-15 15:00:00", "end_time": "2025-12-15 15:59:59", "expected_count": 12428, "actual_count": 11428, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 23:43:48", "last_error": "数据不匹配: 预期 12428, 实际 11428"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$341
+{"task_id": "f7341b27-9d96-485c-95bf-940686efeda8", "api_type": "trade", "start_time": "2025-11-06 00:00:00", "end_time": "2025-11-06 00:59:59", "expected_count": 1150, "actual_count": 650, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 23:46:39", "last_error": "数据不匹配: 预期 1150, 实际 650"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$339
+{"task_id": "f60d7fda-8c07-48b9-a4ea-090057884252", "api_type": "trade", "start_time": "2025-11-06 01:00:00", "end_time": "2025-11-06 01:59:59", "expected_count": 758, "actual_count": 258, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 23:46:43", "last_error": "数据不匹配: 预期 758, 实际 258"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "4cdab6d6-1be8-40e2-af97-b17cff2ac003", "api_type": "trade", "start_time": "2025-12-15 16:00:00", "end_time": "2025-12-15 16:59:59", "expected_count": 15484, "actual_count": 14484, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 23:51:09", "last_error": "数据不匹配: 预期 15484, 实际 14484"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "2f32d4a9-36aa-47c0-a9c4-13b3933ec81b", "api_type": "trade", "start_time": "2025-12-15 17:00:00", "end_time": "2025-12-15 17:59:59", "expected_count": 18920, "actual_count": 18919, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 23:51:32", "last_error": "数据不匹配: 预期 18920, 实际 18919"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "befca73b-8535-4b94-9915-0879a2199d7a", "api_type": "trade", "start_time": "2025-11-06 09:00:00", "end_time": "2025-11-06 09:59:59", "expected_count": 8287, "actual_count": 7787, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-15 23:59:18", "last_error": "数据不匹配: 预期 8287, 实际 7787"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "f4b392eb-d988-46d7-87a7-ea83f10ba808", "api_type": "trade", "start_time": "2025-12-15 17:00:00", "end_time": "2025-12-15 17:59:59", "expected_count": 18919, "actual_count": 17919, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-16 00:03:16", "last_error": "数据不匹配: 预期 18919, 实际 17919"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "36198774-3624-47a4-b28c-58614d5dfa04", "api_type": "trade", "start_time": "2025-11-06 11:00:00", "end_time": "2025-11-06 11:59:59", "expected_count": 6201, "actual_count": 5701, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-16 00:08:25", "last_error": "数据不匹配: 预期 6201, 实际 5701"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "988e673a-a63e-44a6-8023-a1cd9c61c27e", "api_type": "trade", "start_time": "2025-11-06 12:00:00", "end_time": "2025-11-06 12:59:59", "expected_count": 2786, "actual_count": 2500, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-16 00:10:18", "last_error": "数据不匹配: 预期 2786, 实际 2500"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "453f0983-70ca-41f0-a496-ea3540114c9b", "api_type": "trade", "start_time": "2025-12-15 18:00:00", "end_time": "2025-12-15 18:59:59", "expected_count": 19205, "actual_count": 17705, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-16 00:14:26", "last_error": "数据不匹配: 预期 19205, 实际 17705"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "bf5c1250-3a86-4ff8-b638-98c8dd4c1382", "api_type": "trade", "start_time": "2025-11-06 15:00:00", "end_time": "2025-11-06 15:59:59", "expected_count": 5515, "actual_count": 5015, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-16 00:17:16", "last_error": "数据不匹配: 预期 5515, 实际 5015"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "d90856c0-23c8-4228-8d69-6aed64a718ff", "api_type": "trade", "start_time": "2025-12-15 19:00:00", "end_time": "2025-12-15 19:59:59", "expected_count": 14702, "actual_count": 14202, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-16 00:20:56", "last_error": "数据不匹配: 预期 14702, 实际 14202"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "1ee13ade-01a1-4c36-b883-9cfbef6f7470", "api_type": "trade", "start_time": "2025-12-15 20:00:00", "end_time": "2025-12-15 20:59:59", "expected_count": 12126, "actual_count": 11126, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-16 00:28:46", "last_error": "数据不匹配: 预期 12126, 实际 11126"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "d6ff143a-0b1d-480c-a6a9-7fe9148ce074", "api_type": "trade", "start_time": "2025-12-15 21:00:00", "end_time": "2025-12-15 21:59:59", "expected_count": 11600, "actual_count": 11100, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-16 00:33:05", "last_error": "数据不匹配: 预期 11600, 实际 11100"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$341
+{"task_id": "f2c1a1a3-7e53-4dcb-bd8e-49585afc730b", "api_type": "trade", "start_time": "2025-11-07 06:00:00", "end_time": "2025-11-07 06:59:59", "expected_count": 1294, "actual_count": 794, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-16 00:37:37", "last_error": "数据不匹配: 预期 1294, 实际 794"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "bc026228-f16f-4d89-b716-69b623e3f104", "api_type": "trade", "start_time": "2025-11-07 09:00:00", "end_time": "2025-11-07 09:59:59", "expected_count": 5920, "actual_count": 5420, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-16 00:41:14", "last_error": "数据不匹配: 预期 5920, 实际 5420"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "4ba960ed-f5e6-4d4e-8dde-bf9fcb16951b", "api_type": "trade", "start_time": "2025-12-10 11:00:00", "end_time": "2025-12-10 11:59:59", "expected_count": 11964, "actual_count": 11963, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-16 09:21:27", "last_error": "数据不匹配: 预期 11964, 实际 11963"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "deb1c29d-c169-478a-94e0-a7526f7c1de0", "api_type": "trade", "start_time": "2025-12-14 08:00:00", "end_time": "2025-12-14 08:59:59", "expected_count": 4802, "actual_count": 4800, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-16 10:16:23", "last_error": "数据不匹配: 预期 4802, 实际 4800"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$347
+{"task_id": "60e360a6-3eff-4e74-9135-206d772f5cc1", "api_type": "trade", "start_time": "2025-12-16 10:00:00", "end_time": "2025-12-16 10:59:59", "expected_count": 21472, "actual_count": 21416, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-16 11:57:10", "last_error": "数据不匹配: 预期 21472, 实际 21416"}
+*3
+$5
+RPUSH
+$21
+data_pull:retry_queue
+$343
+{"task_id": "2a8dbfc7-bb8f-4c7f-87af-0d0eb901e8ce", "api_type": "trade", "start_time": "2025-12-16 12:00:00", "end_time": "2025-12-16 12:59:59", "expected_count": 3752, "actual_count": 3753, "shop_no": null, "warehouse_no": null, "retry_count": 0, "created_at": "2025-12-16 12:09:45", "last_error": "数据不匹配: 预期 3752, 实际 3753"}

@@ -1,0 +1,84 @@
+# 旺店通奇门接口配置
+wdt:
+  # 旺店通应用配置
+  app_key: '33457302'
+  app_secret: '168b0a063de6a1791c1107d9794c1511:152112177237114209c96f4a83c35fec'
+  
+# 慧经营账单配置
+  hjy_app_id: '8cc279b33de841b38431d8c3188861e9'  # 租户应用标识
+  hjy_sid: 'lqx3'  # 卖家账号
+  hjy_app_key: '031aa6b6e6244e867840e5970574a79ce7ff7614'  # 应用密钥(签名用)
+  hjy_gateway_url: 'http://332wh0cyoi.api.taobao.com/router/qm'  # 账单接口网关地址
+
+  # 奇门网关配置
+  qimen_appkey: '33457302'
+  qimen_appsecret: '6d9fe9dca09b24046dce5d27966ba28d'
+  gateway_url: 'http://3ldsmu02o9.api.taobao.com/router/qm'
+  target_appkey: '21363512'
+  
+  # 客户ID
+  wdt3_customer_id: 'lqx3' 
+  
+  # 请求超时（秒）
+  timeout: 30
+
+# 数据库配置（可选）
+database(mysql):
+  type: mysql  # 支持 mysql 或 sqlserver
+  host: 192.168.253.36
+  port: 3306
+  user: zhuwenbin 
+  password: cB0jF0lH3eE2dN5e
+  database: data_pull_db
+  charset: utf8mb4
+
+database:
+  # type: mysql  # 支持 mysql 或 sqlserver
+  # host: 192.168.253.36
+  # port: 3306
+  # user: zhuwenbin 
+  # password: cB0jF0lH3eE2dN5e
+  # database: data_pull_db
+  # charset: utf8mb4
+  # driver: ODBC Driver 17 for SQL Server  # SQL Server 需要指定驱动
+  type: sqlserver
+  host: 192.168.253.189
+  port: 1433
+  user: zhuwenbin 
+  password: cB0jF0lH3eE2dN5e
+  database: dwd
+  charset: utf8mb4
+  driver: ODBC Driver 17 for SQL Server
+# 日志配置
+logging:
+  level: INFO
+  log_dir: logs
+  log_file: data_pull.log
+
+# 微伴助手配置
+weiban:
+  # API 基础地址
+  base_url: 'https://open.weibanzhushou.com'
+  # 企业ID（需要从微伴后台获取）
+  corp_id: '1847124254593075201'
+  # 应用密钥（需要从微伴后台获取）
+  secret: '065688a5065005d5b58083ed36c365d5'
+  # Token 缓存文件路径（可选，默认 ./access_token.conf）
+  token_cache_path: './access_token.conf'
+  # 请求超时（秒）
+  timeout: 30
+  # EHR 数据库配置（用于获取员工列表）
+  ehr_database:
+    host: '192.168.253.189'
+    port: 1433
+    user: 'zhuwenbin'
+    password: 'cB0jF0lH3eE2dN5e'
+    database: 'BI_lqx'
+
+# Redis配置（可选，用于任务队列和分布式锁）
+# 如果不配置，数据不匹配时只记录日志，不会入队重试
+redis:
+  host: localhost
+  port: 6379
+  db: 0
+  password: null

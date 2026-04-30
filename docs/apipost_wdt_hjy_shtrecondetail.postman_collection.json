@@ -1,0 +1,69 @@
+{
+  "info": {
+    "name": "慧经营 wdt.hjy.recon.shtrecondetail.query",
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "description": "售后对账明细。请求方式：POST，URL 带奇门系统参数 querystring，Body 为 x-www-form-urlencoded 业务参数。\n\n签名：\n1) hjySign：对 sign_params（不含 hjySign）按 key 排序，拼成 k1:v1&k2:v2，末尾接 hjy_app_key，去掉双引号与空格，MD5 小写。\n2) top_sign：合并 sys_params（无 sign）与 api_params（含 hjySign），按 key 排序，MD5(secret + 各k+v按序拼接 + secret) 大写。\n\n可先在本项目 python run.py pull -c wdt -s sht_recon_detail --debug 从日志复制 timestamp、各参数与 sign 对照。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "qimen_appkey", "value": ""},
+    {"key": "qimen_appsecret", "value": ""},
+    {"key": "target_appkey", "value": ""},
+    {"key": "hjy_app_id", "value": ""},
+    {"key": "hjy_sid", "value": ""},
+    {"key": "hjy_app_key", "value": ""},
+    {"key": "timestamp", "value": "2026-04-09 15:00:00"},
+    {"key": "top_sign", "value": ""},
+    {"key": "hjySign", "value": ""}
+  ],
+  "item": [
+    {
+      "name": "shtrecondetail.query",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/x-www-form-urlencoded; charset=UTF-8"}
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {"key": "appId", "value": "{{hjy_app_id}}", "type": "text"},
+            {"key": "sid", "value": "{{hjy_sid}}", "type": "text"},
+            {"key": "startDate", "value": "2025-08-01", "type": "text"},
+            {"key": "endDate", "value": "2025-08-02", "type": "text"},
+            {"key": "periodMark", "value": "", "type": "text", "disabled": true},
+            {"key": "nextRequestId", "value": "", "type": "text", "disabled": true},
+            {"key": "refundType", "value": "[\"退货退款\"]", "type": "text", "disabled": true},
+            {"key": "shopNo", "value": "[\"01000011801\"]", "type": "text", "disabled": true},
+            {"key": "warehouseNo", "value": "[]", "type": "text", "disabled": true},
+            {"key": "specNo", "value": "[]", "type": "text", "disabled": true},
+            {"key": "summaryNo", "value": "[]", "type": "text", "disabled": true},
+            {"key": "recoStatus", "value": "[\"对账成功\"]", "type": "text", "disabled": true},
+            {"key": "platOrderNo", "value": "[]", "type": "text", "disabled": true},
+            {"key": "salesmanName", "value": "", "type": "text", "disabled": true},
+            {"key": "sysOrderNo", "value": "[]", "type": "text", "disabled": true},
+            {"key": "hjySign", "value": "{{hjySign}}", "type": "text"}
+          ]
+        },
+        "url": {
+          "raw": "http://332wh0cyoi.api.taobao.com/router/qm?app_key={{qimen_appkey}}&v=2.0&format=json&sign_method=md5&method=wdt.hjy.recon.shtrecondetail.query&timestamp={{timestamp}}&target_app_key={{target_appkey}}&session=&sign={{top_sign}}",
+          "protocol": "http",
+          "host": ["332wh0cyoi", "api", "taobao", "com"],
+          "path": ["router", "qm"],
+          "query": [
+            {"key": "app_key", "value": "{{qimen_appkey}}"},
+            {"key": "v", "value": "2.0"},
+            {"key": "format", "value": "json"},
+            {"key": "sign_method", "value": "md5"},
+            {"key": "method", "value": "wdt.hjy.recon.shtrecondetail.query"},
+            {"key": "timestamp", "value": "{{timestamp}}"},
+            {"key": "target_app_key", "value": "{{target_appkey}}"},
+            {"key": "session", "value": ""},
+            {"key": "sign", "value": "{{top_sign}}"}
+          ]
+        },
+        "description": "服务名 method=wdt.hjy.recon.shtrecondetail.query。测试环境网关可改为文档中的 qmtest 地址。"
+      }
+    }
+  ]
+}
