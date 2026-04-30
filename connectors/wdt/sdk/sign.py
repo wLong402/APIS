@@ -19,20 +19,17 @@ class WdtSignUtil:
     @staticmethod
     def is_json(value: Any) -> bool:
         """
-        判断是否为JSON字符串
-        
-        Args:
-            value: 待判断的值
-            
-        Returns:
-            是否为有效JSON字符串
+        判断是否为JSON字符串（首字符短路，避免对普通字符串解析）
         """
-        if not isinstance(value, str):
+        if not isinstance(value, str) or len(value) < 2:
+            return False
+        first = value[0]
+        if first != '{' and first != '[':
             return False
         try:
             json.loads(value)
             return True
-        except (json.JSONDecodeError, TypeError):
+        except (json.JSONDecodeError, TypeError, ValueError):
             return False
     
     @classmethod

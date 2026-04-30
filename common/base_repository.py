@@ -47,6 +47,9 @@ class BaseRepository(ABC):
         
         self.db = db_manager or get_db_manager()
         self.logger = get_logger(f"repository.{self.full_table_name}")
+        self._table_ready = False
+        self._known_columns: Set[str] = set()
+        self._fields_cache: Optional[Dict[str, str]] = None
     
     @property
     def full_table_name(self) -> str:
@@ -64,7 +67,9 @@ class BaseRepository(ABC):
         
         try:
             fields = self._analyze_fields(data_list)
-            self._ensure_table(fields)
+            if not self._table_ready:
+                self._ensure_table(fields)
+                self._table_ready = True
             self._ensure_columns(fields)
         except Exception as e:
             self.logger.error(f"表结构初始化失败: {e}")
@@ -276,20 +281,29 @@ class BaseRepository(ABC):
         return 0
     
     def _analyze_fields(self, data_list: List[Dict], sample_size: int = 100) -> Dict[str, str]:
-        """分析数据字段和类型"""
-        fields = {}
+        """分析数据字段和类型（带实例级缓存，新字段增量合并）"""
         db_type = self.db.config.database.type
         
+        if self._fields_cache is None:
+            fields = {}
+        else:
+            fields = self._fields_cache
+        
+        new_keys = False
         for item in data_list[:sample_size]:
             for key, value in item.items():
                 if key not in fields:
                     fields[key] = infer_column_type(value, db_type)
+                    new_keys = True
                 elif value is not None:
                     current_type = fields[key]
                     new_type = infer_column_type(value, db_type)
-                    # 只在更具体的类型时更新
                     if current_type in ('TEXT', 'NVARCHAR(MAX)') and new_type not in ('TEXT', 'NVARCHAR(MAX)'):
                         fields[key] = new_type
+                        new_keys = True
+        
+        if self._fields_cache is None or new_keys:
+            self._fields_cache = fields
         
         return fields
     
@@ -327,34 +341,46 @@ class BaseRepository(ABC):
                 pass
     
     def _ensure_columns(self, fields: Dict[str, str]):
-        """确保所有列存在"""
+        """确保所有列存在（带实例级缓存，避免每次保存都查所有列）"""
         table_name = self.full_table_name
         
+        target_cols = {sanitize_column_name(f): t for f, t in fields.items()}
+        
+        if self._known_columns and all(c in self._known_columns for c in target_cols):
+            return
+        
         try:
-            existing = set(self.db.get_table_columns(table_name))
+            existing = set(c.lower() for c in self.db.get_table_columns(table_name))
+            self._known_columns = set(existing)
         except Exception as e:
             self.logger.error(f"获取表列失败: {e}")
-            existing = set()
+            existing = set(self._known_columns)
         
+        missing = [(c, t) for c, t in target_cols.items() if c.lower() not in existing]
+        if not missing:
+            self._known_columns.update(target_cols.keys())
+            return
+        
+        is_mysql = self.db.adapter.__class__.__name__ == 'MySQLAdapter'
         with self.db.get_connection() as conn:
             cursor = self.db.adapter.get_cursor(conn)
             added = 0
-            
-            for field_name, field_type in fields.items():
-                col_name = sanitize_column_name(field_name)
-                if col_name.lower() not in existing:
-                    try:
-                        if self.db.adapter.__class__.__name__ == 'MySQLAdapter':
-                            cursor.execute(f"ALTER TABLE `{table_name}` ADD COLUMN `{col_name}` {field_type}")
-                        else:  # SQL Server
-                            cursor.execute(f"ALTER TABLE [{table_name}] ADD [{col_name}] {field_type}")
-                        added += 1
-                    except Exception:
-                        pass
+            for col_name, field_type in missing:
+                try:
+                    if is_mysql:
+                        cursor.execute(f"ALTER TABLE `{table_name}` ADD COLUMN `{col_name}` {field_type}")
+                    else:
+                        cursor.execute(f"ALTER TABLE [{table_name}] ADD [{col_name}] {field_type}")
+                    added += 1
+                    self._known_columns.add(col_name.lower())
+                except Exception:
+                    pass
             
             if added > 0:
                 self.db.adapter.commit(conn)
                 self.logger.info(f"新增 {added} 个字段到表 {table_name}")
+        
+        self._known_columns.update(c.lower() for c in target_cols)
     
     def find_by_id(self, unique_value: Any) -> Optional[Dict]:
         """根据唯一键查询"""

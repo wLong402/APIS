@@ -222,7 +222,7 @@ class SQLServerAdapter(DatabaseAdapter):
     
     def get_cursor(self, conn):
         cursor = conn.cursor()
-        cursor.fast_executemany = False
+        cursor.fast_executemany = True
         return cursor
     
     def commit(self, conn):

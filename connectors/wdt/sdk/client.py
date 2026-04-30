@@ -85,7 +85,7 @@ class QimenClient:
         }
     
     def call(self, method: str, params: Dict, pager: Optional[Dict] = None, 
-             debug: bool = False, max_retries: int = 100, retry_delay: float = 1.0) -> Dict:
+             debug: bool = False, max_retries: int = 5, retry_delay: float = 1.0) -> Dict:
         """
         调用奇门API（带重试机制）
         
@@ -163,11 +163,10 @@ class QimenClient:
                     # 成功获取响应，返回结果
                     return last_result
                 
-                # status为None，需要重试
                 if attempt < max_retries - 1:
                     if debug:
                         debug_print(f"      [API DEBUG] status=None, 第{attempt + 1}次重试...")
-                    time.sleep(retry_delay * (attempt + 0.1))  # 递增等待时间
+                    time.sleep(retry_delay * (attempt + 1))
                 
             except requests.exceptions.RequestException as e:
                 last_result = {
@@ -177,7 +176,7 @@ class QimenClient:
                 if attempt < max_retries - 1:
                     if debug:
                         debug_print(f"      [API DEBUG] 网络异常, 第{attempt + 1}次重试...")
-                    time.sleep(retry_delay * (attempt + 0.1))
+                    time.sleep(retry_delay * (attempt + 1))
                     
             except json.JSONDecodeError:
                 last_result = {

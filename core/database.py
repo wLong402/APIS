@@ -79,6 +79,8 @@ class ConnectionPool:
         self._overflow_count = 0
         self._lock = Lock()
         self._connection_times = {}  # 记录连接创建时间
+        self._last_used = {}  # 记录连接最近一次归还时间
+        self._ping_interval = 60  # 距上次使用超过 60 秒才 ping
         
         # 预创建连接
         self._init_pool()
@@ -108,14 +110,17 @@ class ConnectionPool:
         return conn
     
     def _is_connection_valid(self, conn) -> bool:
-        """检查连接是否有效"""
+        """检查连接是否有效（最近用过的连接跳过 ping）"""
         try:
-            # 检查连接是否超时需要回收
+            now = time.time()
             create_time = self._connection_times.get(id(conn), 0)
-            if time.time() - create_time > self.recycle_time:
+            if now - create_time > self.recycle_time:
                 return False
             
-            # 执行简单查询测试连接
+            last_used = self._last_used.get(id(conn), 0)
+            if now - last_used < self._ping_interval:
+                return True
+            
             return self.adapter.ping_connection(conn)
         except Exception:
             return False
@@ -177,8 +182,8 @@ class ConnectionPool:
             self._close_connection(conn)
         else:
             try:
-                # 回滚未提交的事务
                 self.adapter.rollback(conn)
+                self._last_used[id(conn)] = time.time()
                 self._pool.put_nowait(conn)
             except Exception:
                 self._close_connection(conn)
@@ -187,6 +192,7 @@ class ConnectionPool:
         """关闭连接"""
         try:
             self._connection_times.pop(id(conn), None)
+            self._last_used.pop(id(conn), None)
             self.adapter.close_connection(conn)
         except Exception:
             pass
