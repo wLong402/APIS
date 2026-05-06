@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>数据同步控制台</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --bg2: #161c24;
+    --bg3: #1f2730;
+    --border: #2a3341;
+    --text: #d8dee9;
+    --muted: #7a8492;
+    --primary: #4f8eff;
+    --success: #3ddc97;
+    --warn: #ffb454;
+    --danger: #ff5570;
+    --code: #0b0f14;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Microsoft YaHei", sans-serif;
+    background: var(--bg); color: var(--text); font-size: 13px;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px; background: var(--bg2); border-bottom: 1px solid var(--border);
+  }
+  header h1 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: 0.5px; }
+  header .tabs { display: flex; gap: 4px; }
+  header .tab {
+    padding: 6px 14px; border-radius: 6px; cursor: pointer; color: var(--muted);
+  }
+  header .tab.active { background: var(--bg3); color: var(--text); }
+  header .tab:hover { color: var(--text); }
+  main { padding: 16px 20px; max-width: 1400px; margin: 0 auto; }
+  .panel {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px; margin-bottom: 16px;
+  }
+  .panel h2 { margin: 0 0 12px; font-size: 14px; font-weight: 600; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .col { flex: 1 1 200px; }
+  label { display: block; color: var(--muted); margin-bottom: 4px; font-size: 12px; }
+  input, select, textarea {
+    width: 100%; padding: 6px 10px; background: var(--bg3); color: var(--text);
+    border: 1px solid var(--border); border-radius: 4px; font-size: 13px;
+    font-family: inherit;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--primary); }
+  button {
+    padding: 6px 14px; background: var(--primary); color: white; border: none;
+    border-radius: 4px; cursor: pointer; font-size: 13px;
+  }
+  button.ghost { background: var(--bg3); border: 1px solid var(--border); color: var(--text); }
+  button.danger { background: var(--danger); }
+  button.warn { background: var(--warn); color: #1a1a1a; }
+  button:hover { opacity: 0.85; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; }
+  tr:hover { background: rgba(255,255,255,0.02); }
+  .status { padding: 2px 8px; border-radius: 3px; font-size: 11px; display: inline-block; }
+  .status.running { background: rgba(79,142,255,0.2); color: var(--primary); }
+  .status.success { background: rgba(61,220,151,0.2); color: var(--success); }
+  .status.failed { background: rgba(255,85,112,0.2); color: var(--danger); }
+  .status.stopped { background: rgba(255,180,84,0.2); color: var(--warn); }
+  .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .grow { flex-grow: 1; }
+  .log {
+    background: var(--code); color: #cdd9e5; font-family: Consolas, "Cascadia Code",
+                Monaco, monospace; font-size: 12px; line-height: 1.5;
+    padding: 12px; border-radius: 6px; overflow: auto; height: 480px;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .pill { display: inline-block; padding: 2px 6px; background: var(--bg3); border-radius: 3px; font-size: 11px; }
+  .hidden { display: none !important; }
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex;
+    align-items: center; justify-content: center; z-index: 100;
+  }
+  .modal {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 20px; width: 720px; max-width: 95vw; max-height: 90vh; overflow: auto;
+  }
+  .modal h3 { margin: 0 0 14px; }
+  .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+  .help { color: var(--muted); font-size: 11px; margin-top: 4px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .toast {
+    position: fixed; bottom: 20px; right: 20px; padding: 10px 16px;
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+    z-index: 200; max-width: 360px;
+  }
+  .toast.error { border-color: var(--danger); }
+  .toast.success { border-color: var(--success); }
+  details summary { cursor: pointer; color: var(--muted); margin-bottom: 8px; }
+  details[open] summary { color: var(--text); }
+</style>
+</head>
+<body>
+  <header>
+    <h1>数据同步控制台</h1>
+    <div class="tabs">
+      <div class="tab active" data-tab="run">手动运行</div>
+      <div class="tab" data-tab="schedules">定时任务</div>
+      <div class="tab" data-tab="jobs">任务记录</div>
+    </div>
+    <div style="color: var(--muted); font-size: 12px;" id="server-status">就绪</div>
+  </header>
+
+  <main>
+    <!-- 手动运行 -->
+    <section id="tab-run">
+      <div class="panel">
+        <h2>新建拉取任务</h2>
+        <div class="row">
+          <div class="col">
+            <label>连接器</label>
+            <select id="run-connector"></select>
+          </div>
+          <div class="col">
+            <label>服务</label>
+            <select id="run-service"></select>
+          </div>
+          <div class="col">
+            <label>开始日期 / 时间</label>
+            <input id="run-start" placeholder="YYYY-MM-DD 或 YYYY-MM-DD HH:MM:SS" />
+          </div>
+          <div class="col">
+            <label>结束日期 / 时间</label>
+            <input id="run-end" placeholder="YYYY-MM-DD 或 YYYY-MM-DD HH:MM:SS" />
+          </div>
+        </div>
+        <div class="row" style="margin-top: 8px;">
+          <div class="col">
+            <label>过去N天 (优先)</label>
+            <input id="run-past-days" type="number" min="0" placeholder="留空" />
+          </div>
+          <div class="col">
+            <label>间隔(秒)</label>
+            <input id="run-interval" type="number" min="0" placeholder="3600 = 按小时" />
+          </div>
+          <div class="col">
+            <label>每页数量</label>
+            <input id="run-page-size" type="number" value="200" />
+          </div>
+          <div class="col">
+            <label>并行线程</label>
+            <input id="run-workers" type="number" value="10" />
+          </div>
+        </div>
+        <details style="margin-top: 12px;">
+          <summary>更多参数</summary>
+          <div class="grid" style="margin-top: 8px;">
+            <div><label>店铺编号</label><input id="run-shop-no" /></div>
+            <div><label>仓库编号</label><input id="run-warehouse-no" /></div>
+            <div><label>费用项名称</label><input id="run-classification-name" /></div>
+            <div><label>是否汇总</label><input id="run-is-summary" placeholder="0/1" /></div>
+            <div><label>方案名称</label><input id="run-scheme-name" /></div>
+            <div><label>查询口径</label><input id="run-terms-income" /></div>
+            <div><label>查询维度</label><input id="run-composite-dim" /></div>
+            <div><label>是否拆分组合装</label><input id="run-split-suite" /></div>
+            <div><label>成本类型</label><input id="run-cost-type" /></div>
+            <div><label>是否跟单</label><input id="run-stat-mode" /></div>
+            <div><label>建单方式</label><input id="run-order-way" /></div>
+            <div><label>按店铺展示</label><input id="run-display-by-shop" /></div>
+            <div><label>按时间展示</label><input id="run-display-by-date" /></div>
+            <div><label>原始单+系统单</label><input id="run-original-order" /></div>
+            <div><label>平台订单号</label><input id="run-plat-order-nos" /></div>
+            <div><label>系统订单号</label><input id="run-erp-order-nos" /></div>
+            <div><label>多店铺编号</label><input id="run-shop-nos" /></div>
+            <div><label>商家编码</label><input id="run-spec-no" /></div>
+            <div><label>费用项编码</label><input id="run-project" /></div>
+            <div><label>汇总单号</label><input id="run-summary-no" /></div>
+            <div><label>费用项名称(列表)</label><input id="run-expense-item-name" /></div>
+            <div><label>员工ID列表</label><input id="run-staff-ids" /></div>
+            <div><label>配置录入开始</label><input id="run-start-config-record-time" /></div>
+            <div><label>配置录入结束</label><input id="run-end-config-record-time" /></div>
+          </div>
+        </details>
+        <div class="toolbar" style="margin-top: 16px;">
+          <label style="display:flex; gap:6px; align-items:center; margin:0;">
+            <input id="run-by-day" type="checkbox" style="width:auto;" /> 按天循环
+          </label>
+          <label style="display:flex; gap:6px; align-items:center; margin:0;">
+            <input id="run-debug" type="checkbox" style="width:auto;" /> 调试模式
+          </label>
+          <label style="display:flex; gap:6px; align-items:center; margin:0;">
+            <input id="run-no-ehr" type="checkbox" style="width:auto;" /> 不读 EHR (微伴)
+          </label>
+          <div class="grow"></div>
+          <button class="ghost" onclick="saveAsSchedule()">保存为定时任务</button>
+          <button onclick="runNow()">立即运行</button>
+        </div>
+      </div>
+
+      <div class="panel hidden" id="run-log-panel">
+        <div class="toolbar">
+          <h2 style="margin:0;">实时日志</h2>
+          <span id="run-log-status" class="status">-</span>
+          <span class="pill" id="run-log-cmd"></span>
+          <div class="grow"></div>
+          <button class="warn" onclick="stopCurrentJob()">停止</button>
+          <button class="ghost" onclick="closeCurrentLog()">关闭</button>
+        </div>
+        <div class="log" id="run-log"></div>
+      </div>
+    </section>
+
+    <!-- 定时任务 -->
+    <section id="tab-schedules" class="hidden">
+      <div class="panel">
+        <div class="toolbar">
+          <h2 style="margin:0;">定时任务列表</h2>
+          <div class="grow"></div>
+          <button class="ghost" onclick="loadSchedules()">刷新</button>
+          <button onclick="openScheduleModal()">+ 新建</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>名称</th>
+              <th>服务</th>
+              <th>触发</th>
+              <th>状态</th>
+              <th>上次运行</th>
+              <th>下次运行</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="sched-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 任务记录 -->
+    <section id="tab-jobs" class="hidden">
+      <div class="panel">
+        <div class="toolbar">
+          <h2 style="margin:0;">任务记录</h2>
+          <div class="grow"></div>
+          <button class="ghost" onclick="loadJobs()">刷新</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>开始时间</th>
+              <th>服务</th>
+              <th>来源</th>
+              <th>状态</th>
+              <th>结束时间</th>
+              <th>退出码</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="jobs-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="panel hidden" id="jobs-log-panel">
+        <div class="toolbar">
+          <h2 style="margin:0;">日志</h2>
+          <span class="pill" id="jobs-log-cmd"></span>
+          <div class="grow"></div>
+          <button class="ghost" onclick="closeJobsLog()">关闭</button>
+        </div>
+        <div class="log" id="jobs-log"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 定时任务弹窗 -->
+  <div id="sched-modal" class="modal-bg hidden">
+    <div class="modal">
+      <h3 id="sched-modal-title">新建定时任务</h3>
+      <div class="row">
+        <div class="col">
+          <label>任务名称</label>
+          <input id="sm-name" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <div class="col">
+          <label>触发类型</label>
+          <select id="sm-trigger-type" onchange="onTriggerTypeChange()">
+            <option value="daily">每天定时</option>
+            <option value="interval">固定间隔</option>
+            <option value="cron">Cron 表达式</option>
+          </select>
+        </div>
+        <div class="col" id="sm-trigger-daily-wrap">
+          <label>每天执行时间</label>
+          <input id="sm-trigger-time" placeholder="01:00" value="01:00" />
+        </div>
+        <div class="col hidden" id="sm-trigger-interval-wrap">
+          <label>间隔(秒)</label>
+          <input id="sm-trigger-seconds" type="number" value="3600" />
+        </div>
+        <div class="col hidden" id="sm-trigger-cron-wrap">
+          <label>Cron (分 时 日 月 周)</label>
+          <input id="sm-trigger-expr" placeholder="0 1 * * *" />
+          <div class="help">示例: 0 1 * * * 每天 01:00；*/30 * * * * 每30分钟</div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:16px;">拉取参数</h3>
+      <div class="row">
+        <div class="col">
+          <label>连接器</label>
+          <select id="sm-connector"></select>
+        </div>
+        <div class="col">
+          <label>服务</label>
+          <select id="sm-service"></select>
+        </div>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <div class="col">
+          <label>开始日期</label>
+          <input id="sm-start" placeholder="留空=当天" />
+        </div>
+        <div class="col">
+          <label>结束日期</label>
+          <input id="sm-end" placeholder="留空=当天" />
+        </div>
+        <div class="col">
+          <label>过去N天</label>
+          <input id="sm-past-days" type="number" placeholder="留空" />
+        </div>
+        <div class="col">
+          <label>间隔(秒)</label>
+          <input id="sm-interval" type="number" placeholder="3600=按小时" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <div class="col">
+          <label>每页数量</label>
+          <input id="sm-page-size" type="number" value="200" />
+        </div>
+        <div class="col">
+          <label>并行线程</label>
+          <input id="sm-workers" type="number" value="10" />
+        </div>
+        <div class="col">
+          <label>店铺编号</label>
+          <input id="sm-shop-no" />
+        </div>
+        <div class="col" style="display:flex; align-items:center; gap:6px;">
+          <label style="display:flex;gap:4px;align-items:center;">
+            <input id="sm-debug" type="checkbox" style="width:auto;" /> debug
+          </label>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="ghost" onclick="closeScheduleModal()">取消</button>
+        <button onclick="saveSchedule()">保存</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const api = async (url, opts={}) => {
+  const r = await fetch(url, {
+    headers: {'Content-Type':'application/json'},
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  if (!r.ok) {
+    let msg = r.statusText;
+    try { msg = (await r.json()).error || msg; } catch(e) {}
+    throw new Error(msg);
+  }
+  return r.json();
+};
+
+let connectors = [];
+let currentJobId = null;
+let logTimer = null;
+let jobsLogTimer = null;
+let currentJobsLogId = null;
+let editingScheduleId = null;
+
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+async function init() {
+  connectors = await api('/api/connectors');
+  fillConnectorSelect($('run-connector'), $('run-service'));
+  fillConnectorSelect($('sm-connector'), $('sm-service'));
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      ['run','schedules','jobs'].forEach(n => $('tab-'+n).classList.add('hidden'));
+      $('tab-'+t.dataset.tab).classList.remove('hidden');
+      if (t.dataset.tab === 'schedules') loadSchedules();
+      if (t.dataset.tab === 'jobs') loadJobs();
+    };
+  });
+}
+
+function fillConnectorSelect(connSel, svcSel) {
+  connSel.innerHTML = connectors.map(c =>
+    `<option value="${c.name}">${c.display_name} (${c.name})</option>`
+  ).join('');
+  const fillSvc = () => {
+    const c = connectors.find(x => x.name === connSel.value);
+    svcSel.innerHTML = (c?.services||[]).map(s =>
+      `<option value="${s.name}">${s.label} (${s.name})</option>`
+    ).join('');
+  };
+  connSel.onchange = fillSvc;
+  fillSvc();
+}
+
+function collectPayload(prefix='run') {
+  const v = (id) => $(prefix+'-'+id).value || null;
+  const c = (id) => $(prefix+'-'+id).checked;
+  return {
+    connector: v('connector'),
+    service: v('service'),
+    start: v('start'),
+    end: v('end'),
+    past_days: v('past-days') ? Number(v('past-days')) : null,
+    interval: v('interval') ? Number(v('interval')) : null,
+    page_size: v('page-size') ? Number(v('page-size')) : null,
+    workers: v('workers') ? Number(v('workers')) : null,
+    shop_no: v('shop-no'),
+    warehouse_no: prefix==='run' ? v('warehouse-no') : null,
+    classification_name: prefix==='run' ? v('classification-name') : null,
+    is_summary: prefix==='run' ? v('is-summary') : null,
+    scheme_name: prefix==='run' ? v('scheme-name') : null,
+    terms_income: prefix==='run' ? v('terms-income') : null,
+    composite_dim: prefix==='run' ? v('composite-dim') : null,
+    split_suite: prefix==='run' ? v('split-suite') : null,
+    cost_type: prefix==='run' ? v('cost-type') : null,
+    stat_mode: prefix==='run' ? v('stat-mode') : null,
+    order_way: prefix==='run' ? v('order-way') : null,
+    display_by_shop: prefix==='run' ? v('display-by-shop') : null,
+    display_by_date: prefix==='run' ? v('display-by-date') : null,
+    original_order: prefix==='run' ? v('original-order') : null,
+    plat_order_nos: prefix==='run' ? v('plat-order-nos') : null,
+    erp_order_nos: prefix==='run' ? v('erp-order-nos') : null,
+    shop_nos: prefix==='run' ? v('shop-nos') : null,
+    spec_no: prefix==='run' ? v('spec-no') : null,
+    project: prefix==='run' ? v('project') : null,
+    summary_no: prefix==='run' ? v('summary-no') : null,
+    expense_item_name: prefix==='run' ? v('expense-item-name') : null,
+    staff_ids: prefix==='run' ? v('staff-ids') : null,
+    start_config_record_time: prefix==='run' ? v('start-config-record-time') : null,
+    end_config_record_time: prefix==='run' ? v('end-config-record-time') : null,
+    by_day: prefix==='run' ? c('by-day') : false,
+    debug: c('debug'),
+    no_ehr: prefix==='run' ? c('no-ehr') : false,
+  };
+}
+
+async function runNow() {
+  try {
+    const payload = collectPayload('run');
+    const job = await api('/api/run', { method: 'POST', body: payload });
+    toast('任务已启动: ' + job.id, 'success');
+    openLog(job);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+function openLog(job) {
+  currentJobId = job.id;
+  $('run-log-panel').classList.remove('hidden');
+  $('run-log').textContent = '';
+  $('run-log-cmd').textContent = job.cmd || '';
+  $('run-log-status').textContent = job.status || 'running';
+  $('run-log-status').className = 'status ' + (job.status || 'running');
+  let offset = 0;
+  if (logTimer) clearInterval(logTimer);
+  const tick = async () => {
+    try {
+      const data = await api(`/api/jobs/${currentJobId}/log?offset=${offset}`);
+      if (data.content) {
+        $('run-log').textContent += data.content;
+        $('run-log').scrollTop = $('run-log').scrollHeight;
+        offset = data.offset;
+      }
+      const j = await api(`/api/jobs/${currentJobId}`);
+      $('run-log-status').textContent = j.status;
+      $('run-log-status').className = 'status ' + j.status;
+      if (data.eof) {
+        clearInterval(logTimer); logTimer = null;
+      }
+    } catch (e) {}
+  };
+  tick();
+  logTimer = setInterval(tick, 1000);
+}
+
+function closeCurrentLog() {
+  if (logTimer) clearInterval(logTimer);
+  logTimer = null;
+  currentJobId = null;
+  $('run-log-panel').classList.add('hidden');
+}
+
+async function stopCurrentJob() {
+  if (!currentJobId) return;
+  try {
+    await api(`/api/jobs/${currentJobId}/stop`, { method: 'POST' });
+    toast('已发送停止信号', 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function loadJobs() {
+  const items = await api('/api/jobs');
+  $('jobs-tbody').innerHTML = items.map(j => `
+    <tr>
+      <td>${j.started_at || '-'}</td>
+      <td>${j.connector}.${j.service}</td>
+      <td>${j.source}</td>
+      <td><span class="status ${j.status}">${j.status}</span></td>
+      <td>${j.finished_at || '-'}</td>
+      <td>${j.exit_code === null ? '-' : j.exit_code}</td>
+      <td>
+        <button class="ghost" onclick="viewJobLog('${j.id}')">日志</button>
+        ${j.status === 'running' ? `<button class="warn" onclick="stopJob('${j.id}')">停止</button>` : ''}
+      </td>
+    </tr>
+  `).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--muted);">暂无记录</td></tr>`;
+}
+
+async function viewJobLog(id) {
+  currentJobsLogId = id;
+  $('jobs-log-panel').classList.remove('hidden');
+  $('jobs-log').textContent = '';
+  let offset = 0;
+  if (jobsLogTimer) clearInterval(jobsLogTimer);
+  const tick = async () => {
+    try {
+      const data = await api(`/api/jobs/${id}/log?offset=${offset}`);
+      if (data.content) {
+        $('jobs-log').textContent += data.content;
+        $('jobs-log').scrollTop = $('jobs-log').scrollHeight;
+        offset = data.offset;
+      }
+      const j = await api(`/api/jobs/${id}`);
+      $('jobs-log-cmd').textContent = j.cmd || '';
+      if (data.eof) { clearInterval(jobsLogTimer); jobsLogTimer = null; }
+    } catch (e) {}
+  };
+  tick();
+  jobsLogTimer = setInterval(tick, 1500);
+}
+
+function closeJobsLog() {
+  if (jobsLogTimer) clearInterval(jobsLogTimer);
+  jobsLogTimer = null;
+  $('jobs-log-panel').classList.add('hidden');
+}
+
+async function stopJob(id) {
+  try {
+    await api(`/api/jobs/${id}/stop`, { method: 'POST' });
+    toast('已发送停止信号', 'success');
+    loadJobs();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function loadSchedules() {
+  const items = await api('/api/schedules');
+  $('sched-tbody').innerHTML = items.map(s => {
+    const trigText = s.trigger.type === 'daily'
+      ? `每天 ${s.trigger.time}`
+      : s.trigger.type === 'interval'
+        ? `每 ${s.trigger.seconds}s`
+        : `cron ${s.trigger.expr}`;
+    return `
+    <tr>
+      <td>${s.name}</td>
+      <td>${s.payload.connector}.${s.payload.service}</td>
+      <td>${trigText}</td>
+      <td>${s.enabled
+        ? '<span class="status running">已启用</span>'
+        : '<span class="status stopped">已禁用</span>'}</td>
+      <td>${s.last_run_at || '-'}</td>
+      <td>${s.next_run_at || '-'}</td>
+      <td>
+        <button class="ghost" onclick="runSchedule('${s.id}')">立即跑</button>
+        <button class="ghost" onclick="toggleSchedule('${s.id}')">${s.enabled?'禁用':'启用'}</button>
+        <button class="ghost" onclick='editSchedule(${JSON.stringify(s).replace(/'/g, "&#39;")})'>编辑</button>
+        <button class="danger" onclick="deleteSchedule('${s.id}')">删除</button>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--muted);">暂无定时任务</td></tr>`;
+}
+
+function openScheduleModal() {
+  editingScheduleId = null;
+  $('sched-modal-title').textContent = '新建定时任务';
+  ['name','trigger-time','trigger-seconds','trigger-expr','start','end','past-days',
+   'interval','shop-no'].forEach(k => { const el=$('sm-'+k); if(el) el.value=''; });
+  $('sm-trigger-time').value = '01:00';
+  $('sm-trigger-seconds').value = '3600';
+  $('sm-page-size').value = 200;
+  $('sm-workers').value = 10;
+  $('sm-debug').checked = false;
+  $('sm-trigger-type').value = 'daily';
+  onTriggerTypeChange();
+  $('sched-modal').classList.remove('hidden');
+}
+
+function editSchedule(s) {
+  editingScheduleId = s.id;
+  $('sched-modal-title').textContent = '编辑定时任务';
+  $('sm-name').value = s.name || '';
+  $('sm-trigger-type').value = s.trigger.type;
+  onTriggerTypeChange();
+  if (s.trigger.type === 'daily') $('sm-trigger-time').value = s.trigger.time || '';
+  if (s.trigger.type === 'interval') $('sm-trigger-seconds').value = s.trigger.seconds || 3600;
+  if (s.trigger.type === 'cron') $('sm-trigger-expr').value = s.trigger.expr || '';
+  const p = s.payload || {};
+  $('sm-connector').value = p.connector || connectors[0]?.name;
+  $('sm-connector').dispatchEvent(new Event('change'));
+  setTimeout(() => { $('sm-service').value = p.service || ''; }, 0);
+  $('sm-start').value = p.start || '';
+  $('sm-end').value = p.end || '';
+  $('sm-past-days').value = p.past_days || '';
+  $('sm-interval').value = p.interval || '';
+  $('sm-page-size').value = p.page_size || 200;
+  $('sm-workers').value = p.workers || 10;
+  $('sm-shop-no').value = p.shop_no || '';
+  $('sm-debug').checked = !!p.debug;
+  $('sched-modal').classList.remove('hidden');
+}
+
+function closeScheduleModal() {
+  $('sched-modal').classList.add('hidden');
+}
+
+function onTriggerTypeChange() {
+  const t = $('sm-trigger-type').value;
+  $('sm-trigger-daily-wrap').classList.toggle('hidden', t !== 'daily');
+  $('sm-trigger-interval-wrap').classList.toggle('hidden', t !== 'interval');
+  $('sm-trigger-cron-wrap').classList.toggle('hidden', t !== 'cron');
+}
+
+async function saveSchedule() {
+  const t = $('sm-trigger-type').value;
+  const trigger = { type: t };
+  if (t === 'daily') trigger.time = $('sm-trigger-time').value || '00:00';
+  if (t === 'interval') trigger.seconds = Number($('sm-trigger-seconds').value || 3600);
+  if (t === 'cron') trigger.expr = $('sm-trigger-expr').value;
+  const payload = collectPayload('sm');
+  const body = {
+    name: $('sm-name').value,
+    payload,
+    trigger,
+    enabled: true,
+  };
+  try {
+    if (editingScheduleId) {
+      await api('/api/schedules/' + editingScheduleId, { method: 'PUT', body });
+      toast('已更新', 'success');
+    } else {
+      await api('/api/schedules', { method: 'POST', body });
+      toast('已创建', 'success');
+    }
+    closeScheduleModal();
+    loadSchedules();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function saveAsSchedule() {
+  // 直接打开弹窗并使用当前手动运行的参数填充
+  openScheduleModal();
+  const p = collectPayload('run');
+  $('sm-connector').value = p.connector || '';
+  $('sm-connector').dispatchEvent(new Event('change'));
+  setTimeout(() => { $('sm-service').value = p.service || ''; }, 0);
+  $('sm-start').value = p.start || '';
+  $('sm-end').value = p.end || '';
+  $('sm-past-days').value = p.past_days || '';
+  $('sm-interval').value = p.interval || '';
+  $('sm-page-size').value = p.page_size || 200;
+  $('sm-workers').value = p.workers || 10;
+  $('sm-shop-no').value = p.shop_no || '';
+  $('sm-debug').checked = !!p.debug;
+}
+
+async function toggleSchedule(id) {
+  try {
+    await api('/api/schedules/' + id + '/toggle', { method: 'POST' });
+    loadSchedules();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteSchedule(id) {
+  if (!confirm('确认删除？')) return;
+  try {
+    await api('/api/schedules/' + id, { method: 'DELETE' });
+    loadSchedules();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function runSchedule(id) {
+  try {
+    const job = await api('/api/schedules/' + id + '/run', { method: 'POST' });
+    toast('已启动: ' + job.id, 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+init();
+setInterval(() => {
+  if (document.querySelector('.tab.active').dataset.tab === 'jobs') loadJobs();
+}, 5000);
+</script>
+</body>
+</html>

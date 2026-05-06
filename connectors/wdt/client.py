@@ -30,6 +30,8 @@ from .sdk.api import (
     ProfitsOrderQueryAPI,
     ShtReconDetailQueryAPI,
     ProfitsLiveSkuQueryAPI,
+    ProfitsLiveOrderQueryAPI,
+    ProfitsLiveRefundQueryAPI,
     MarketingShareResultQueryAPI,
     ExpenseSkuDaySummaryQueryAPI,
 )
@@ -101,6 +103,8 @@ class WdtClient(BaseAPIClient):
         self._profits_order_api = None
         self._sht_recon_detail_api = None
         self._profits_live_sku_api = None
+        self._profits_live_order_api = None
+        self._profits_live_refund_api = None
         self._marketing_share_result_api = None
         self._expense_sku_day_summary_api = None
     
@@ -279,6 +283,32 @@ class WdtClient(BaseAPIClient):
                 hjy_gateway_url=self._hjy_gateway_url,
             )
         return self._profits_live_sku_api
+
+    @property
+    def profits_live_order_api(self) -> ProfitsLiveOrderQueryAPI:
+        if self._profits_live_order_api is None:
+            self._profits_live_order_api = ProfitsLiveOrderQueryAPI(
+                client=self._qimen_client,
+                config=self._wdt_config,
+                hjy_app_id=self._hjy_app_id,
+                hjy_sid=self._hjy_sid,
+                hjy_app_key=self._hjy_app_key,
+                hjy_gateway_url=self._hjy_gateway_url,
+            )
+        return self._profits_live_order_api
+
+    @property
+    def profits_live_refund_api(self) -> ProfitsLiveRefundQueryAPI:
+        if self._profits_live_refund_api is None:
+            self._profits_live_refund_api = ProfitsLiveRefundQueryAPI(
+                client=self._qimen_client,
+                config=self._wdt_config,
+                hjy_app_id=self._hjy_app_id,
+                hjy_sid=self._hjy_sid,
+                hjy_app_key=self._hjy_app_key,
+                hjy_gateway_url=self._hjy_gateway_url,
+            )
+        return self._profits_live_refund_api
 
     @property
     def marketing_share_result_api(self) -> MarketingShareResultQueryAPI:

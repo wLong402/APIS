@@ -51,6 +51,8 @@ from .profits_sku import ProfitsSkuQueryAPI
 from .profits_order import ProfitsOrderQueryAPI
 from .sht_recon_detail import ShtReconDetailQueryAPI
 from .profits_live_sku import ProfitsLiveSkuQueryAPI
+from .profits_live_order import ProfitsLiveOrderQueryAPI
+from .profits_live_refund import ProfitsLiveRefundQueryAPI
 from .marketing_share_result import MarketingShareResultQueryAPI
 from .expense_sku_day_summary import ExpenseSkuDaySummaryQueryAPI
 
@@ -103,6 +105,8 @@ __all__ = [
     'ProfitsOrderQueryAPI',
     'ShtReconDetailQueryAPI',
     'ProfitsLiveSkuQueryAPI',
+    'ProfitsLiveOrderQueryAPI',
+    'ProfitsLiveRefundQueryAPI',
     'MarketingShareResultQueryAPI',
     'ExpenseSkuDaySummaryQueryAPI',
 ]

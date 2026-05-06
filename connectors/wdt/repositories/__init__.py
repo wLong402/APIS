@@ -26,6 +26,8 @@ from .profits_sku_repo import ProfitsSkuRepository
 from .profits_order_repo import ProfitsOrderRepository
 from .sht_recon_detail_repo import ShtReconDetailRepository
 from .profits_live_sku_repo import ProfitsLiveSkuRepository
+from .profits_live_order_repo import ProfitsLiveOrderRepository
+from .profits_live_refund_repo import ProfitsLiveRefundRepository
 from .marketing_share_result_repo import MarketingShareResultRepository
 from .expense_sku_day_summary_repo import ExpenseSkuDaySummaryRepository
 from .expense_sku_day_summary_detail_repo import ExpenseSkuDaySummaryDetailRepository
@@ -55,6 +57,8 @@ __all__ = [
     'ProfitsOrderRepository',
     'ShtReconDetailRepository',
     'ProfitsLiveSkuRepository',
+    'ProfitsLiveOrderRepository',
+    'ProfitsLiveRefundRepository',
     'MarketingShareResultRepository',
     'ExpenseSkuDaySummaryRepository',
     'ExpenseSkuDaySummaryDetailRepository',

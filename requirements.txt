@@ -7,3 +7,4 @@ sqlalchemy>=2.0.0
 pandas>=2.2.0
 pymssql>=2.2.11
 concurrent-log-handler>=0.9.25
+flask>=3.0.0

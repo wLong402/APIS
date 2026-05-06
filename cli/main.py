@@ -85,6 +85,7 @@ def pull_command(args):
         'project': getattr(args, 'project', None),
         'summary_no': getattr(args, 'summary_no', None),
         'expense_item_name': getattr(args, 'expense_item_name', None),
+        'order_tools': getattr(args, 'order_tools', None),
     }
     
     # 微伴 external_user 服务优先使用 database(mysql) 配置
@@ -159,7 +160,7 @@ def pull_command(args):
                 debug=args.debug,
                 **pull_kwargs,
             )
-        elif connector == 'wdt' and service_name in ('profits_sku', 'profits_order', 'profits_live_sku'):
+        elif connector == 'wdt' and service_name in ('profits_sku', 'profits_order', 'profits_live_sku', 'profits_live_order', 'profits_live_refund'):
             result = service.pull_by_day(
                 start_date=args.start or today,
                 end_date=args.end or args.start or today,
@@ -305,7 +306,7 @@ def cli():
     pull_parser.add_argument(
         '-s', '--service',
         required=True,
-        help='服务名称（wdt: trade, refund, stockout, erp_trade, stockin_refund, stockspec, bill_standard, bk_share_data, fixbill_data_summary, marketing_share_result, profits_sku, profits_order; weiban: external_user, external_user_detail）'
+        help='服务名称（wdt: trade, refund, stockout, erp_trade, stockin_refund, stockspec, bill_standard, bk_share_data, fixbill_data_summary, marketing_share_result, profits_sku, profits_order, profits_live_sku, profits_live_order, profits_live_refund; weiban: external_user, external_user_detail）'
     )
     
     # 时间参数（不传则默认当天；sht_recon_detail 同时不传 --start/--end 则不传账期日期参数）
@@ -440,6 +441,10 @@ def cli():
     pull_parser.add_argument(
         '--expense-item-name',
         help='费用项名称，逗号分隔（仅 expense_sku_day_summary）'
+    )
+    pull_parser.add_argument(
+        '--order-tools',
+        help='订单渠道（仅 profits_live_order/profits_live_refund，如 1 或 1,2,3,4）'
     )
     pull_parser.add_argument(
         '--warehouse-no',

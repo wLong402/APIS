@@ -23,6 +23,8 @@ from .services import (
     ProfitsOrderPullService,
     ShtReconDetailPullService,
     ProfitsLiveSkuPullService,
+    ProfitsLiveOrderPullService,
+    ProfitsLiveRefundPullService,
     MarketingShareResultPullService,
     ExpenseSkuDaySummaryPullService,
 )
@@ -42,6 +44,8 @@ from .repositories import (
     ProfitsOrderRepository,
     ShtReconDetailRepository,
     ProfitsLiveSkuRepository,
+    ProfitsLiveOrderRepository,
+    ProfitsLiveRefundRepository,
     MarketingShareResultRepository,
     ExpenseSkuDaySummaryRepository,
 )
@@ -121,6 +125,14 @@ CONNECTOR_INFO = {
             'name': '直播商品利润表',
             'class': ProfitsLiveSkuPullService,
         },
+        'profits_live_order': {
+            'name': '直播订单管理（正向）',
+            'class': ProfitsLiveOrderPullService,
+        },
+        'profits_live_refund': {
+            'name': '直播订单管理（逆向）',
+            'class': ProfitsLiveRefundPullService,
+        },
         'marketing_share_result': {
             'name': '营销账单分摊结果',
             'class': MarketingShareResultPullService,
@@ -186,6 +198,8 @@ __all__ = [
     'ProfitsOrderPullService',
     'ShtReconDetailPullService',
     'ProfitsLiveSkuPullService',
+    'ProfitsLiveOrderPullService',
+    'ProfitsLiveRefundPullService',
     'MarketingShareResultPullService',
     'ExpenseSkuDaySummaryPullService',
     # 仓库
@@ -204,6 +218,8 @@ __all__ = [
     'ProfitsOrderRepository',
     'ShtReconDetailRepository',
     'ProfitsLiveSkuRepository',
+    'ProfitsLiveOrderRepository',
+    'ProfitsLiveRefundRepository',
     'MarketingShareResultRepository',
     'ExpenseSkuDaySummaryRepository',
     # 元信息
