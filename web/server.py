@@ -20,7 +20,9 @@ app = Flask(__name__, static_folder=None)
 
 @app.after_request
 def _no_cache(resp):
-    resp.headers['Cache-Control'] = 'no-store'
+    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
     return resp
 
 
@@ -76,6 +78,22 @@ def api_job_detail(job_id):
 def api_job_log(job_id):
     offset = int(request.args.get('offset', 0))
     return jsonify(jobs_mod.read_log(job_id, offset))
+
+
+@app.get('/api/jobs/<job_id>/log/download')
+def api_job_log_download(job_id):
+    j = jobs_mod.get_job(job_id)
+    if not j or not j.get('log_path') or not os.path.exists(j['log_path']):
+        return jsonify({'error': 'not found'}), 404
+    log_dir = os.path.dirname(j['log_path'])
+    fname = os.path.basename(j['log_path'])
+    return send_from_directory(log_dir, fname, as_attachment=True,
+                               download_name=f'{job_id}.log')
+
+
+@app.get('/api/jobs/<job_id>/summary')
+def api_job_summary(job_id):
+    return jsonify(jobs_mod.summarize_log(job_id))
 
 
 @app.post('/api/jobs/<job_id>/stop')

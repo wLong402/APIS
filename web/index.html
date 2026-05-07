@@ -67,6 +67,7 @@
   .status { padding: 2px 8px; border-radius: 3px; font-size: 11px; display: inline-block; }
   .status.running { background: rgba(79,142,255,0.2); color: var(--primary); }
   .status.success { background: rgba(61,220,151,0.2); color: var(--success); }
+  .status.warning { background: rgba(255,180,84,0.2); color: var(--warn); }
   .status.failed { background: rgba(255,85,112,0.2); color: var(--danger); }
   .status.stopped { background: rgba(255,180,84,0.2); color: var(--warn); }
   .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
@@ -77,6 +78,10 @@
     padding: 12px; border-radius: 6px; overflow: auto; height: 480px;
     white-space: pre-wrap; word-break: break-all;
   }
+  .log .ln-err { background: rgba(255,85,112,0.18); color: #ff8a9f; display: block; }
+  .log .ln-warn { background: rgba(255,180,84,0.15); color: #ffc266; display: block; }
+  .log .ln-info { color: #6bb1ff; }
+  .log .hl { background: #ff5570; color: #fff; padding: 0 2px; border-radius: 2px; }
   .pill { display: inline-block; padding: 2px 6px; background: var(--bg3); border-radius: 3px; font-size: 11px; }
   .hidden { display: none !important; }
   .modal-bg {
@@ -204,11 +209,19 @@
           <h2 style="margin:0;">实时日志</h2>
           <span id="run-log-status" class="status">-</span>
           <span class="pill" id="run-log-cmd"></span>
+          <span class="pill" id="run-log-err-count" style="background:rgba(255,85,112,0.2);color:#ff8a9f;display:none;"></span>
           <div class="grow"></div>
+          <input id="run-log-keyword" placeholder="过滤关键字..." style="width:200px;" oninput="applyLogFilter('run')" />
+          <button class="ghost" onclick="jumpFirstError('run')">跳到错误</button>
+          <button class="ghost" onclick="downloadLog(currentJobId)">下载</button>
           <button class="warn" onclick="stopCurrentJob()">停止</button>
           <button class="ghost" onclick="closeCurrentLog()">关闭</button>
         </div>
         <div class="log" id="run-log"></div>
+        <details id="run-summary-wrap" style="margin-top:10px;">
+          <summary>错误 / 警告 摘要（点击展开）</summary>
+          <div id="run-summary" style="margin-top:8px;"></div>
+        </details>
       </div>
     </section>
 
@@ -266,10 +279,18 @@
         <div class="toolbar">
           <h2 style="margin:0;">日志</h2>
           <span class="pill" id="jobs-log-cmd"></span>
+          <span class="pill" id="jobs-log-err-count" style="background:rgba(255,85,112,0.2);color:#ff8a9f;display:none;"></span>
           <div class="grow"></div>
+          <input id="jobs-log-keyword" placeholder="过滤关键字..." style="width:200px;" oninput="applyLogFilter('jobs')" />
+          <button class="ghost" onclick="jumpFirstError('jobs')">跳到错误</button>
+          <button class="ghost" onclick="downloadLog(currentJobsLogId)">下载</button>
           <button class="ghost" onclick="closeJobsLog()">关闭</button>
         </div>
         <div class="log" id="jobs-log"></div>
+        <details id="jobs-summary-wrap" style="margin-top:10px;" open>
+          <summary>错误 / 警告 摘要（点击展开）</summary>
+          <div id="jobs-summary" style="margin-top:8px;"></div>
+        </details>
       </div>
     </section>
   </main>
@@ -387,6 +408,147 @@ let jobsLogTimer = null;
 let currentJobsLogId = null;
 let editingScheduleId = null;
 
+const ERR_PATTERNS = [
+  /\[ERROR\]/, /\bERROR\b/, /\bException\b/, /\bTraceback\b/,
+  /拉取失败/, /\[数据不匹配\]/, /数据总数不匹配/,
+  /请求异常/, /请求失败/, /连接失败/, /连接超时/, /请求超时/, /读取超时/,
+  /HTTP状态码:\s*[45]\d\d/,
+  /表结构初始化失败/, /批量保存失败/,
+];
+const WARN_PATTERNS = [
+  /\[WARNING\]/, /\bWARN(ING)?\b/, /\[空页/, /冲突/,
+  /⚠/, /数据为空/, /返回空数据/,
+];
+const FETCH_SAVE_RE = /获取\s*(\d+)\s*条[，,]\s*保存\s*(\d+)\s*条/;
+const SUMMARY_ERR_RE = /错误:\s*(\d+)\s*条/;
+
+function classifyLine(line) {
+  if (/\[(API )?DEBUG\]|\[INFO\]/.test(line)) return 'ln-info';
+  if (ERR_PATTERNS.some(r => r.test(line))) return 'ln-err';
+  if (WARN_PATTERNS.some(r => r.test(line))) return 'ln-warn';
+  let m = line.match(FETCH_SAVE_RE);
+  if (m) {
+    const fetched = +m[1], saved = +m[2];
+    if (fetched > 0 && saved < fetched) return saved === 0 ? 'ln-err' : 'ln-warn';
+  }
+  m = line.match(SUMMARY_ERR_RE);
+  if (m && +m[1] > 0) return 'ln-err';
+  return '';
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderLog(panelKey, rawText) {
+  const el = $(panelKey + '-log');
+  const keywordEl = $(panelKey + '-log-keyword');
+  const keyword = (keywordEl?.value || '').trim();
+  const lines = rawText.split('\n');
+  let errCount = 0;
+  const html = lines.map((line, i) => {
+    if (keyword && !line.toLowerCase().includes(keyword.toLowerCase())) return '';
+    const cls = classifyLine(line);
+    if (cls === 'ln-err') errCount++;
+    let html = escapeHtml(line);
+    if (keyword) {
+      const re = new RegExp('(' + keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+      html = html.replace(re, '<span class="hl">$1</span>');
+    }
+    return cls ? `<span class="${cls}" data-err="${cls==='ln-err'?1:0}">${html}</span>` : html + '\n';
+  }).join('');
+  el.innerHTML = html;
+  const cntEl = $(panelKey + '-log-err-count');
+  if (errCount > 0) {
+    cntEl.style.display = '';
+    cntEl.textContent = '错误 ' + errCount;
+  } else {
+    cntEl.style.display = 'none';
+  }
+}
+
+function applyLogFilter(panelKey) {
+  const buf = panelKey === 'run' ? runLogBuf : jobsLogBuf;
+  renderLog(panelKey, buf);
+}
+
+function jumpFirstError(panelKey) {
+  const el = $(panelKey + '-log');
+  const first = el.querySelector('.ln-err');
+  if (first) {
+    first.scrollIntoView({behavior: 'smooth', block: 'center'});
+    first.style.outline = '2px solid #ff5570';
+    setTimeout(() => first.style.outline = '', 1500);
+  } else {
+    toast('未发现错误行', 'info');
+  }
+}
+
+async function loadSummary(panelKey, id) {
+  if (!id) return;
+  try {
+    const s = await api(`/api/jobs/${id}/summary`);
+    const el = $(panelKey + '-summary');
+    const errs = s.errors || [];
+    const wrns = s.warnings || [];
+    if (!errs.length && !wrns.length) {
+      el.innerHTML = '<span style="color:var(--muted);">无错误或警告</span>';
+      return;
+    }
+    const renderItem = (it, cls) =>
+      `<div style="padding:4px 8px;margin-bottom:2px;border-radius:3px;cursor:pointer;
+                   background:${cls==='err'?'rgba(255,85,112,0.1)':'rgba(255,180,84,0.1)'};
+                   color:${cls==='err'?'#ff8a9f':'#ffc266'};font-family:Consolas,monospace;font-size:11px;"
+            onclick="scrollToLogLine('${panelKey}', ${it.line})"
+            title="点击跳转到日志第 ${it.line} 行">
+         <span style="opacity:0.6;">L${it.line}</span> ${escapeHtml(it.text)}
+       </div>`;
+    el.innerHTML =
+      (errs.length ? `<div style="color:var(--danger);font-weight:600;margin-bottom:4px;">错误 (${errs.length})</div>` +
+                     errs.map(e => renderItem(e, 'err')).join('') : '') +
+      (wrns.length ? `<div style="color:var(--warn);font-weight:600;margin:8px 0 4px;">警告 (${wrns.length})</div>` +
+                     wrns.map(w => renderItem(w, 'warn')).join('') : '');
+  } catch (e) {}
+}
+
+function scrollToLogLine(panelKey, lineNo) {
+  const el = $(panelKey + '-log');
+  const buf = panelKey === 'run' ? runLogBuf : jobsLogBuf;
+  const lines = buf.split('\n');
+  const target = lines[lineNo - 1] || '';
+  if (!target) return;
+  const spans = el.querySelectorAll('.ln-err, .ln-warn');
+  for (const s of spans) {
+    if (s.textContent.trim() === target.trim()) {
+      s.scrollIntoView({behavior:'smooth', block:'center'});
+      s.style.outline = '2px solid #ff5570';
+      setTimeout(() => s.style.outline = '', 1500);
+      return;
+    }
+  }
+}
+
+function downloadLog(id) {
+  if (!id) return;
+  const a = document.createElement('a');
+  a.href = `/api/jobs/${id}/log/download`;
+  a.download = id + '.log';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+let runLogBuf = '';
+let jobsLogBuf = '';
+
+function statusHint(status, code) {
+  if (status === 'success') return '完全成功';
+  if (status === 'warning') return '已完成，但存在数据不匹配或部分错误（CLI 退出码=1）';
+  if (status === 'failed') return '执行失败（异常退出）';
+  if (status === 'stopped') return '被手动停止';
+  return '';
+}
+
 function toast(msg, type='info') {
   const el = document.createElement('div');
   el.className = 'toast ' + type;
@@ -482,7 +644,8 @@ async function runNow() {
 function openLog(job) {
   currentJobId = job.id;
   $('run-log-panel').classList.remove('hidden');
-  $('run-log').textContent = '';
+  runLogBuf = '';
+  $('run-log').innerHTML = '';
   $('run-log-cmd').textContent = job.cmd || '';
   $('run-log-status').textContent = job.status || 'running';
   $('run-log-status').className = 'status ' + (job.status || 'running');
@@ -492,7 +655,8 @@ function openLog(job) {
     try {
       const data = await api(`/api/jobs/${currentJobId}/log?offset=${offset}`);
       if (data.content) {
-        $('run-log').textContent += data.content;
+        runLogBuf += data.content;
+        renderLog('run', runLogBuf);
         $('run-log').scrollTop = $('run-log').scrollHeight;
         offset = data.offset;
       }
@@ -501,6 +665,7 @@ function openLog(job) {
       $('run-log-status').className = 'status ' + j.status;
       if (data.eof) {
         clearInterval(logTimer); logTimer = null;
+        loadSummary('run', currentJobId);
       }
     } catch (e) {}
   };
@@ -532,7 +697,7 @@ async function loadJobs() {
       <td>${j.source}</td>
       <td><span class="status ${j.status}">${j.status}</span></td>
       <td>${j.finished_at || '-'}</td>
-      <td>${j.exit_code === null ? '-' : j.exit_code}</td>
+      <td title="${statusHint(j.status, j.exit_code)}">${j.exit_code === null ? '-' : j.exit_code}</td>
       <td>
         <button class="ghost" onclick="viewJobLog('${j.id}')">日志</button>
         ${j.status === 'running' ? `<button class="warn" onclick="stopJob('${j.id}')">停止</button>` : ''}
@@ -544,24 +709,30 @@ async function loadJobs() {
 async function viewJobLog(id) {
   currentJobsLogId = id;
   $('jobs-log-panel').classList.remove('hidden');
-  $('jobs-log').textContent = '';
+  jobsLogBuf = '';
+  $('jobs-log').innerHTML = '';
   let offset = 0;
   if (jobsLogTimer) clearInterval(jobsLogTimer);
   const tick = async () => {
     try {
       const data = await api(`/api/jobs/${id}/log?offset=${offset}`);
       if (data.content) {
-        $('jobs-log').textContent += data.content;
+        jobsLogBuf += data.content;
+        renderLog('jobs', jobsLogBuf);
         $('jobs-log').scrollTop = $('jobs-log').scrollHeight;
         offset = data.offset;
       }
       const j = await api(`/api/jobs/${id}`);
       $('jobs-log-cmd').textContent = j.cmd || '';
-      if (data.eof) { clearInterval(jobsLogTimer); jobsLogTimer = null; }
+      if (data.eof) {
+        clearInterval(jobsLogTimer); jobsLogTimer = null;
+        loadSummary('jobs', id);
+      }
     } catch (e) {}
   };
   tick();
   jobsLogTimer = setInterval(tick, 1500);
+  setTimeout(() => loadSummary('jobs', id), 500);
 }
 
 function closeJobsLog() {

@@ -56,9 +56,14 @@ def _save():
 _load()
 
 
+def _resolve_python() -> str:
+    """允许通过环境变量 DATA_SYNC_PYTHON 指定子进程使用的 python，否则用当前解释器"""
+    return os.environ.get('DATA_SYNC_PYTHON') or sys.executable
+
+
 def build_command(payload: dict) -> List[str]:
     """根据前端参数构建 run.py pull 命令行"""
-    cmd = [sys.executable, '-u', os.path.join(ROOT, 'run.py'), 'pull',
+    cmd = [_resolve_python(), '-u', os.path.join(ROOT, 'run.py'), 'pull',
            '-c', payload['connector'], '-s', payload['service']]
 
     mapping = {
@@ -163,7 +168,14 @@ def run_job(payload: dict, source: str = 'manual', schedule_id: Optional[str] = 
                 j = _jobs.get(job_id)
                 if j:
                     j['exit_code'] = exit_code
-                    j['status'] = 'success' if exit_code == 0 else ('stopped' if exit_code in (-15, 15, 130, 143) else 'failed')
+                    if exit_code == 0:
+                        j['status'] = 'success'
+                    elif exit_code == 1:
+                        j['status'] = 'warning'
+                    elif exit_code in (-15, 15, 130, 143, -1073741510, 3221225786):
+                        j['status'] = 'stopped'
+                    else:
+                        j['status'] = 'failed'
                     j['finished_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     _save()
 
@@ -201,6 +213,72 @@ def list_jobs(limit: int = 100) -> List[dict]:
 
 def get_job(job_id: str) -> Optional[dict]:
     return _jobs.get(job_id)
+
+
+import re as _re
+
+_INFO_RE = _re.compile(r'\[(API )?DEBUG\]|\[INFO\]')
+_ERR_RES = [
+    _re.compile(r'\[ERROR\]'),
+    _re.compile(r'\bERROR\b'),
+    _re.compile(r'\bException\b'),
+    _re.compile(r'\bTraceback\b'),
+    _re.compile(r'拉取失败|\[数据不匹配\]|数据总数不匹配'),
+    _re.compile(r'请求异常|请求失败|连接失败|连接超时|请求超时|读取超时'),
+    _re.compile(r'HTTP状态码:\s*[45]\d\d'),
+    _re.compile(r'表结构初始化失败|批量保存失败'),
+]
+_WARN_RES = [
+    _re.compile(r'\[WARNING\]'),
+    _re.compile(r'\bWARN(ING)?\b'),
+    _re.compile(r'\[空页|⚠|返回空数据|数据为空|冲突'),
+]
+_FETCH_SAVE_RE = _re.compile(r'获取\s*(\d+)\s*条[，,]\s*保存\s*(\d+)\s*条')
+_SUMMARY_ERR_RE = _re.compile(r'错误:\s*(\d+)\s*条')
+
+
+def _classify_line(s: str) -> str:
+    if _INFO_RE.search(s):
+        return ''
+    for r in _ERR_RES:
+        if r.search(s):
+            return 'err'
+    for r in _WARN_RES:
+        if r.search(s):
+            return 'warn'
+    m = _FETCH_SAVE_RE.search(s)
+    if m:
+        fetched, saved = int(m.group(1)), int(m.group(2))
+        if fetched > 0 and saved < fetched:
+            return 'err' if saved == 0 else 'warn'
+    m = _SUMMARY_ERR_RE.search(s)
+    if m and int(m.group(1)) > 0:
+        return 'err'
+    return ''
+
+
+def summarize_log(job_id: str, tail_lines: int = 5000) -> dict:
+    job = _jobs.get(job_id)
+    if not job or not os.path.exists(job.get('log_path') or ''):
+        return {'errors': [], 'warnings': [], 'totals': {}}
+    try:
+        with open(job['log_path'], 'r', encoding='utf-8', errors='replace') as f:
+            lines = f.readlines()[-tail_lines:]
+    except Exception:
+        return {'errors': [], 'warnings': [], 'totals': {}}
+    errors, warnings = [], []
+    for i, ln in enumerate(lines):
+        s = ln.rstrip('\n')
+        kind = _classify_line(s)
+        if kind == 'err':
+            errors.append({'line': i + 1, 'text': s[:500]})
+        elif kind == 'warn':
+            warnings.append({'line': i + 1, 'text': s[:500]})
+    return {
+        'errors': errors[-50:],
+        'warnings': warnings[-50:],
+        'totals': {'error_count': len(errors), 'warning_count': len(warnings)},
+    }
 
 
 def read_log(job_id: str, offset: int = 0, max_bytes: int = 200_000) -> dict:

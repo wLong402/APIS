@@ -73,6 +73,7 @@ class BaseRepository(ABC):
             self._ensure_columns(fields)
         except Exception as e:
             self.logger.error(f"表结构初始化失败: {e}")
+            print(f"    [ERROR] 表结构初始化失败 ({self.full_table_name}): {e}", flush=True)
             raise
         
         is_mysql = self.db.adapter.__class__.__name__ == 'MySQLAdapter'
@@ -127,6 +128,7 @@ class BaseRepository(ABC):
                     self.logger.error(f"批量保存失败: {e}")
                     self.logger.error(f"SQL: {sql[:200]}...")
                     self.logger.error(f"参数示例: {batch_data[0] if batch_data else 'None'}")
+                    print(f"    [ERROR] 批量保存失败 ({table_name}): {e}", flush=True)
                 
                 self.db.adapter.commit(conn)
         
@@ -270,6 +272,7 @@ class BaseRepository(ABC):
                         continue
                     else:
                         self.logger.error(f"批量保存失败: {e}")
+                        print(f"    [ERROR] 批量保存失败 ({table_name}): {e}", flush=True)
 
             if errors > 0:
                 self.logger.warning(f"保存 {table_name}: 成功 {count} 条，失败 {errors} 条")
