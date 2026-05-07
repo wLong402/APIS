@@ -53,7 +53,6 @@ class ProfitsLiveRefundQueryAPI:
         end_date: str,
         terms_income: str,
         stat_mode: str,
-        scheme_name: Optional[str] = None,
         shop_nos: Optional[str] = None,
         order_tools: Optional[str] = None,
         cost_type: Optional[str] = None,
@@ -71,8 +70,6 @@ class ProfitsLiveRefundQueryAPI:
             'statMode': str(stat_mode),
         }
 
-        if scheme_name:
-            sign_params['schemeName'] = scheme_name
         if shop_nos:
             sign_params['shopNos'] = shop_nos
         if order_tools:
@@ -153,7 +150,6 @@ class ProfitsLiveRefundQueryAPI:
         end_date: str,
         terms_income: str,
         stat_mode: str,
-        scheme_name: Optional[str] = None,
         shop_nos: Optional[str] = None,
         order_tools: Optional[str] = None,
         cost_type: Optional[str] = None,
@@ -173,7 +169,6 @@ class ProfitsLiveRefundQueryAPI:
                 end_date=end_date,
                 terms_income=terms_income,
                 stat_mode=stat_mode,
-                scheme_name=scheme_name,
                 shop_nos=shop_nos,
                 order_tools=order_tools,
                 cost_type=cost_type,

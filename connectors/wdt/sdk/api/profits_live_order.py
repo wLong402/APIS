@@ -52,7 +52,6 @@ class ProfitsLiveOrderQueryAPI:
         start_date: str,
         end_date: str,
         terms_income: str,
-        scheme_name: Optional[str] = None,
         shop_nos: Optional[str] = None,
         order_tools: Optional[str] = None,
         cost_type: Optional[str] = None,
@@ -69,8 +68,6 @@ class ProfitsLiveOrderQueryAPI:
             'termsIncome': str(terms_income),
         }
 
-        if scheme_name:
-            sign_params['schemeName'] = scheme_name
         if shop_nos:
             sign_params['shopNos'] = shop_nos
         if order_tools:
@@ -150,7 +147,6 @@ class ProfitsLiveOrderQueryAPI:
         start_date: str,
         end_date: str,
         terms_income: str,
-        scheme_name: Optional[str] = None,
         shop_nos: Optional[str] = None,
         order_tools: Optional[str] = None,
         cost_type: Optional[str] = None,
@@ -169,7 +165,6 @@ class ProfitsLiveOrderQueryAPI:
                 start_date=start_date,
                 end_date=end_date,
                 terms_income=terms_income,
-                scheme_name=scheme_name,
                 shop_nos=shop_nos,
                 order_tools=order_tools,
                 cost_type=cost_type,
