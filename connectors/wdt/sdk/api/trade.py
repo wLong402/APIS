@@ -76,7 +76,7 @@ class RawTradeSearchAPI:
                tid: Optional[str] = None,
                shop_no: Optional[str] = None,
                is_slave: Optional[bool] = None,
-               detail_mask: int = 0,
+               detail_mask: int = 1,
                page_size: int = 50,
                page_no: int = 1,
                debug: bool = False) -> Dict:
@@ -90,7 +90,7 @@ class RawTradeSearchAPI:
             tid: 原始单号
             shop_no: 店铺编号（不支持批量查询）
             is_slave: 是否使用从库查询（仅对开通从库配置客户生效）
-            detail_mask: 优惠明细掩码，1=返回优惠明细，0=不返回（默认0）
+            detail_mask: 优惠明细掩码，1=返回优惠明细，0=不返回（默认1）
             page_size: 分页大小（单量较大建议200以下）
             page_no: 页号，从0开始（注意：不是从1开始！）
             
@@ -162,7 +162,7 @@ class RawTradeSearchAPI:
                              start_time: str,
                              end_time: str,
                              shop_no: Optional[str] = None,
-                             with_discount: bool = False,
+                             with_discount: bool = True,
                              page_size: int = 50,
                              page_no: int = 1) -> Dict:
         """
@@ -193,7 +193,7 @@ class RawTradeSearchAPI:
                    end_time: str,
                    time_type: int = 3,
                    shop_no: Optional[str] = None,
-                   with_discount: bool = False,
+                   with_discount: bool = True,
                    page_size: int = 50,
                    debug: bool = False,
                    max_workers: int = 10) -> List[Dict]:

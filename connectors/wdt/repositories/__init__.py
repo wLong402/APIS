@@ -5,6 +5,7 @@
 
 from .trade_repo import TradeRepository
 from .raw_trade_detail_repo import RawTradeDetailRepository
+from .raw_trade_discount_list_repo import RawTradeDiscountListRepository
 from .refund_repo import RefundRepository
 from .raw_refund_detail_repo import RawRefundDetailRepository
 from .stockout_sales_repo import StockoutSalesDetailRepository
@@ -35,6 +36,7 @@ from .expense_sku_day_summary_detail_repo import ExpenseSkuDaySummaryDetailRepos
 __all__ = [
     'TradeRepository',
     'RawTradeDetailRepository',
+    'RawTradeDiscountListRepository',
     'RefundRepository',
     'RawRefundDetailRepository',
     'StockoutSalesDetailRepository',

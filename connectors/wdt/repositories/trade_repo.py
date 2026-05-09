@@ -8,6 +8,7 @@ from typing import List, Dict
 
 from common.base_repository import BaseRepository
 from .raw_trade_detail_repo import RawTradeDetailRepository
+from .raw_trade_discount_list_repo import RawTradeDiscountListRepository
 
 
 class TradeRepository(BaseRepository):
@@ -20,6 +21,7 @@ class TradeRepository(BaseRepository):
     def __init__(self, db_manager=None):
         super().__init__(db_manager)
         self.detail_repo = RawTradeDetailRepository(db_manager)
+        self.discount_repo = RawTradeDiscountListRepository(db_manager)
     
     def save_batch(self, data_list: List[Dict], batch_size: int = 500) -> int:
         """批量保存订单数据，同时保存明细"""
@@ -27,6 +29,7 @@ class TradeRepository(BaseRepository):
             return 0
         
         detail_list = []
+        discount_list = []
         trade_list = []
         
         self.logger.info(f"开始处理 {len(data_list)} 条订单，提取明细...")
@@ -47,10 +50,26 @@ class TradeRepository(BaseRepository):
                         detail_item = order.copy()
                         detail_item['tid'] = tid
                         detail_list.append(detail_item)
+
+            discount_list_field = trade.get('discount_list') or []
+            if isinstance(discount_list_field, str):
+                try:
+                    discount_list_field = json.loads(discount_list_field)
+                except:
+                    discount_list_field = []
+
+            if isinstance(discount_list_field, list) and tid:
+                for discount in discount_list_field:
+                    if isinstance(discount, dict):
+                        discount_item = discount.copy()
+                        discount_item['tid'] = tid
+                        discount_list.append(discount_item)
             
             trade_copy = trade.copy()
             if 'trade_orders' in trade_copy:
                 del trade_copy['trade_orders']
+            if 'discount_list' in trade_copy:
+                del trade_copy['discount_list']
             trade_list.append(trade_copy)
         
         self.logger.info(f"提取到 {len(detail_list)} 条明细，开始保存订单...")
@@ -63,6 +82,15 @@ class TradeRepository(BaseRepository):
                 self.logger.info(f"保存订单明细完成: {detail_count} 条")
             except Exception as e:
                 self.logger.error(f"保存订单明细失败: {e}", exc_info=True)
+                raise
+
+        if discount_list:
+            self.logger.info(f"开始保存 {len(discount_list)} 条优惠明细...")
+            try:
+                discount_count = self.discount_repo.save_batch(discount_list, batch_size)
+                self.logger.info(f"保存优惠明细完成: {discount_count} 条")
+            except Exception as e:
+                self.logger.error(f"保存优惠明细失败: {e}", exc_info=True)
                 raise
         
         return count

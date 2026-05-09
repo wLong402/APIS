@@ -97,10 +97,17 @@ class ShtReconDetailQueryAPI:
                 resp_data = result.get('response', result)
 
                 if debug:
+                    data_list = resp_data.get('data') if isinstance(resp_data, dict) else None
+                    data_size = len(data_list) if isinstance(data_list, list) else 0
                     _emit_debug(f"      [REQUEST DEBUG] request_url: {request_url}")
                     _emit_debug(f"      [RESPONSE DEBUG] HTTP状态码: {response.status_code}")
-                    _emit_debug(f"      [RESPONSE DEBUG] 原始响应: {response.text}")
-                    _emit_debug(f"      [RESPONSE DEBUG] 解析响应: {json.dumps(resp_data, ensure_ascii=False, indent=2)}")
+                    _emit_debug(
+                        "      [RESPONSE DEBUG] "
+                        f"resultCode={resp_data.get('resultCode')}, "
+                        f"message={resp_data.get('message', '')}, "
+                        f"data_count={data_size}, "
+                        f"nextRequestId={resp_data.get('nextRequestId')}"
+                    )
 
                 result_code = resp_data.get('resultCode')
                 msg = resp_data.get('message', '')
