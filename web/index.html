@@ -6,6 +6,21 @@
 <title>数据同步控制台</title>
 <style>
   :root {
+    --bg: #f5f7fa;
+    --bg2: #ffffff;
+    --bg3: #f8fafc;
+    --border: #d9e0ea;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --primary: #4f8eff;
+    --success: #3ddc97;
+    --warn: #ffb454;
+    --danger: #ff5570;
+    --code: #f3f4f6;
+    --row-hover: rgba(15, 23, 42, 0.04);
+    --log-text: #111827;
+  }
+  :root[data-theme="dark"] {
     --bg: #0f1419;
     --bg2: #161c24;
     --bg3: #1f2730;
@@ -17,6 +32,8 @@
     --warn: #ffb454;
     --danger: #ff5570;
     --code: #0b0f14;
+    --row-hover: rgba(255, 255, 255, 0.02);
+    --log-text: #cdd9e5;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
@@ -63,7 +80,7 @@
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
   th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
   th { color: var(--muted); font-weight: 500; }
-  tr:hover { background: rgba(255,255,255,0.02); }
+  tr:hover { background: var(--row-hover); }
   .status { padding: 2px 8px; border-radius: 3px; font-size: 11px; display: inline-block; }
   .status.running { background: rgba(79,142,255,0.2); color: var(--primary); }
   .status.success { background: rgba(61,220,151,0.2); color: var(--success); }
@@ -73,14 +90,14 @@
   .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
   .grow { flex-grow: 1; }
   .log {
-    background: var(--code); color: #cdd9e5; font-family: Consolas, "Cascadia Code",
+    background: var(--code); color: var(--log-text); font-family: Consolas, "Cascadia Code",
                 Monaco, monospace; font-size: 12px; line-height: 1.5;
     padding: 12px; border-radius: 6px; overflow: auto; height: 480px;
     white-space: pre-wrap; word-break: break-all;
   }
   .log .ln-err { background: rgba(255,85,112,0.18); color: #ff8a9f; display: block; }
   .log .ln-warn { background: rgba(255,180,84,0.15); color: #ffc266; display: block; }
-  .log .ln-info { color: #6bb1ff; }
+  .log .ln-info { color: #2563eb; }
   .log .hl { background: #ff5570; color: #fff; padding: 0 2px; border-radius: 2px; }
   .pill { display: inline-block; padding: 2px 6px; background: var(--bg3); border-radius: 3px; font-size: 11px; }
   .hidden { display: none !important; }
@@ -105,6 +122,20 @@
   .toast.success { border-color: var(--success); }
   details summary { cursor: pointer; color: var(--muted); margin-bottom: 8px; }
   details[open] summary { color: var(--text); }
+  .theme-toggle {
+    position: fixed;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 220;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 12px;
+  }
 </style>
 </head>
 <body>
@@ -117,6 +148,7 @@
     </div>
     <div style="color: var(--muted); font-size: 12px;" id="server-status">就绪</div>
   </header>
+  <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">切换到黑夜模式</button>
 
   <main>
     <!-- 手动运行 -->
@@ -407,6 +439,20 @@ let logTimer = null;
 let jobsLogTimer = null;
 let currentJobsLogId = null;
 let editingScheduleId = null;
+let currentTheme = 'light';
+
+function applyTheme(theme) {
+  currentTheme = theme === 'dark' ? 'dark' : 'light';
+  const root = document.documentElement;
+  root.setAttribute('data-theme', currentTheme);
+  const btn = $('theme-toggle');
+  if (btn) btn.textContent = currentTheme === 'dark' ? '切换到白天模式' : '切换到黑夜模式';
+  localStorage.setItem('ui-theme', currentTheme);
+}
+
+function toggleTheme() {
+  applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+}
 
 const ERR_PATTERNS = [
   /\[ERROR\]/, /\bERROR\b/, /\bException\b/, /\bTraceback\b/,
@@ -558,6 +604,7 @@ function toast(msg, type='info') {
 }
 
 async function init() {
+  applyTheme(localStorage.getItem('ui-theme') || 'light');
   connectors = await api('/api/connectors');
   fillConnectorSelect($('run-connector'), $('run-service'));
   fillConnectorSelect($('sm-connector'), $('sm-service'));
