@@ -5,7 +5,7 @@ import hashlib
 import json
 import time
 from typing import Dict, Optional, List
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 import requests
 
@@ -29,6 +29,29 @@ def _emit_debug(msg: str) -> None:
         get_logger('connector.wdt.sht_recon_detail').info(msg)
     except Exception:
         pass
+
+
+def _summarize_debug_value(val, max_len: int = 96) -> str:
+    if val is None:
+        return 'None'
+    if isinstance(val, list):
+        return f'<{len(val)} items>'
+    if isinstance(val, dict):
+        return f'<{len(val)} keys>'
+    s = str(val)
+    if len(s) > max_len:
+        return s[:max_len] + f'...<{len(s)} chars>'
+    return s
+
+
+def _summarize_debug_dict(d: Dict, max_len: int = 96) -> str:
+    parts = []
+    for k in sorted(d.keys()):
+        v = d.get(k)
+        if v is None:
+            continue
+        parts.append(f'{k}={_summarize_debug_value(v, max_len=max_len)}')
+    return ', '.join(parts)
 
 
 class ShtReconDetailQueryAPI:
@@ -99,7 +122,8 @@ class ShtReconDetailQueryAPI:
                 if debug:
                     data_list = resp_data.get('data') if isinstance(resp_data, dict) else None
                     data_size = len(data_list) if isinstance(data_list, list) else 0
-                    _emit_debug(f"      [REQUEST DEBUG] request_url: {request_url}")
+                    host = urlparse(self.gateway_url).netloc or self.gateway_url
+                    _emit_debug(f"      [REQUEST DEBUG] POST gateway={host}")
                     _emit_debug(f"      [RESPONSE DEBUG] HTTP状态码: {response.status_code}")
                     _emit_debug(
                         "      [RESPONSE DEBUG] "
@@ -161,7 +185,7 @@ class ShtReconDetailQueryAPI:
                 'next_request_id': next_request_id,
             }
             _inputs = {k: v for k, v in _inputs.items() if v is not None}
-            _emit_debug(f"      [REQUEST DEBUG] query() 入参: {json.dumps(_inputs, ensure_ascii=False, indent=2)}")
+            _emit_debug(f"      [REQUEST DEBUG] query() 入参: {_summarize_debug_dict(_inputs)}")
 
         sign_params = {
             'appId': self.hjy_app_id,
@@ -241,11 +265,13 @@ class ShtReconDetailQueryAPI:
 
             if debug:
                 _emit_debug(f"      [API DEBUG] method: {self.METHOD}")
-                _emit_debug(f"      [REQUEST DEBUG] sign_mode: {mode}")
-                _emit_debug(f"      [REQUEST DEBUG] sign_params(签名字段): {json.dumps(sign_params, ensure_ascii=False, indent=2)}")
-                _emit_debug(f"      [API DEBUG] post body(api_params): {json.dumps(api_params, ensure_ascii=False, indent=2)}")
-                _emit_debug(f"      [REQUEST DEBUG] timestamp: {timestamp}")
-                _emit_debug(f"      [REQUEST DEBUG] top_sign(奇门): {top_sign}")
+                _emit_debug(f"      [REQUEST DEBUG] sign_mode={mode}, timestamp={timestamp}")
+                _emit_debug(f"      [API DEBUG] sign_params: {_summarize_debug_dict(sign_params)}")
+                hs = api_params.get('hjySign') or ''
+                _emit_debug(
+                    f"      [API DEBUG] hjySign={_summarize_debug_value(hs, max_len=16)}, "
+                    f"top_sign={str(top_sign)[:16]}...<{len(str(top_sign))} chars>"
+                )
 
             resp_data = self._request_once(api_params, sys_params, debug=debug)
             last_resp = resp_data

@@ -91,14 +91,18 @@
   .grow { flex-grow: 1; }
   .log {
     background: var(--code); color: var(--log-text); font-family: Consolas, "Cascadia Code",
-                Monaco, monospace; font-size: 12px; line-height: 1.5;
+                Monaco, monospace; font-size: 12px;
     padding: 12px; border-radius: 6px; overflow: auto; height: 480px;
-    white-space: pre-wrap; word-break: break-all;
+    box-sizing: border-box;
   }
-  .log .ln-err { background: rgba(255,85,112,0.18); color: #ff8a9f; display: block; }
-  .log .ln-warn { background: rgba(255,180,84,0.15); color: #ffc266; display: block; }
-  .log .ln-info { color: #2563eb; }
+  .log-slot { overflow: visible; white-space: pre; box-sizing: border-box; min-width: 100%; }
+  .log .ln-row { box-sizing: border-box; padding: 0; margin: 0; white-space: pre;
+                 min-height: 18px; line-height: 18px; }
+  .log .ln-err { background: rgba(255,85,112,0.18); color: #ff8a9f; display: inline; padding: 0 2px; border-radius: 2px;}
+  .log .ln-warn { background: rgba(255,180,84,0.15); color: #ffc266; display: inline; padding: 0 2px; border-radius: 2px;}
+  .log .ln-info { color: #2563eb; display: inline; }
   .log .hl { background: #ff5570; color: #fff; padding: 0 2px; border-radius: 2px; }
+  .ln-row.flash { outline: 2px solid #ff5570; outline-offset: -1px; border-radius: 2px;}
   .pill { display: inline-block; padding: 2px 6px; background: var(--bg3); border-radius: 3px; font-size: 11px; }
   .hidden { display: none !important; }
   .modal-bg {
@@ -249,7 +253,8 @@
           <button class="warn" onclick="stopCurrentJob()">停止</button>
           <button class="ghost" onclick="closeCurrentLog()">关闭</button>
         </div>
-        <div class="log" id="run-log"></div>
+        <div class="help hidden" id="run-log-hint"></div>
+        <div class="log" id="run-log"><div id="run-log-slot" class="log-slot"></div></div>
         <details id="run-summary-wrap" style="margin-top:10px;">
           <summary>错误 / 警告 摘要（点击展开）</summary>
           <div id="run-summary" style="margin-top:8px;"></div>
@@ -318,7 +323,8 @@
           <button class="ghost" onclick="downloadLog(currentJobsLogId)">下载</button>
           <button class="ghost" onclick="closeJobsLog()">关闭</button>
         </div>
-        <div class="log" id="jobs-log"></div>
+        <div class="help hidden" id="jobs-log-hint"></div>
+        <div class="log" id="jobs-log"><div id="jobs-log-slot" class="log-slot"></div></div>
         <details id="jobs-summary-wrap" style="margin-top:10px;" open>
           <summary>错误 / 警告 摘要（点击展开）</summary>
           <div id="jobs-summary" style="margin-top:8px;"></div>
@@ -467,6 +473,211 @@ const WARN_PATTERNS = [
 ];
 const FETCH_SAVE_RE = /获取\s*(\d+)\s*条[，,]\s*保存\s*(\d+)\s*条/;
 const SUMMARY_ERR_RE = /错误:\s*(\d+)\s*条/;
+const LV = { LH: 18, BUF: 20 };
+const logVpByPanel = {
+  run: { lines: [], rem: '', raf: 0, errCount: 0 },
+  jobs: { lines: [], rem: '', raf: 0, errCount: 0 },
+};
+
+function logVpState(pk) {
+  return logVpByPanel[pk === 'jobs' ? 'jobs' : 'run'];
+}
+
+function logViewport(panelKey) {
+  return $(panelKey + '-log');
+}
+
+function logSlot(panelKey) {
+  return $(panelKey + '-log-slot');
+}
+
+function bindLogViewportOnce(panelKey) {
+  const vp = logViewport(panelKey);
+  if (!vp || vp.dataset.vpBound) return;
+  vp.dataset.vpBound = '1';
+  vp._lgStickBottom = true;
+  vp.addEventListener('scroll', () => {
+    const nearBottom = vp.scrollHeight - vp.scrollTop - vp.clientHeight < 60;
+    vp._lgStickBottom = nearBottom;
+    scheduleLogVpRender(panelKey);
+  }, { passive: true });
+}
+
+function escapeRe(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function scheduleLogVpRender(panelKey) {
+  const st = logVpState(panelKey);
+  if (st.raf) return;
+  st.raf = requestAnimationFrame(() => {
+    st.raf = 0;
+    renderLogVp(panelKey);
+  });
+}
+
+function lineHtml(text, kwRaw, absIdx) {
+  const cls = classifyLine(text);
+  let body = escapeHtml(text);
+  if ((kwRaw || '').trim()) {
+    try {
+      const re = new RegExp('(' + escapeRe(kwRaw.trim()) + ')', 'gi');
+      body = body.replace(re, '<span class="hl">$1</span>');
+    } catch (e) {}
+  }
+  if (cls) {
+    body = `<span class="${cls}" data-err="${cls === 'ln-err' ? 1 : 0}">${body}</span>`;
+  }
+  return `<div class="ln-row" data-abs="${absIdx}" style="min-height:${LV.LH}px;line-height:${LV.LH}px">${body}</div>`;
+}
+
+function renderLogVp(panelKey) {
+  const vp = logViewport(panelKey);
+  const slot = logSlot(panelKey);
+  if (!vp || !slot) return;
+  const st = logVpState(panelKey);
+  const kwRaw = (($(panelKey + '-log-keyword')?.value) || '').trim();
+  const kwLower = kwRaw.toLowerCase();
+  const hasFilter = !!kwLower;
+  let count;
+  let filteredRows = null;
+  if (!hasFilter) {
+    count = st.lines.length;
+  } else {
+    filteredRows = [];
+    for (let i = 0; i < st.lines.length; i++) {
+      const txt = st.lines[i];
+      if (txt.toLowerCase().includes(kwLower)) filteredRows.push({ abs: i, text: txt });
+    }
+    count = filteredRows.length;
+  }
+  const cntEl = $(panelKey + '-log-err-count');
+  if (cntEl) {
+    let ec;
+    if (!hasFilter) ec = st.errCount | 0;
+    else {
+      ec = 0;
+      for (let j = 0; j < filteredRows.length; j++) {
+        if (classifyLine(filteredRows[j].text) === 'ln-err') ec++;
+      }
+    }
+    if (ec > 0) {
+      cntEl.style.display = '';
+      cntEl.textContent = '错误 ' + ec;
+    } else cntEl.style.display = 'none';
+  }
+  if (count === 0) {
+    slot.style.paddingTop = '0px';
+    slot.style.paddingBottom = '0px';
+    slot.innerHTML = '';
+    return;
+  }
+  const stScroll = vp.scrollTop;
+  let startRow = Math.floor(stScroll / LV.LH) - LV.BUF;
+  if (startRow < 0) startRow = 0;
+  let endRow = Math.ceil((stScroll + vp.clientHeight) / LV.LH) + LV.BUF;
+  if (endRow > count) endRow = count;
+  const padTop = startRow * LV.LH;
+  const padBottom = (count - endRow) * LV.LH;
+  let html = '';
+  for (let vi = startRow; vi < endRow; vi++) {
+    let abs;
+    let text;
+    if (!hasFilter) {
+      abs = vi;
+      text = st.lines[vi];
+    } else {
+      const r = filteredRows[vi];
+      abs = r.abs;
+      text = r.text;
+    }
+    html += lineHtml(text, kwRaw, abs);
+  }
+  slot.style.paddingTop = padTop + 'px';
+  slot.style.paddingBottom = padBottom + 'px';
+  slot.innerHTML = html;
+}
+
+function appendLogChunk(panelKey, chunk, eof) {
+  const st = logVpState(panelKey);
+  const c = chunk || '';
+  if (!eof && !c && !st.rem) return;
+  const s = st.rem + c;
+  if (!s) {
+    st.rem = '';
+    return;
+  }
+  const parts = s.split('\n');
+  let complete;
+  if (!eof) {
+    st.rem = parts.pop() ?? '';
+    complete = parts;
+  } else {
+    st.rem = '';
+    complete = parts;
+  }
+  for (let i = 0; i < complete.length; i++) {
+    const ln = complete[i];
+    st.lines.push(ln);
+    if (classifyLine(ln) === 'ln-err') st.errCount++;
+  }
+}
+
+function resetLogView(panelKey) {
+  const st = logVpState(panelKey);
+  st.lines = [];
+  st.rem = '';
+  st.errCount = 0;
+  const slot = logSlot(panelKey);
+  const vp = logViewport(panelKey);
+  if (slot) {
+    slot.innerHTML = '';
+    slot.style.paddingTop = '0px';
+    slot.style.paddingBottom = '0px';
+  }
+  if (vp) {
+    vp.scrollTop = 0;
+    vp._lgStickBottom = true;
+  }
+  bindLogViewportOnce(panelKey);
+}
+
+function afterLogAppend(panelKey) {
+  scheduleLogVpRender(panelKey);
+  requestAnimationFrame(() => {
+    const vp = logViewport(panelKey);
+    if (!vp || !vp._lgStickBottom) return;
+    vp.scrollTop = vp.scrollHeight - vp.clientHeight;
+  });
+}
+
+function scrollToAbsLine(panelKey, absZero) {
+  const vp = logViewport(panelKey);
+  const kwEl = $(panelKey + '-log-keyword');
+  if (kwEl) kwEl.value = '';
+  if (vp) vp._lgStickBottom = false;
+  scheduleLogVpRender(panelKey);
+  requestAnimationFrame(() => {
+    if (!vp) return;
+    const st = logVpState(panelKey);
+    const n = st.lines.length;
+    if (n === 0) return;
+    const idx = Math.max(0, Math.min(n - 1, absZero));
+    const t = idx * LV.LH;
+    vp.scrollTop = Math.min(
+      Math.max(0, vp.scrollHeight - vp.clientHeight),
+      Math.max(0, t - vp.clientHeight * 0.35)
+    );
+    scheduleLogVpRender(panelKey);
+    requestAnimationFrame(() => {
+      const row = logSlot(panelKey)?.querySelector('[data-abs="' + idx + '"]');
+      if (row) {
+        row.classList.add('flash');
+        setTimeout(() => row.classList.remove('flash'), 1400);
+      }
+    });
+  });
+}
 
 function classifyLine(line) {
   if (/\[(API )?DEBUG\]|\[INFO\]/.test(line)) return 'ln-info';
@@ -486,48 +697,21 @@ function escapeHtml(s) {
   return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-function renderLog(panelKey, rawText) {
-  const el = $(panelKey + '-log');
-  const keywordEl = $(panelKey + '-log-keyword');
-  const keyword = (keywordEl?.value || '').trim();
-  const lines = rawText.split('\n');
-  let errCount = 0;
-  const html = lines.map((line, i) => {
-    if (keyword && !line.toLowerCase().includes(keyword.toLowerCase())) return '';
-    const cls = classifyLine(line);
-    if (cls === 'ln-err') errCount++;
-    let html = escapeHtml(line);
-    if (keyword) {
-      const re = new RegExp('(' + keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
-      html = html.replace(re, '<span class="hl">$1</span>');
-    }
-    return cls ? `<span class="${cls}" data-err="${cls==='ln-err'?1:0}">${html}</span>` : html + '\n';
-  }).join('');
-  el.innerHTML = html;
-  const cntEl = $(panelKey + '-log-err-count');
-  if (errCount > 0) {
-    cntEl.style.display = '';
-    cntEl.textContent = '错误 ' + errCount;
-  } else {
-    cntEl.style.display = 'none';
-  }
-}
-
 function applyLogFilter(panelKey) {
-  const buf = panelKey === 'run' ? runLogBuf : jobsLogBuf;
-  renderLog(panelKey, buf);
+  const vp = logViewport(panelKey);
+  if (vp) vp.scrollTop = 0;
+  scheduleLogVpRender(panelKey);
 }
 
 function jumpFirstError(panelKey) {
-  const el = $(panelKey + '-log');
-  const first = el.querySelector('.ln-err');
-  if (first) {
-    first.scrollIntoView({behavior: 'smooth', block: 'center'});
-    first.style.outline = '2px solid #ff5570';
-    setTimeout(() => first.style.outline = '', 1500);
-  } else {
-    toast('未发现错误行', 'info');
+  const lines = logVpState(panelKey).lines;
+  for (let i = 0; i < lines.length; i++) {
+    if (classifyLine(lines[i]) === 'ln-err') {
+      scrollToAbsLine(panelKey, i);
+      return;
+    }
   }
+  toast('未发现错误行', 'info');
 }
 
 async function loadSummary(panelKey, id) {
@@ -558,20 +742,10 @@ async function loadSummary(panelKey, id) {
 }
 
 function scrollToLogLine(panelKey, lineNo) {
-  const el = $(panelKey + '-log');
-  const buf = panelKey === 'run' ? runLogBuf : jobsLogBuf;
-  const lines = buf.split('\n');
-  const target = lines[lineNo - 1] || '';
-  if (!target) return;
-  const spans = el.querySelectorAll('.ln-err, .ln-warn');
-  for (const s of spans) {
-    if (s.textContent.trim() === target.trim()) {
-      s.scrollIntoView({behavior:'smooth', block:'center'});
-      s.style.outline = '2px solid #ff5570';
-      setTimeout(() => s.style.outline = '', 1500);
-      return;
-    }
-  }
+  const idx = lineNo - 1;
+  const st = logVpState(panelKey).lines;
+  if (idx < 0 || idx >= st.length) return;
+  scrollToAbsLine(panelKey, idx);
 }
 
 function downloadLog(id) {
@@ -583,9 +757,6 @@ function downloadLog(id) {
   a.click();
   a.remove();
 }
-
-let runLogBuf = '';
-let jobsLogBuf = '';
 
 function statusHint(status, code) {
   if (status === 'success') return '完全成功';
@@ -608,6 +779,8 @@ async function init() {
   connectors = await api('/api/connectors');
   fillConnectorSelect($('run-connector'), $('run-service'));
   fillConnectorSelect($('sm-connector'), $('sm-service'));
+  bindLogViewportOnce('run');
+  bindLogViewportOnce('jobs');
 
   document.querySelectorAll('.tab').forEach(t => {
     t.onclick = () => {
@@ -691,8 +864,9 @@ async function runNow() {
 function openLog(job) {
   currentJobId = job.id;
   $('run-log-panel').classList.remove('hidden');
-  runLogBuf = '';
-  $('run-log').innerHTML = '';
+  resetLogView('run');
+  const rh = $('run-log-hint');
+  if (rh) { rh.classList.add('hidden'); rh.textContent = ''; }
   $('run-log-cmd').textContent = job.cmd || '';
   $('run-log-status').textContent = job.status || 'running';
   $('run-log-status').className = 'status ' + (job.status || 'running');
@@ -701,12 +875,9 @@ function openLog(job) {
   const tick = async () => {
     try {
       const data = await api(`/api/jobs/${currentJobId}/log?offset=${offset}`);
-      if (data.content) {
-        runLogBuf += data.content;
-        renderLog('run', runLogBuf);
-        $('run-log').scrollTop = $('run-log').scrollHeight;
-        offset = data.offset;
-      }
+      appendLogChunk('run', data.content || '', !!data.eof);
+      offset = data.offset;
+      afterLogAppend('run');
       const j = await api(`/api/jobs/${currentJobId}`);
       $('run-log-status').textContent = j.status;
       $('run-log-status').className = 'status ' + j.status;
@@ -756,19 +927,17 @@ async function loadJobs() {
 async function viewJobLog(id) {
   currentJobsLogId = id;
   $('jobs-log-panel').classList.remove('hidden');
-  jobsLogBuf = '';
-  $('jobs-log').innerHTML = '';
+  resetLogView('jobs');
+  const jh = $('jobs-log-hint');
+  if (jh) { jh.classList.add('hidden'); jh.textContent = ''; }
   let offset = 0;
   if (jobsLogTimer) clearInterval(jobsLogTimer);
   const tick = async () => {
     try {
       const data = await api(`/api/jobs/${id}/log?offset=${offset}`);
-      if (data.content) {
-        jobsLogBuf += data.content;
-        renderLog('jobs', jobsLogBuf);
-        $('jobs-log').scrollTop = $('jobs-log').scrollHeight;
-        offset = data.offset;
-      }
+      appendLogChunk('jobs', data.content || '', !!data.eof);
+      offset = data.offset;
+      afterLogAppend('jobs');
       const j = await api(`/api/jobs/${id}`);
       $('jobs-log-cmd').textContent = j.cmd || '';
       if (data.eof) {
