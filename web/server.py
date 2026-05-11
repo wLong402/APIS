@@ -3,6 +3,7 @@
 
 import os
 import sys
+from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_from_directory
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -16,6 +17,147 @@ from web import scheduler as sched_mod  # noqa: E402
 WEB_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__, static_folder=None)
+
+_WDT_FIXED_BY_DAY = {
+    'profits_sku',
+    'profits_order',
+    'profits_live_sku',
+    'profits_live_order',
+    'profits_live_refund',
+}
+
+
+def _normalize_time_range(payload: dict):
+    connector = payload.get('connector')
+    service_name = payload.get('service')
+    today = datetime.now().strftime('%Y-%m-%d')
+    start = payload.get('start')
+    end = payload.get('end')
+    past_days = payload.get('past_days')
+    if past_days:
+        end_time = datetime.now()
+        start_time = end_time - timedelta(days=int(past_days))
+        return (
+            start_time.strftime('%Y-%m-%d 00:00:00'),
+            end_time.strftime('%Y-%m-%d 23:59:59'),
+            today,
+        )
+    if connector == 'wdt' and service_name == 'sht_recon_detail' and not start and not end:
+        return None, None, today
+    s = start or today
+    e = end or today
+    return (
+        s if ' ' in str(s) else f'{s} 00:00:00',
+        e if ' ' in str(e) else f'{e} 23:59:59',
+        today,
+    )
+
+
+def _build_pull_kwargs(payload: dict, limit: int) -> dict:
+    return {
+        'shop_no': payload.get('shop_no'),
+        'page_size': max(1, min(int(limit), 50)),
+        'max_workers': 1,
+        'classification_name': payload.get('classification_name'),
+        'start_config_record_time': payload.get('start_config_record_time'),
+        'end_config_record_time': payload.get('end_config_record_time'),
+        'is_summary': payload.get('is_summary') or '0',
+        'scheme_name': payload.get('scheme_name'),
+        'terms_income': payload.get('terms_income'),
+        'composite_dim': payload.get('composite_dim'),
+        'split_suite': payload.get('split_suite'),
+        'cost_type': payload.get('cost_type'),
+        'stat_mode': payload.get('stat_mode'),
+        'order_way': payload.get('order_way'),
+        'display_by_shop': payload.get('display_by_shop'),
+        'display_by_date': payload.get('display_by_date'),
+        'original_order': payload.get('original_order'),
+        'plat_order_nos': payload.get('plat_order_nos'),
+        'erp_order_nos': payload.get('erp_order_nos'),
+        'shop_nos': payload.get('shop_nos'),
+        'spec_no': payload.get('spec_no'),
+        'project': payload.get('project'),
+        'summary_no': payload.get('summary_no'),
+        'expense_item_name': payload.get('expense_item_name'),
+        'order_tools': payload.get('order_tools'),
+        'debug': bool(payload.get('debug')),
+    }
+
+
+def _preview_data(payload: dict, limit: int = 5) -> dict:
+    connector = payload.get('connector')
+    service_name = payload.get('service')
+    if connector not in ('wdt', 'weiban'):
+        raise ValueError(f'不支持的连接器: {connector}')
+    if connector == 'wdt':
+        from connectors.wdt import create_service
+        service = create_service(service_name)
+    else:
+        if service_name == 'external_user':
+            from connectors.weiban.services import ExternalUserPullService
+            service = ExternalUserPullService()
+        elif service_name == 'external_user_detail':
+            from connectors.weiban.services import ExternalUserDetailPullService
+            service = ExternalUserDetailPullService()
+        else:
+            raise ValueError(f'不支持的微伴服务: {service_name}')
+
+    start_time, end_time, today = _normalize_time_range(payload)
+    kwargs = _build_pull_kwargs(payload, limit)
+
+    if connector == 'weiban':
+        data = service._fetch_data('', '', staff_id=payload.get('shop_no'), **kwargs)
+    else:
+        if service_name == 'profits_live_order':
+            start_date = (start_time or f'{today} 00:00:00').split(' ')[0]
+            end_date = (end_time or f'{today} 23:59:59').split(' ')[0]
+            resp = service.profits_live_order_api.query(
+                start_date=start_date,
+                end_date=end_date,
+                terms_income=str(payload.get('terms_income') or '1'),
+                shop_nos=payload.get('shop_nos'),
+                order_tools=payload.get('order_tools'),
+                cost_type=payload.get('cost_type'),
+                debug=False,
+            )
+            rows = resp.get('data', []) if isinstance(resp, dict) else []
+            return {'items': rows[:limit], 'count': len(rows)}
+        if service_name == 'profits_live_refund':
+            start_date = (start_time or f'{today} 00:00:00').split(' ')[0]
+            end_date = (end_time or f'{today} 23:59:59').split(' ')[0]
+            resp = service.profits_live_refund_api.query(
+                start_date=start_date,
+                end_date=end_date,
+                scheme_name=payload.get('scheme_name') or '系统方案',
+                terms_income=str(payload.get('terms_income') or '1'),
+                stat_mode=str(payload.get('stat_mode') or '1'),
+                shop_nos=payload.get('shop_nos'),
+                order_tools=payload.get('order_tools'),
+                cost_type=payload.get('cost_type'),
+                debug=False,
+            )
+            rows = resp.get('data', []) if isinstance(resp, dict) else []
+            return {'items': rows[:limit], 'count': len(rows)}
+        if service_name in _WDT_FIXED_BY_DAY or payload.get('by_day'):
+            day = payload.get('start') or today
+            start_time = f'{day} 00:00:00'
+            end_time = f'{day} 23:59:59'
+        elif payload.get('interval') and start_time and end_time:
+            sec = int(payload.get('interval') or 0)
+            if sec > 0:
+                dt_start = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
+                dt_end = datetime.strptime(end_time, '%Y-%m-%d %H:%M:%S')
+                seg_end = min(dt_start + timedelta(seconds=sec - 1), dt_end)
+                end_time = seg_end.strftime('%Y-%m-%d %H:%M:%S')
+        data = service._fetch_data(start_time, end_time, **kwargs)
+
+    if isinstance(data, dict):
+        rows = data.get('data') if isinstance(data.get('data'), list) else [data]
+    elif isinstance(data, list):
+        rows = data
+    else:
+        rows = []
+    return {'items': rows[:limit], 'count': len(rows)}
 
 
 @app.after_request
@@ -59,6 +201,19 @@ def api_run():
         return jsonify({'error': 'connector / service 必填'}), 400
     job = jobs_mod.run_job(data, source='manual')
     return jsonify(job)
+
+
+@app.post('/api/preview')
+def api_preview():
+    data = request.get_json(force=True) or {}
+    if not data.get('connector') or not data.get('service'):
+        return jsonify({'error': 'connector / service 必填'}), 400
+    limit = int(data.get('limit') or 5)
+    try:
+        out = _preview_data(data, limit=max(1, min(limit, 20)))
+        return jsonify(out)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
 
 @app.get('/api/jobs')

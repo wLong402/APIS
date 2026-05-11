@@ -35,6 +35,7 @@ class ProfitsLiveRefundPullService(BasePullService):
         call_params = dict(
             start_date=start_date,
             end_date=end_date,
+            scheme_name=kwargs.get('scheme_name') or '系统方案',
             terms_income=str(kwargs.get('terms_income') or '1'),
             stat_mode=str(kwargs.get('stat_mode') or '1'),
             shop_nos=kwargs.get('shop_nos'),
@@ -46,6 +47,7 @@ class ProfitsLiveRefundPullService(BasePullService):
         data = self.profits_live_refund_api.query_all(
             start_date=start_date,
             end_date=end_date,
+            scheme_name=kwargs.get('scheme_name') or '系统方案',
             terms_income=str(kwargs.get('terms_income') or '1'),
             stat_mode=str(kwargs.get('stat_mode') or '1'),
             shop_nos=kwargs.get('shop_nos'),

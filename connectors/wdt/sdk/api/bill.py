@@ -18,6 +18,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from ..client import QimenClient
 from ..config import WdtConfig
 from ..sign import WdtSignUtil
+from .log_template import summarize_params, summarize_response
 
 
 def _get_debug_print():
@@ -115,7 +116,7 @@ class BillStandardQueryAPI:
         
         if debug:
             debug_print(f"      [API DEBUG] method: {self.METHOD}")
-            debug_print(f"      [API DEBUG] api_params: {api_params}")
+            debug_print(f"      [API DEBUG] params: {summarize_params(api_params)}")
         
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         
@@ -143,14 +144,7 @@ class BillStandardQueryAPI:
         headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
         
         if debug:
-            debug_print(f"      [REQUEST DEBUG] ========== 请求报文 ==========")
-            debug_print(f"      [REQUEST DEBUG] URL: {request_url}")
-            debug_print(f"      [REQUEST DEBUG] Method: POST")
-            debug_print(f"      [REQUEST DEBUG] Headers: {json.dumps(headers, ensure_ascii=False)}")
-            debug_print(f"      [REQUEST DEBUG] Body:")
-            for k, v in sorted(api_params.items()):
-                debug_print(f"        {k}: {v}")
-            debug_print(f"      [REQUEST DEBUG] =============================")
+            debug_print(f"      [REQUEST DEBUG] method=POST, params={summarize_params(api_params)}")
         
         max_retries = 3
         for attempt in range(max_retries):
@@ -166,15 +160,9 @@ class BillStandardQueryAPI:
                 resp_data = result.get('response', result)
                 
                 if debug:
-                    debug_print(f"      [RESPONSE DEBUG] ========== 响应报文 ==========")
-                    debug_print(f"      [RESPONSE DEBUG] HTTP状态码: {response.status_code}")
-                    debug_print(f"      [RESPONSE DEBUG] Response Headers:")
-                    for k, v in response.headers.items():
-                        debug_print(f"        {k}: {v}")
-                    debug_print(f"      [RESPONSE DEBUG] Raw Response: {response.text[:500]}")
-                    debug_print(f"      [RESPONSE DEBUG] Parsed Response:")
-                    debug_print(f"        {json.dumps(resp_data, ensure_ascii=False, indent=8)}")
-                    debug_print(f"      [RESPONSE DEBUG] =============================")
+                    debug_print(
+                        f"      [RESPONSE DEBUG] http={response.status_code}, {summarize_response(resp_data)}"
+                    )
                 
                 # 检查是否需要重试（没有 resultCode 或系统繁忙）
                 result_code = resp_data.get('resultCode')

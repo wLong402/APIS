@@ -6,6 +6,7 @@ import sys
 import json
 import time
 import uuid
+import re
 import signal
 import threading
 import subprocess
@@ -96,6 +97,7 @@ def build_command(payload: dict) -> List[str]:
         'project': '--project',
         'summary_no': '--summary-no',
         'expense_item_name': '--expense-item-name',
+        'order_tools': '--order-tools',
         'warehouse_no': '--warehouse-no',
     }
     for k, flag in mapping.items():
@@ -208,7 +210,14 @@ def list_jobs(limit: int = 100) -> List[dict]:
     with _lock:
         items = list(_jobs.values())
     items.sort(key=lambda x: x.get('started_at', ''), reverse=True)
-    return items[:limit]
+    out = []
+    for it in items[:limit]:
+        row = dict(it)
+        pct, txt = _job_progress(row)
+        row['progress_percent'] = pct
+        row['progress_text'] = txt
+        out.append(row)
+    return out
 
 
 def get_job(job_id: str) -> Optional[dict]:
@@ -303,3 +312,77 @@ def read_log(job_id: str, offset: int = 0, max_bytes: int = 200_000) -> dict:
         'offset': offset + len(chunk),
         'eof': (offset + len(chunk) >= size) and (job.get('status') != 'running'),
     }
+
+
+_RE_PROGRESS_RATIO = re.compile(r'\[(\d+)\s*/\s*(\d+)\]|进度[:：]\s*(\d+)\s*/\s*(\d+)')
+_RE_PROGRESS_PERCENT = re.compile(r'(\d+(?:\.\d+)?)\s*%')
+_RE_FETCHED = re.compile(r'(?:获取|已获取)[:：]?\s*(\d+)\s*条')
+_RE_SAVED = re.compile(r'保存[:：]?\s*(\d+)\s*条')
+_RE_ERRORS = re.compile(r'错误[:：]?\s*(\d+)\s*条')
+
+
+def _tail_text(path: str, max_bytes: int = 24_000) -> str:
+    try:
+        if not path or not os.path.exists(path):
+            return ''
+        size = os.path.getsize(path)
+        start = max(0, size - max_bytes)
+        with open(path, 'rb') as f:
+            f.seek(start)
+            data = f.read(max_bytes)
+        return data.decode('utf-8', errors='replace')
+    except Exception:
+        return ''
+
+
+def _job_progress(job: dict):
+    status = job.get('status')
+    if status == 'success':
+        return 100, '100%'
+    if status in ('warning', 'failed', 'stopped'):
+        return 100, '已结束'
+    if status != 'running':
+        return 0, '-'
+
+    tail = _tail_text(job.get('log_path'))
+    if not tail:
+        return 0, '运行中'
+
+    lines = [ln.strip() for ln in tail.splitlines() if ln.strip()]
+    latest_fetched = None
+    latest_saved = None
+    latest_errors = None
+    for ln in reversed(lines):
+        m = _RE_PROGRESS_RATIO.search(ln)
+        if m:
+            a = int(m.group(1) or m.group(3))
+            b = int(m.group(2) or m.group(4))
+            if b > 0:
+                pct = int(max(0, min(100, round(a * 100 / b))))
+                return pct, f'{a}/{b} ({pct}%)'
+        if latest_fetched is None:
+            m = _RE_FETCHED.search(ln)
+            if m:
+                latest_fetched = int(m.group(1))
+        if latest_saved is None:
+            m = _RE_SAVED.search(ln)
+            if m:
+                latest_saved = int(m.group(1))
+        if latest_errors is None:
+            m = _RE_ERRORS.search(ln)
+            if m:
+                latest_errors = int(m.group(1))
+
+    if latest_fetched is not None and latest_saved is not None and latest_fetched > 0:
+        pct = int(max(0, min(99, round(latest_saved * 100 / latest_fetched))))
+        txt = f'保存 {latest_saved}/获取 {latest_fetched}'
+        if latest_errors is not None:
+            txt += f'，错误 {latest_errors}'
+        return pct, txt
+
+    for ln in reversed(lines):
+        m = _RE_PROGRESS_PERCENT.search(ln)
+        if m:
+            pct = int(max(0, min(100, round(float(m.group(1))))))
+            return pct, f'{pct}%'
+    return 0, '运行中'

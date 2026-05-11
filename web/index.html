@@ -80,6 +80,8 @@
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
   th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
   th { color: var(--muted); font-weight: 500; }
+  .table-scroll { max-height: 360px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; }
+  .table-scroll table { margin: 0; }
   tr:hover { background: var(--row-hover); }
   .status { padding: 2px 8px; border-radius: 3px; font-size: 11px; display: inline-block; }
   .status.running { background: rgba(79,142,255,0.2); color: var(--primary); }
@@ -98,9 +100,14 @@
   .log-slot { overflow: visible; white-space: pre; box-sizing: border-box; min-width: 100%; }
   .log .ln-row { box-sizing: border-box; padding: 0; margin: 0; white-space: pre;
                  min-height: 18px; line-height: 18px; }
-  .log .ln-err { background: rgba(255,85,112,0.18); color: #ff8a9f; display: inline; padding: 0 2px; border-radius: 2px;}
-  .log .ln-warn { background: rgba(255,180,84,0.15); color: #ffc266; display: inline; padding: 0 2px; border-radius: 2px;}
-  .log .ln-info { color: #2563eb; display: inline; }
+  .log .ln-err, .log .ln-warn, .log .ln-info { color: inherit; background: none; display: inline; padding: 0; border-radius: 0; }
+  .log .tag-debug { color: #60a5fa; font-weight: 600; }
+  .log .tag-api-debug { color: #93c5fd; font-weight: 600; }
+  .log .tag-request-debug { color: #a5b4fc; font-weight: 600; }
+  .log .tag-response-debug { color: #22d3ee; font-weight: 600; }
+  .log .tag-info { color: #34d399; font-weight: 600; }
+  .log .tag-error { color: #fb7185; font-weight: 700; }
+  .log .tag-warning { color: #fbbf24; font-weight: 700; }
   .log .hl { background: #ff5570; color: #fff; padding: 0 2px; border-radius: 2px; }
   .ln-row.flash { outline: 2px solid #ff5570; outline-offset: -1px; border-radius: 2px;}
   .pill { display: inline-block; padding: 2px 6px; background: var(--bg3); border-radius: 3px; font-size: 11px; }
@@ -222,6 +229,7 @@
             <div><label>员工ID列表</label><input id="run-staff-ids" /></div>
             <div><label>配置录入开始</label><input id="run-start-config-record-time" /></div>
             <div><label>配置录入结束</label><input id="run-end-config-record-time" /></div>
+            <div><label>订单渠道</label><input id="run-order-tools" placeholder="如 1 或 1,2,3" /></div>
           </div>
         </details>
         <div class="toolbar" style="margin-top: 16px;">
@@ -235,6 +243,7 @@
             <input id="run-no-ehr" type="checkbox" style="width:auto;" /> 不读 EHR (微伴)
           </label>
           <div class="grow"></div>
+          <button class="ghost" onclick="previewRawData()">预览原始返回(5条)</button>
           <button class="ghost" onclick="saveAsSchedule()">保存为定时任务</button>
           <button onclick="runNow()">立即运行</button>
         </div>
@@ -296,20 +305,23 @@
           <div class="grow"></div>
           <button class="ghost" onclick="loadJobs()">刷新</button>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>开始时间</th>
-              <th>服务</th>
-              <th>来源</th>
-              <th>状态</th>
-              <th>结束时间</th>
-              <th>退出码</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody id="jobs-tbody"></tbody>
-        </table>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>开始时间</th>
+                <th>服务</th>
+                <th>进度</th>
+                <th>来源</th>
+                <th>状态</th>
+                <th>结束时间</th>
+                <th>退出码</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="jobs-tbody"></tbody>
+          </table>
+        </div>
       </div>
 
       <div class="panel hidden" id="jobs-log-panel">
@@ -423,6 +435,17 @@
     </div>
   </div>
 
+  <div id="preview-modal" class="modal-bg hidden">
+    <div class="modal">
+      <h3>接口原始返回预览（前 5 条）</h3>
+      <div class="help" id="preview-meta" style="margin-bottom:8px;"></div>
+      <textarea id="preview-json" style="height:420px;font-family:Consolas,monospace;"></textarea>
+      <div class="actions">
+        <button class="ghost" onclick="closePreviewModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 const $ = (id) => document.getElementById(id);
 const api = async (url, opts={}) => {
@@ -518,7 +541,7 @@ function scheduleLogVpRender(panelKey) {
 
 function lineHtml(text, kwRaw, absIdx) {
   const cls = classifyLine(text);
-  let body = escapeHtml(text);
+  let body = colorizeLogTags(escapeHtml(text));
   if ((kwRaw || '').trim()) {
     try {
       const re = new RegExp('(' + escapeRe(kwRaw.trim()) + ')', 'gi');
@@ -680,7 +703,7 @@ function scrollToAbsLine(panelKey, absZero) {
 }
 
 function classifyLine(line) {
-  if (/\[(API )?DEBUG\]|\[INFO\]/.test(line)) return 'ln-info';
+  if (/\[(API|REQUEST|RESPONSE)?\s*DEBUG\]|\[INFO\]/.test(line)) return 'ln-info';
   if (ERR_PATTERNS.some(r => r.test(line))) return 'ln-err';
   if (WARN_PATTERNS.some(r => r.test(line))) return 'ln-warn';
   let m = line.match(FETCH_SAVE_RE);
@@ -695,6 +718,18 @@ function classifyLine(line) {
 
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function colorizeLogTags(escapedText) {
+  return escapedText
+    .replace(/\[RESPONSE DEBUG\]/g, '<span class="tag-response-debug">[RESPONSE DEBUG]</span>')
+    .replace(/\[REQUEST DEBUG\]/g, '<span class="tag-request-debug">[REQUEST DEBUG]</span>')
+    .replace(/\[API DEBUG\]/g, '<span class="tag-api-debug">[API DEBUG]</span>')
+    .replace(/\[DEBUG\]/g, '<span class="tag-debug">[DEBUG]</span>')
+    .replace(/\[INFO\]/g, '<span class="tag-info">[INFO]</span>')
+    .replace(/\[ERROR\]/g, '<span class="tag-error">[ERROR]</span>')
+    .replace(/\[WARNING\]/g, '<span class="tag-warning">[WARNING]</span>')
+    .replace(/\[WARN\]/g, '<span class="tag-warning">[WARN]</span>');
 }
 
 function applyLogFilter(panelKey) {
@@ -766,6 +801,13 @@ function statusHint(status, code) {
   return '';
 }
 
+function serviceDisplay(connector, service) {
+  const c = connectors.find(x => x.name === connector);
+  const s = c?.services?.find(x => x.name === service);
+  if (!s) return `${connector}.${service}`;
+  return `${s.label} (${connector}.${service})`;
+}
+
 function toast(msg, type='info') {
   const el = document.createElement('div');
   el.className = 'toast ' + type;
@@ -794,6 +836,81 @@ async function init() {
   });
 }
 
+const RUN_ADVANCED_FIELDS = [
+  'shop-no', 'warehouse-no', 'classification-name', 'is-summary',
+  'scheme-name', 'terms-income', 'composite-dim', 'split-suite',
+  'cost-type', 'stat-mode', 'order-way', 'display-by-shop',
+  'display-by-date', 'original-order', 'plat-order-nos', 'erp-order-nos',
+  'shop-nos', 'spec-no', 'project', 'summary-no', 'expense-item-name',
+  'staff-ids', 'start-config-record-time', 'end-config-record-time', 'order-tools',
+];
+
+const WDT_SERVICE_ADVANCED_PARAMS = {
+  trade: ['shop-no'],
+  refund: ['shop-no'],
+  aftersales_refund: ['shop-no'],
+  erp_trade: ['shop-no'],
+  erp: ['shop-no'],
+  history_trade: ['shop-no'],
+  stockout_sales_query_with_detail: ['warehouse-no'],
+  stockin_refund_query_with_detail: ['shop-no'],
+  bill_standard: ['shop-no'],
+  bk_share_data: ['classification-name', 'is-summary', 'start-config-record-time', 'end-config-record-time'],
+  fixbill_data_summary: ['classification-name', 'is-summary', 'start-config-record-time', 'end-config-record-time'],
+  marketing_detail: ['shop-no'],
+  profits_sku: ['scheme-name', 'terms-income', 'composite-dim', 'split-suite', 'cost-type', 'stat-mode', 'order-way', 'display-by-shop', 'display-by-date', 'shop-nos'],
+  profits_order: ['scheme-name', 'terms-income', 'cost-type', 'stat-mode', 'order-way', 'original-order', 'plat-order-nos', 'erp-order-nos', 'shop-nos'],
+  profits_live_sku: ['scheme-name', 'terms-income', 'composite-dim', 'split-suite', 'cost-type', 'shop-nos'],
+  profits_live_order: ['terms-income', 'cost-type', 'shop-nos', 'order-tools'],
+  profits_live_refund: ['scheme-name', 'terms-income', 'cost-type', 'shop-nos', 'order-tools'],
+  marketing_share_result: ['spec-no', 'project'],
+  expense_sku_day_summary: ['summary-no', 'expense-item-name'],
+  sht_recon_detail: ['shop-no'],
+};
+
+const WDT_PULL_BY_DAY_SERVICES = new Set([
+  'profits_sku',
+  'profits_order',
+  'profits_live_sku',
+  'profits_live_order',
+  'profits_live_refund',
+]);
+
+function toggleRunAdvancedField(fieldKey, visible) {
+  const input = $('run-' + fieldKey);
+  if (!input) return;
+  const wrap = input.closest('div');
+  if (!wrap) return;
+  wrap.classList.toggle('hidden', !visible);
+}
+
+function updateRunAdvancedParamsVisibility() {
+  const connector = $('run-connector')?.value;
+  const service = $('run-service')?.value;
+  let show = [];
+  if (connector === 'wdt' && service && WDT_SERVICE_ADVANCED_PARAMS[service]) {
+    show = WDT_SERVICE_ADVANCED_PARAMS[service];
+  }
+  const showSet = new Set(show);
+  RUN_ADVANCED_FIELDS.forEach(k => toggleRunAdvancedField(k, showSet.has(k)));
+}
+
+function updateIntervalInputAvailability(prefix, connector, service) {
+  const intervalInput = $(prefix + '-interval');
+  if (!intervalInput) return;
+  const isDayOnly = connector === 'wdt' && WDT_PULL_BY_DAY_SERVICES.has(service);
+  if (isDayOnly) {
+    intervalInput.value = '';
+    intervalInput.disabled = true;
+    intervalInput.placeholder = '该服务固定按天拉取，间隔不可用';
+    intervalInput.title = '该服务固定按天拉取，间隔参数无效';
+  } else {
+    intervalInput.disabled = false;
+    intervalInput.placeholder = '3600 = 按小时';
+    intervalInput.title = '';
+  }
+}
+
 function fillConnectorSelect(connSel, svcSel) {
   connSel.innerHTML = connectors.map(c =>
     `<option value="${c.name}">${c.display_name} (${c.name})</option>`
@@ -803,8 +920,28 @@ function fillConnectorSelect(connSel, svcSel) {
     svcSel.innerHTML = (c?.services||[]).map(s =>
       `<option value="${s.name}">${s.label} (${s.name})</option>`
     ).join('');
+    if (connSel.id === 'run-connector' && svcSel.id === 'run-service') {
+      updateRunAdvancedParamsVisibility();
+    }
+    if (connSel.id === 'run-connector' && svcSel.id === 'run-service') {
+      updateIntervalInputAvailability('run', connSel.value, svcSel.value);
+    }
+    if (connSel.id === 'sm-connector' && svcSel.id === 'sm-service') {
+      updateIntervalInputAvailability('sm', connSel.value, svcSel.value);
+    }
   };
   connSel.onchange = fillSvc;
+  svcSel.onchange = () => {
+    if (connSel.id === 'run-connector' && svcSel.id === 'run-service') {
+      updateRunAdvancedParamsVisibility();
+    }
+    if (connSel.id === 'run-connector' && svcSel.id === 'run-service') {
+      updateIntervalInputAvailability('run', connSel.value, svcSel.value);
+    }
+    if (connSel.id === 'sm-connector' && svcSel.id === 'sm-service') {
+      updateIntervalInputAvailability('sm', connSel.value, svcSel.value);
+    }
+  };
   fillSvc();
 }
 
@@ -841,6 +978,7 @@ function collectPayload(prefix='run') {
     project: prefix==='run' ? v('project') : null,
     summary_no: prefix==='run' ? v('summary-no') : null,
     expense_item_name: prefix==='run' ? v('expense-item-name') : null,
+    order_tools: prefix==='run' ? v('order-tools') : null,
     staff_ids: prefix==='run' ? v('staff-ids') : null,
     start_config_record_time: prefix==='run' ? v('start-config-record-time') : null,
     end_config_record_time: prefix==='run' ? v('end-config-record-time') : null,
@@ -856,6 +994,23 @@ async function runNow() {
     const job = await api('/api/run', { method: 'POST', body: payload });
     toast('任务已启动: ' + job.id, 'success');
     openLog(job);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+function closePreviewModal() {
+  $('preview-modal').classList.add('hidden');
+}
+
+async function previewRawData() {
+  try {
+    const payload = collectPayload('run');
+    payload.limit = 5;
+    const res = await api('/api/preview', { method: 'POST', body: payload });
+    $('preview-meta').textContent = `本次拉取到 ${res.count || 0} 条，展示前 ${(res.items || []).length} 条`;
+    $('preview-json').value = JSON.stringify(res.items || [], null, 2);
+    $('preview-modal').classList.remove('hidden');
   } catch (e) {
     toast(e.message, 'error');
   }
@@ -911,7 +1066,8 @@ async function loadJobs() {
   $('jobs-tbody').innerHTML = items.map(j => `
     <tr>
       <td>${j.started_at || '-'}</td>
-      <td>${j.connector}.${j.service}</td>
+      <td>${serviceDisplay(j.connector, j.service)}</td>
+      <td>${j.progress_text || '-'}</td>
       <td>${j.source}</td>
       <td><span class="status ${j.status}">${j.status}</span></td>
       <td>${j.finished_at || '-'}</td>
@@ -921,7 +1077,7 @@ async function loadJobs() {
         ${j.status === 'running' ? `<button class="warn" onclick="stopJob('${j.id}')">停止</button>` : ''}
       </td>
     </tr>
-  `).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--muted);">暂无记录</td></tr>`;
+  `).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--muted);">暂无记录</td></tr>`;
 }
 
 async function viewJobLog(id) {
@@ -976,7 +1132,7 @@ async function loadSchedules() {
     return `
     <tr>
       <td>${s.name}</td>
-      <td>${s.payload.connector}.${s.payload.service}</td>
+      <td>${serviceDisplay(s.payload.connector, s.payload.service)}</td>
       <td>${trigText}</td>
       <td>${s.enabled
         ? '<span class="status running">已启用</span>'

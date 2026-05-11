@@ -11,6 +11,7 @@ import requests
 from ..client import QimenClient
 from ..config import WdtConfig
 from ..sign import WdtSignUtil
+from .log_template import summarize_params, summarize_response
 
 
 def _get_debug_print():
@@ -84,7 +85,7 @@ class ProfitsLiveOrderQueryAPI:
 
         if debug:
             debug_print(f"      [API DEBUG] method: {self.METHOD}")
-            debug_print(f"      [API DEBUG] api_params: {api_params}")
+            debug_print(f"      [API DEBUG] params: {summarize_params(api_params)}")
 
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         sys_params = {
@@ -105,8 +106,6 @@ class ProfitsLiveOrderQueryAPI:
         sys_params['sign'] = top_sign
 
         request_url = f"{self.gateway_url}?{urlencode({k: str(v) for k, v in sys_params.items()})}"
-        if debug:
-            debug_print(f"      [URL DEBUG] request_url: {request_url}")
         headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
 
         max_retries = 3
@@ -122,7 +121,10 @@ class ProfitsLiveOrderQueryAPI:
                 resp_data = result.get('response', result)
 
                 if debug:
-                    debug_print(f"      [RESPONSE DEBUG] {json.dumps(resp_data, ensure_ascii=False)[:500]}")
+                    debug_print(
+                        "      [RESPONSE DEBUG] "
+                        f"http={response.status_code}, {summarize_response(resp_data)}"
+                    )
 
                 result_code = resp_data.get('resultCode')
                 msg = resp_data.get('message', '')
