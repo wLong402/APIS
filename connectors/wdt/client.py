@@ -29,6 +29,7 @@ from .sdk.api import (
     ProfitsSkuQueryAPI,
     ProfitsOrderQueryAPI,
     ShtReconDetailQueryAPI,
+    ReconDeliveryDetailQueryAPI,
     ProfitsLiveSkuQueryAPI,
     ProfitsLiveOrderQueryAPI,
     ProfitsLiveRefundQueryAPI,
@@ -102,6 +103,7 @@ class WdtClient(BaseAPIClient):
         self._profits_sku_api = None
         self._profits_order_api = None
         self._sht_recon_detail_api = None
+        self._recon_delivery_detail_api = None
         self._profits_live_sku_api = None
         self._profits_live_order_api = None
         self._profits_live_refund_api = None
@@ -270,6 +272,19 @@ class WdtClient(BaseAPIClient):
                 hjy_gateway_url=self._hjy_gateway_url,
             )
         return self._sht_recon_detail_api
+
+    @property
+    def recon_delivery_detail_api(self) -> ReconDeliveryDetailQueryAPI:
+        if self._recon_delivery_detail_api is None:
+            self._recon_delivery_detail_api = ReconDeliveryDetailQueryAPI(
+                client=self._qimen_client,
+                config=self._wdt_config,
+                hjy_app_id=self._hjy_app_id,
+                hjy_sid=self._hjy_sid,
+                hjy_app_key=self._hjy_app_key,
+                hjy_gateway_url=self._hjy_gateway_url,
+            )
+        return self._recon_delivery_detail_api
 
     @property
     def profits_live_sku_api(self) -> ProfitsLiveSkuQueryAPI:

@@ -26,6 +26,7 @@ from .aftersales_refund_detail_repo import AftersalesRefundDetailRepository
 from .profits_sku_repo import ProfitsSkuRepository
 from .profits_order_repo import ProfitsOrderRepository
 from .sht_recon_detail_repo import ShtReconDetailRepository
+from .recon_delivery_detail_repo import ReconDeliveryDetailRepository
 from .profits_live_sku_repo import ProfitsLiveSkuRepository
 from .profits_live_order_repo import ProfitsLiveOrderRepository
 from .profits_live_refund_repo import ProfitsLiveRefundRepository
@@ -58,6 +59,7 @@ __all__ = [
     'ProfitsSkuRepository',
     'ProfitsOrderRepository',
     'ShtReconDetailRepository',
+    'ReconDeliveryDetailRepository',
     'ProfitsLiveSkuRepository',
     'ProfitsLiveOrderRepository',
     'ProfitsLiveRefundRepository',

@@ -99,6 +99,11 @@ def build_command(payload: dict) -> List[str]:
         'expense_item_name': '--expense-item-name',
         'order_tools': '--order-tools',
         'warehouse_no': '--warehouse-no',
+        'period_mark': '--period-mark',
+        'reco_status': '--reco-status',
+        'salesman_name': '--salesman-name',
+        'start_business_time': '--start-business-time',
+        'end_business_time': '--end-business-time',
     }
     for k, flag in mapping.items():
         v = payload.get(k)

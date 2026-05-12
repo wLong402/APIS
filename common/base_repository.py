@@ -13,7 +13,7 @@ from core.database import (
     DatabaseManager, get_db_manager, 
     sanitize_column_name, infer_column_type
 )
-from core.logger import get_logger
+from core.logger import get_logger, debug_print
 
 
 class BaseRepository(ABC):
@@ -58,7 +58,7 @@ class BaseRepository(ABC):
             return f"{self.SYSTEM_PREFIX}_{self.TABLE_NAME}"
         return self.TABLE_NAME
     
-    def save_batch(self, data_list: List[Dict], batch_size: int = 500) -> int:
+    def save_batch(self, data_list: List[Dict], batch_size: int = 500, debug: bool = False, progress_label: str = '') -> int:
         if not data_list:
             return 0
         
@@ -88,11 +88,14 @@ class BaseRepository(ABC):
             unique_key = None
         
         if not is_mysql and unique_key:
-            return self._save_batch_sqlserver_merge(data_list, fields, col_names, unique_key, batch_size)
+            return self._save_batch_sqlserver_merge(data_list, fields, col_names, unique_key, batch_size, debug=debug, progress_label=progress_label)
         
         count = 0
         errors = 0
         sql = self.db.adapter.upsert_sql(table_name, col_names, unique_key[0] if unique_key and len(unique_key) == 1 else unique_key)
+        label = progress_label or table_name
+        if debug:
+            debug_print(f"    [SAVE PROGRESS] {label} 开始落库，总量={total:,}，batch_size={batch_size}")
         
         with self.db.get_connection() as conn:
             cursor = self.db.adapter.get_cursor(conn)
@@ -123,6 +126,11 @@ class BaseRepository(ABC):
                 try:
                     cursor.executemany(sql, batch_data)
                     count += len(batch_data)
+                    if debug:
+                        debug_print(
+                            f"    [SAVE PROGRESS] {label} 批次 {batch_end:,}/{total:,} "
+                            f"本批={len(batch_data):,} 累计成功={count:,}"
+                        )
                 except Exception as e:
                     errors += len(batch_data)
                     self.logger.error(f"批量保存失败: {e}")
@@ -157,7 +165,7 @@ class BaseRepository(ABC):
                 return None
         return value
     
-    def _save_batch_sqlserver_merge(self, data_list: List[Dict], fields: Dict, col_names: List[str], unique_key: List[str], batch_size: int, max_retries: int = 3) -> int:
+    def _save_batch_sqlserver_merge(self, data_list: List[Dict], fields: Dict, col_names: List[str], unique_key: List[str], batch_size: int, max_retries: int = 3, debug: bool = False, progress_label: str = '') -> int:
         import time
         import threading
 
@@ -165,6 +173,7 @@ class BaseRepository(ABC):
         tid = threading.current_thread().ident
         temp_table = f"#tmp_{self.TABLE_NAME}_{tid}"
         total = len(data_list)
+        label = progress_label or table_name
 
         col_defs_full = ', '.join([f'[{c}] NVARCHAR(MAX)' for c in col_names])
 
@@ -233,6 +242,11 @@ class BaseRepository(ABC):
                         cursor.setinputsizes(input_sizes)
                         cursor.executemany(insert_sql, batch_data)
                         count += len(batch_data)
+                        if debug:
+                            debug_print(
+                                f"    [SAVE PROGRESS] {label} 批次 {batch_end:,}/{total:,} "
+                                f"本批={len(batch_data):,} 累计成功={count:,}"
+                            )
 
                     self.db.adapter.commit(conn)
 

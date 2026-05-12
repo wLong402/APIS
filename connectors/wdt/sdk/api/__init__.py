@@ -50,6 +50,7 @@ from .fixbill_data_summary import FixbillDataSummaryQueryAPI
 from .profits_sku import ProfitsSkuQueryAPI
 from .profits_order import ProfitsOrderQueryAPI
 from .sht_recon_detail import ShtReconDetailQueryAPI
+from .recon_delivery_detail import ReconDeliveryDetailQueryAPI
 from .profits_live_sku import ProfitsLiveSkuQueryAPI
 from .profits_live_order import ProfitsLiveOrderQueryAPI
 from .profits_live_refund import ProfitsLiveRefundQueryAPI
@@ -104,6 +105,7 @@ __all__ = [
     'ProfitsSkuQueryAPI',
     'ProfitsOrderQueryAPI',
     'ShtReconDetailQueryAPI',
+    'ReconDeliveryDetailQueryAPI',
     'ProfitsLiveSkuQueryAPI',
     'ProfitsLiveOrderQueryAPI',
     'ProfitsLiveRefundQueryAPI',

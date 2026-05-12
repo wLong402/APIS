@@ -181,15 +181,34 @@ class BasePullService(ABC):
             # 2. 获取数据
             data = self._fetch_data(start_time, end_time, **kwargs)
             result.fetched = len(data) if data else 0
+            if kwargs.get('debug', False):
+                debug_print(
+                    f"    [PROGRESS] 获取完成 接口={self.SYSTEM_NAME}.{self.SERVICE_NAME} "
+                    f"获取={result.fetched:,}"
+                )
             
             # 3. 保存数据
             if data and self.repo:
-                result.saved = self.repo.save_batch(data)
+                if kwargs.get('debug', False):
+                    debug_print(
+                        f"    [PROGRESS] 开始落库 接口={self.SYSTEM_NAME}.{self.SERVICE_NAME} "
+                        f"待落库={result.fetched:,}"
+                    )
+                result.saved = self.repo.save_batch(
+                    data,
+                    debug=kwargs.get('debug', False),
+                    progress_label=f"{self.SYSTEM_NAME}.{self.SERVICE_NAME}",
+                )
             elif data:
                 result.saved = result.fetched  # 无仓库时视为全部成功
             
             # 4. 计算错误数
             result.errors = result.fetched - result.saved
+            if kwargs.get('debug', False):
+                debug_print(
+                    f"    [PROGRESS] 落库完成 接口={self.SYSTEM_NAME}.{self.SERVICE_NAME} "
+                    f"获取={result.fetched:,} 落库={result.saved:,} 差异={result.errors:,}"
+                )
             
             # 5. 数据不匹配处理
             if result.errors > 0:

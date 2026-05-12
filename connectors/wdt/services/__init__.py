@@ -18,6 +18,7 @@ from .aftersales_refund_service import AftersalesRefundPullService
 from .profits_sku_service import ProfitsSkuPullService
 from .profits_order_service import ProfitsOrderPullService
 from .sht_recon_detail_service import ShtReconDetailPullService
+from .recon_delivery_detail_service import ReconDeliveryDetailPullService
 from .profits_live_sku_service import ProfitsLiveSkuPullService
 from .profits_live_order_service import ProfitsLiveOrderPullService
 from .profits_live_refund_service import ProfitsLiveRefundPullService
@@ -40,6 +41,7 @@ __all__ = [
     'ProfitsSkuPullService',
     'ProfitsOrderPullService',
     'ShtReconDetailPullService',
+    'ReconDeliveryDetailPullService',
     'ProfitsLiveSkuPullService',
     'ProfitsLiveOrderPullService',
     'ProfitsLiveRefundPullService',

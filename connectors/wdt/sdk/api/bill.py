@@ -161,7 +161,7 @@ class BillStandardQueryAPI:
                 
                 if debug:
                     debug_print(
-                        f"      [RESPONSE DEBUG] http={response.status_code}, {summarize_response(resp_data)}"
+                        f"      [RESPONSE DEBUG] {summarize_response(resp_data, api_params=api_params, http_status=response.status_code)}"
                     )
                 
                 # 检查是否需要重试（没有 resultCode 或系统繁忙）

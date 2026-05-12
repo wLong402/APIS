@@ -133,6 +133,36 @@
   .toast.success { border-color: var(--success); }
   details summary { cursor: pointer; color: var(--muted); margin-bottom: 8px; }
   details[open] summary { color: var(--text); }
+  @keyframes preview-spin {
+    to { transform: rotate(360deg); }
+  }
+  .preview-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.35);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 2;
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+  }
+  :root[data-theme="dark"] .preview-loading-overlay {
+    background: rgba(0, 0, 0, 0.45);
+  }
+  #preview-modal.loading .preview-loading-overlay { display: flex; }
+  .preview-spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: preview-spin 0.75s linear infinite;
+  }
+  #preview-modal .modal { position: relative; }
   .theme-toggle {
     position: fixed;
     right: 16px;
@@ -230,6 +260,11 @@
             <div><label>配置录入开始</label><input id="run-start-config-record-time" /></div>
             <div><label>配置录入结束</label><input id="run-end-config-record-time" /></div>
             <div><label>订单渠道</label><input id="run-order-tools" placeholder="如 1 或 1,2,3" /></div>
+            <div><label>对账标识 periodMark</label><input id="run-period-mark" placeholder="如 1" /></div>
+            <div><label>对账状态(逗号分隔)</label><input id="run-reco-status" placeholder="对账成功,对账失败" /></div>
+            <div><label>业务员名称</label><input id="run-salesman-name" /></div>
+            <div><label>业务开始时间</label><input id="run-start-business-time" placeholder="YYYY-MM-DD HH:MM:SS" /></div>
+            <div><label>业务结束时间</label><input id="run-end-business-time" placeholder="YYYY-MM-DD HH:MM:SS" /></div>
           </div>
         </details>
         <div class="toolbar" style="margin-top: 16px;">
@@ -243,7 +278,7 @@
             <input id="run-no-ehr" type="checkbox" style="width:auto;" /> 不读 EHR (微伴)
           </label>
           <div class="grow"></div>
-          <button class="ghost" onclick="previewRawData()">预览原始返回(5条)</button>
+          <button type="button" class="ghost" id="btn-preview-raw" onclick="previewRawData()">预览原始返回(5条)</button>
           <button class="ghost" onclick="saveAsSchedule()">保存为定时任务</button>
           <button onclick="runNow()">立即运行</button>
         </div>
@@ -437,6 +472,10 @@
 
   <div id="preview-modal" class="modal-bg hidden">
     <div class="modal">
+      <div class="preview-loading-overlay" aria-hidden="true">
+        <div class="preview-spinner"></div>
+        <span>正在请求接口…</span>
+      </div>
       <h3>接口原始返回预览（前 5 条）</h3>
       <div class="help" id="preview-meta" style="margin-bottom:8px;"></div>
       <textarea id="preview-json" style="height:420px;font-family:Consolas,monospace;"></textarea>
@@ -843,6 +882,7 @@ const RUN_ADVANCED_FIELDS = [
   'display-by-date', 'original-order', 'plat-order-nos', 'erp-order-nos',
   'shop-nos', 'spec-no', 'project', 'summary-no', 'expense-item-name',
   'staff-ids', 'start-config-record-time', 'end-config-record-time', 'order-tools',
+  'period-mark', 'reco-status', 'salesman-name', 'start-business-time', 'end-business-time',
 ];
 
 const WDT_SERVICE_ADVANCED_PARAMS = {
@@ -865,7 +905,8 @@ const WDT_SERVICE_ADVANCED_PARAMS = {
   profits_live_refund: ['scheme-name', 'terms-income', 'cost-type', 'shop-nos', 'order-tools'],
   marketing_share_result: ['spec-no', 'project'],
   expense_sku_day_summary: ['summary-no', 'expense-item-name'],
-  sht_recon_detail: ['shop-no'],
+  sht_recon_detail: ['shop-no', 'shop-nos', 'period-mark', 'reco-status'],
+  recon_delivery_detail: ['shop-no', 'shop-nos', 'warehouse-no', 'summary-no', 'spec-no', 'plat-order-nos', 'period-mark', 'reco-status', 'salesman-name', 'start-business-time', 'end-business-time'],
 };
 
 const WDT_PULL_BY_DAY_SERVICES = new Set([
@@ -982,6 +1023,11 @@ function collectPayload(prefix='run') {
     staff_ids: prefix==='run' ? v('staff-ids') : null,
     start_config_record_time: prefix==='run' ? v('start-config-record-time') : null,
     end_config_record_time: prefix==='run' ? v('end-config-record-time') : null,
+    period_mark: prefix==='run' ? v('period-mark') : null,
+    reco_status: prefix==='run' ? v('reco-status') : null,
+    salesman_name: prefix==='run' ? v('salesman-name') : null,
+    start_business_time: prefix==='run' ? v('start-business-time') : null,
+    end_business_time: prefix==='run' ? v('end-business-time') : null,
     by_day: prefix==='run' ? c('by-day') : false,
     debug: c('debug'),
     no_ehr: prefix==='run' ? c('no-ehr') : false,
@@ -1004,15 +1050,31 @@ function closePreviewModal() {
 }
 
 async function previewRawData() {
+  const btn = $('btn-preview-raw');
+  const modal = $('preview-modal');
   try {
+    if (btn) { btn.disabled = true; btn.dataset._prev = btn.textContent; btn.textContent = '请求中…'; }
+    modal.classList.add('loading');
+    modal.classList.remove('hidden');
+    $('preview-json').value = '';
+    $('preview-meta').textContent = '';
     const payload = collectPayload('run');
     payload.limit = 5;
     const res = await api('/api/preview', { method: 'POST', body: payload });
-    $('preview-meta').textContent = `本次拉取到 ${res.count || 0} 条，展示前 ${(res.items || []).length} 条`;
+    let meta = `本次拉取到 ${res.count || 0} 条，展示前 ${(res.items || []).length} 条`;
+    if (res.preview_note) meta += ` | ${res.preview_note}`;
+    if (res.api_result_code != null && String(res.api_result_code) !== '200') {
+      meta += ` | API: ${res.api_result_code} ${res.api_message || ''}`;
+      if (res.api_sub_detail) meta += ` | ${res.api_sub_detail}`;
+    }
+    $('preview-meta').textContent = meta;
     $('preview-json').value = JSON.stringify(res.items || [], null, 2);
-    $('preview-modal').classList.remove('hidden');
   } catch (e) {
+    modal.classList.add('hidden');
     toast(e.message, 'error');
+  } finally {
+    modal.classList.remove('loading');
+    if (btn) { btn.disabled = false; if (btn.dataset._prev) { btn.textContent = btn.dataset._prev; delete btn.dataset._prev; } }
   }
 }
 

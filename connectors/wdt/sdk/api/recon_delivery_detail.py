@@ -12,7 +12,7 @@ import requests
 from ..client import QimenClient
 from ..config import WdtConfig
 from ..sign import WdtSignUtil
-from .log_template import summarize_params, summarize_response
+from .log_template import summarize_response
 
 
 def _get_debug_print():
@@ -27,7 +27,7 @@ def _emit_debug(msg: str) -> None:
     _get_debug_print()(msg)
     try:
         from core.logger import get_logger
-        get_logger('connector.wdt.sht_recon_detail').info(msg)
+        get_logger('connector.wdt.recon_delivery_detail').info(msg)
     except Exception:
         pass
 
@@ -55,8 +55,8 @@ def _summarize_debug_dict(d: Dict, max_len: int = 96) -> str:
     return ', '.join(parts)
 
 
-class ShtReconDetailQueryAPI:
-    METHOD = 'wdt.hjy.recon.shtrecondetail.query'
+class ReconDeliveryDetailQueryAPI:
+    METHOD = 'wdt.hjy.recon.delivery.details.query'
     PAGE_SIZE = 200
 
     def __init__(
@@ -94,18 +94,6 @@ class ShtReconDetailQueryAPI:
         if mode == 'csv':
             return ','.join(cleaned)
         return json.dumps(cleaned, ensure_ascii=False)
-
-    @staticmethod
-    def _is_sign_failure(resp_data: Dict) -> bool:
-        if not isinstance(resp_data, dict):
-            return False
-        message = str(resp_data.get('message', '') or resp_data.get('msg', '')).lower()
-        sub_code = str(resp_data.get('sub_code', '')).lower()
-        if 'invalid signature' in message:
-            return True
-        if 'invalid' in sub_code and 'sign' in sub_code:
-            return True
-        return False
 
     def _request_once(self, api_params: Dict, sys_params: Dict, debug: bool = False) -> Dict:
         request_url = f"{self.gateway_url}?{urlencode({k: str(v) for k, v in sys_params.items()})}"
@@ -162,7 +150,6 @@ class ShtReconDetailQueryAPI:
         period_mark: Optional[str] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        refund_type: Optional[List[str]] = None,
         shop_no: Optional[List[str]] = None,
         warehouse_no: Optional[List[str]] = None,
         spec_no: Optional[List[str]] = None,
@@ -170,7 +157,8 @@ class ShtReconDetailQueryAPI:
         reco_status: Optional[List[str]] = None,
         plat_order_no: Optional[List[str]] = None,
         salesman_name: Optional[str] = None,
-        sys_order_no: Optional[List[str]] = None,
+        start_business_time: Optional[str] = None,
+        end_business_time: Optional[str] = None,
         next_request_id: Optional[str] = None,
         debug: bool = False,
     ) -> Dict:
@@ -179,7 +167,6 @@ class ShtReconDetailQueryAPI:
                 'period_mark': period_mark,
                 'start_date': start_date,
                 'end_date': end_date,
-                'refund_type': refund_type,
                 'shop_no': shop_no,
                 'warehouse_no': warehouse_no,
                 'spec_no': spec_no,
@@ -187,102 +174,88 @@ class ShtReconDetailQueryAPI:
                 'reco_status': reco_status,
                 'plat_order_no': plat_order_no,
                 'salesman_name': salesman_name,
-                'sys_order_no': sys_order_no,
+                'start_business_time': start_business_time,
+                'end_business_time': end_business_time,
                 'next_request_id': next_request_id,
             }
             _inputs = {k: v for k, v in _inputs.items() if v is not None}
             _emit_debug(f"      [REQUEST DEBUG] query() 入参: {_summarize_debug_dict(_inputs)}")
 
-        has_array_filters = any([refund_type, shop_no, warehouse_no, spec_no, summary_no, reco_status, plat_order_no, sys_order_no])
-        array_modes = ['json', 'scalar', 'csv'] if has_array_filters else ['json']
-        last_resp = {'resultCode': 'error', 'message': '未获取到响应'}
+        sign_params = {
+            'appId': self.hjy_app_id,
+            'sid': self.hjy_sid,
+        }
+        if period_mark:
+            sign_params['periodMark'] = period_mark
+        if start_date:
+            sign_params['startDate'] = start_date
+        if end_date:
+            sign_params['endDate'] = end_date
+        if start_business_time:
+            sign_params['startBusinessTime'] = start_business_time
+        if end_business_time:
+            sign_params['endBusinessTime'] = end_business_time
+        v = self._format_array_param(shop_no, 'json')
+        if v:
+            sign_params['shopNo'] = v
+        v = self._format_array_param(warehouse_no, 'json')
+        if v:
+            sign_params['warehouseNo'] = v
+        v = self._format_array_param(spec_no, 'json')
+        if v:
+            sign_params['specNo'] = v
+        v = self._format_array_param(summary_no, 'json')
+        if v:
+            sign_params['summaryNo'] = v
+        v = self._format_array_param(reco_status, 'json')
+        if v:
+            sign_params['recoStatus'] = v
+        v = self._format_array_param(plat_order_no, 'json')
+        if v:
+            sign_params['platOrderNo'] = v
+        if salesman_name:
+            sign_params['salesmanName'] = salesman_name
+        if next_request_id and next_request_id != 'false':
+            sign_params['nextRequestId'] = next_request_id
 
-        for mode in array_modes:
-            sign_params = {
-                'appId': self.hjy_app_id,
-                'sid': self.hjy_sid,
-            }
-            if period_mark:
-                sign_params['periodMark'] = period_mark
-            if start_date:
-                sign_params['startDate'] = start_date
-            if end_date:
-                sign_params['endDate'] = end_date
-            v = self._format_array_param(refund_type, mode)
-            if v:
-                sign_params['refundType'] = v
-            v = self._format_array_param(shop_no, mode)
-            if v:
-                sign_params['shopNo'] = v
-            v = self._format_array_param(warehouse_no, mode)
-            if v:
-                sign_params['warehouseNo'] = v
-            v = self._format_array_param(spec_no, mode)
-            if v:
-                sign_params['specNo'] = v
-            v = self._format_array_param(summary_no, mode)
-            if v:
-                sign_params['summaryNo'] = v
-            v = self._format_array_param(reco_status, mode)
-            if v:
-                sign_params['recoStatus'] = v
-            v = self._format_array_param(plat_order_no, mode)
-            if v:
-                sign_params['platOrderNo'] = v
-            if salesman_name:
-                sign_params['salesmanName'] = salesman_name
-            v = self._format_array_param(sys_order_no, mode)
-            if v:
-                sign_params['sysOrderNo'] = v
-            if next_request_id and next_request_id != 'false':
-                sign_params['nextRequestId'] = next_request_id
+        hjy_sign = self._generate_hjy_sign(sign_params, self.hjy_app_key)
+        api_params = dict(sign_params)
+        api_params['hjySign'] = hjy_sign
 
-            hjy_sign = self._generate_hjy_sign(sign_params, self.hjy_app_key)
-            api_params = dict(sign_params)
-            api_params['hjySign'] = hjy_sign
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        sys_params = {
+            'app_key': self.config.qimen_appkey,
+            'v': '2.0',
+            'format': 'json',
+            'sign_method': 'md5',
+            'method': self.METHOD,
+            'timestamp': timestamp,
+            'target_app_key': self.config.target_appkey,
+            'session': '',
+        }
+        top_sign = WdtSignUtil.generate_top_sign(
+            {**sys_params, **api_params},
+            self.config.qimen_appsecret,
+        )
+        sys_params['sign'] = top_sign
 
-            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-            sys_params = {
-                'app_key': self.config.qimen_appkey,
-                'v': '2.0',
-                'format': 'json',
-                'sign_method': 'md5',
-                'method': self.METHOD,
-                'timestamp': timestamp,
-                'target_app_key': self.config.target_appkey,
-                'session': '',
-            }
-            top_sign = WdtSignUtil.generate_top_sign(
-                {**sys_params, **api_params},
-                self.config.qimen_appsecret,
+        if debug:
+            _emit_debug(f"      [API DEBUG] method: {self.METHOD}")
+            _emit_debug(f"      [REQUEST DEBUG] 数组参数按文档 JSON 序列化, timestamp={timestamp}")
+            _emit_debug(f"      [API DEBUG] sign_params: {_summarize_debug_dict(sign_params)}")
+            hs = api_params.get('hjySign') or ''
+            _emit_debug(
+                f"      [API DEBUG] hjySign={_summarize_debug_value(hs, max_len=16)}, "
+                f"top_sign={str(top_sign)[:16]}...<{len(str(top_sign))} chars>"
             )
-            sys_params['sign'] = top_sign
 
-            if debug:
-                _emit_debug(f"      [API DEBUG] method: {self.METHOD}")
-                _emit_debug(f"      [REQUEST DEBUG] sign_mode={mode}, timestamp={timestamp}")
-                _emit_debug(f"      [API DEBUG] sign_params: {_summarize_debug_dict(sign_params)}")
-                hs = api_params.get('hjySign') or ''
-                _emit_debug(
-                    f"      [API DEBUG] hjySign={_summarize_debug_value(hs, max_len=16)}, "
-                    f"top_sign={str(top_sign)[:16]}...<{len(str(top_sign))} chars>"
-                )
-
-            resp_data = self._request_once(api_params, sys_params, debug=debug)
-            last_resp = resp_data
-            if not self._is_sign_failure(resp_data):
-                return resp_data
-            if debug and mode != array_modes[-1]:
-                _emit_debug("      [REQUEST DEBUG] 命中签名失败，自动切换下一种数组签名格式重试")
-
-        return last_resp
+        return self._request_once(api_params, sys_params, debug=debug)
 
     def query_all(
         self,
         period_mark: Optional[str] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        refund_type: Optional[List[str]] = None,
         shop_no: Optional[List[str]] = None,
         warehouse_no: Optional[List[str]] = None,
         spec_no: Optional[List[str]] = None,
@@ -290,10 +263,11 @@ class ShtReconDetailQueryAPI:
         reco_status: Optional[List[str]] = None,
         plat_order_no: Optional[List[str]] = None,
         salesman_name: Optional[str] = None,
-        sys_order_no: Optional[List[str]] = None,
+        start_business_time: Optional[str] = None,
+        end_business_time: Optional[str] = None,
         debug: bool = False,
     ) -> List[Dict]:
-        all_data = []
+        all_data: List[Dict] = []
         next_request_id = None
         page_no = 0
         while True:
@@ -304,7 +278,6 @@ class ShtReconDetailQueryAPI:
                 period_mark=period_mark,
                 start_date=start_date,
                 end_date=end_date,
-                refund_type=refund_type,
                 shop_no=shop_no,
                 warehouse_no=warehouse_no,
                 spec_no=spec_no,
@@ -312,7 +285,8 @@ class ShtReconDetailQueryAPI:
                 reco_status=reco_status,
                 plat_order_no=plat_order_no,
                 salesman_name=salesman_name,
-                sys_order_no=sys_order_no,
+                start_business_time=start_business_time,
+                end_business_time=end_business_time,
                 next_request_id=next_request_id,
                 debug=debug,
             )

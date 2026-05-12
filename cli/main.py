@@ -33,10 +33,10 @@ def pull_command(args):
         start_time = start_time.strftime('%Y-%m-%d 00:00:00')
         end_time = end_time.strftime('%Y-%m-%d 23:59:59')
     else:
-        if connector == 'wdt' and service_name == 'sht_recon_detail' and args.start is None and args.end is None:
+        if connector == 'wdt' and service_name in ('sht_recon_detail', 'recon_delivery_detail') and args.start is None and args.end is None:
             start_time = None
             end_time = None
-        elif connector == 'wdt' and service_name == 'sht_recon_detail':
+        elif connector == 'wdt' and service_name in ('sht_recon_detail', 'recon_delivery_detail'):
             s = args.start or args.end or today
             e = args.end or args.start or today
             start_time = s if ' ' in s else f"{s} 00:00:00"
@@ -86,6 +86,12 @@ def pull_command(args):
         'summary_no': getattr(args, 'summary_no', None),
         'expense_item_name': getattr(args, 'expense_item_name', None),
         'order_tools': getattr(args, 'order_tools', None),
+        'warehouse_no': getattr(args, 'warehouse_no', None),
+        'period_mark': getattr(args, 'period_mark', None),
+        'reco_status': getattr(args, 'reco_status', None),
+        'salesman_name': getattr(args, 'salesman_name', None),
+        'start_business_time': getattr(args, 'start_business_time', None),
+        'end_business_time': getattr(args, 'end_business_time', None),
     }
     
     # 微伴 external_user 服务优先使用 database(mysql) 配置
@@ -153,7 +159,7 @@ def pull_command(args):
                 debug=args.debug,
                 max_workers=args.workers
             )
-        elif connector == 'wdt' and service_name in ('bill_standard', 'bk_share_data', 'fixbill_data_summary', 'sht_recon_detail', 'marketing_share_result', 'expense_sku_day_summary'):
+        elif connector == 'wdt' and service_name in ('bill_standard', 'bk_share_data', 'fixbill_data_summary', 'sht_recon_detail', 'recon_delivery_detail', 'marketing_share_result', 'expense_sku_day_summary'):
             result = service.pull(
                 start_time=start_time,
                 end_time=end_time,
@@ -306,10 +312,10 @@ def cli():
     pull_parser.add_argument(
         '-s', '--service',
         required=True,
-        help='服务名称（wdt: trade, refund, stockout, erp_trade, stockin_refund, stockspec, bill_standard, bk_share_data, fixbill_data_summary, marketing_share_result, profits_sku, profits_order, profits_live_sku, profits_live_order, profits_live_refund; weiban: external_user, external_user_detail）'
+        help='服务名称（wdt: trade, refund, …, sht_recon_detail, recon_delivery_detail, profits_sku, …; weiban: external_user, external_user_detail）'
     )
     
-    # 时间参数（不传则默认当天；sht_recon_detail 同时不传 --start/--end 则不传账期日期参数）
+    # 时间参数（不传则默认当天；sht_recon_detail/recon_delivery_detail 同时不传 --start/--end 则不传账期日期参数）
     pull_parser.add_argument(
         '--start',
         default=None,
@@ -448,7 +454,32 @@ def cli():
     )
     pull_parser.add_argument(
         '--warehouse-no',
-        help='仓库编号（仅出库单）'
+        help='仓库编号（出库单；发货对账明细支持逗号多仓）'
+    )
+    pull_parser.add_argument(
+        '--period-mark',
+        default=None,
+        help='对账标识 periodMark（慧经营对账类接口，如 1）'
+    )
+    pull_parser.add_argument(
+        '--reco-status',
+        default=None,
+        help='对账状态，逗号分隔（如 对账成功,对账失败）'
+    )
+    pull_parser.add_argument(
+        '--salesman-name',
+        default=None,
+        help='业务员名称（发货对账明细）'
+    )
+    pull_parser.add_argument(
+        '--start-business-time',
+        default=None,
+        help='业务开始时间（发货对账明细，如 2026-01-01 00:00:00）'
+    )
+    pull_parser.add_argument(
+        '--end-business-time',
+        default=None,
+        help='业务结束时间（发货对账明细）'
     )
     pull_parser.add_argument(
         '--page-size', '-ps',

@@ -129,7 +129,7 @@ class MarketingDetailQueryAPI:
                 
                 if debug:
                     debug_print(
-                        f"      [RESPONSE DEBUG] http={response.status_code}, {summarize_response(resp_data)}"
+                        f"      [RESPONSE DEBUG] {summarize_response(resp_data, api_params=api_params, http_status=response.status_code)}"
                     )
                 
                 result_code = resp_data.get('resultCode')

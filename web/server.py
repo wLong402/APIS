@@ -42,7 +42,7 @@ def _normalize_time_range(payload: dict):
             end_time.strftime('%Y-%m-%d 23:59:59'),
             today,
         )
-    if connector == 'wdt' and service_name == 'sht_recon_detail' and not start and not end:
+    if connector == 'wdt' and service_name in ('sht_recon_detail', 'recon_delivery_detail') and not start and not end:
         return None, None, today
     s = start or today
     e = end or today
@@ -80,6 +80,13 @@ def _build_pull_kwargs(payload: dict, limit: int) -> dict:
         'summary_no': payload.get('summary_no'),
         'expense_item_name': payload.get('expense_item_name'),
         'order_tools': payload.get('order_tools'),
+        'warehouse_no': payload.get('warehouse_no'),
+        'period_mark': payload.get('period_mark'),
+        'reco_status': payload.get('reco_status'),
+        'refund_type': payload.get('refund_type'),
+        'salesman_name': payload.get('salesman_name'),
+        'start_business_time': payload.get('start_business_time'),
+        'end_business_time': payload.get('end_business_time'),
         'debug': bool(payload.get('debug')),
     }
 
@@ -138,6 +145,112 @@ def _preview_data(payload: dict, limit: int = 5) -> dict:
             )
             rows = resp.get('data', []) if isinstance(resp, dict) else []
             return {'items': rows[:limit], 'count': len(rows)}
+        if service_name == 'sht_recon_detail':
+            start_date = None
+            end_date = None
+            if start_time:
+                start_date = start_time.split(' ')[0] if ' ' in start_time else start_time
+            if end_time:
+                end_date = end_time.split(' ')[0] if ' ' in end_time else end_time
+            preview_note = None
+            if start_date is None and end_date is None:
+                start_date = end_date = today
+                preview_note = '未填起止日期，预览已默认使用当天账期'
+            shop_list = None
+            if payload.get('shop_nos'):
+                shop_list = [x.strip() for x in str(payload['shop_nos']).split(',') if x.strip()]
+            elif payload.get('shop_no'):
+                shop_list = [str(payload['shop_no']).strip()]
+            rs = payload.get('reco_status')
+            reco = [x.strip() for x in str(rs).split(',') if x.strip()] if rs else None
+            rt = payload.get('refund_type')
+            refund = [x.strip() for x in str(rt).split(',') if x.strip()] if rt else None
+            resp = service.sht_recon_detail_api.query(
+                period_mark=payload.get('period_mark'),
+                start_date=start_date,
+                end_date=end_date,
+                refund_type=refund,
+                shop_no=shop_list,
+                reco_status=reco,
+                debug=False,
+            )
+            raw = resp.get('data') if isinstance(resp, dict) else None
+            if isinstance(raw, list):
+                rows = raw
+            elif isinstance(raw, dict):
+                rows = [raw]
+            else:
+                rows = []
+            out = {
+                'items': rows[:limit],
+                'count': len(rows),
+                'api_result_code': resp.get('resultCode') if isinstance(resp, dict) else None,
+                'api_message': (resp.get('message') if isinstance(resp, dict) else None) or '',
+                'api_sub_result_code': resp.get('sub_resultCode') if isinstance(resp, dict) else None,
+                'api_sub_detail': (resp.get('sub_detail') if isinstance(resp, dict) else None) or '',
+            }
+            if preview_note:
+                out['preview_note'] = preview_note
+            return out
+        if service_name == 'recon_delivery_detail':
+            start_date = None
+            end_date = None
+            if start_time:
+                start_date = start_time.split(' ')[0] if ' ' in start_time else start_time
+            if end_time:
+                end_date = end_time.split(' ')[0] if ' ' in end_time else end_time
+            preview_note = None
+            if start_date is None and end_date is None:
+                start_date = end_date = today
+                preview_note = '未填起止日期，预览已默认使用当天账期'
+            shop_list = None
+            if payload.get('shop_nos'):
+                shop_list = [x.strip() for x in str(payload['shop_nos']).split(',') if x.strip()]
+            elif payload.get('shop_no'):
+                shop_list = [str(payload['shop_no']).strip()]
+            wh = payload.get('warehouse_no')
+            warehouse_list = [x.strip() for x in str(wh).split(',') if x.strip()] if wh else None
+            sn = payload.get('summary_no')
+            summary_list = [x.strip() for x in str(sn).split(',') if x.strip()] if sn else None
+            sp = payload.get('spec_no')
+            spec_list = [x.strip() for x in str(sp).split(',') if x.strip()] if sp else None
+            po = payload.get('plat_order_nos')
+            plat_list = [x.strip() for x in str(po).split(',') if x.strip()] if po else None
+            rs = payload.get('reco_status')
+            reco = [x.strip() for x in str(rs).split(',') if x.strip()] if rs else None
+            resp = service.recon_delivery_detail_api.query(
+                period_mark=payload.get('period_mark'),
+                start_date=start_date,
+                end_date=end_date,
+                shop_no=shop_list,
+                warehouse_no=warehouse_list,
+                spec_no=spec_list,
+                summary_no=summary_list,
+                reco_status=reco,
+                plat_order_no=plat_list,
+                salesman_name=payload.get('salesman_name'),
+                start_business_time=payload.get('start_business_time'),
+                end_business_time=payload.get('end_business_time'),
+                debug=False,
+            )
+            raw = resp.get('data') if isinstance(resp, dict) else None
+            if isinstance(raw, list):
+                rows = raw
+            elif isinstance(raw, dict):
+                rows = [raw]
+            else:
+                rows = []
+            out = {
+                'items': rows[:limit],
+                'count': len(rows),
+                'api_result_code': resp.get('resultCode') if isinstance(resp, dict) else None,
+                'api_message': (resp.get('message') if isinstance(resp, dict) else None) or '',
+                'api_sub_result_code': resp.get('sub_resultCode') if isinstance(resp, dict) else None,
+                'api_sub_detail': (resp.get('sub_detail') if isinstance(resp, dict) else None) or '',
+            }
+            if preview_note:
+                out['preview_note'] = preview_note
+            return out
         if service_name in _WDT_FIXED_BY_DAY or payload.get('by_day'):
             day = payload.get('start') or today
             start_time = f'{day} 00:00:00'
