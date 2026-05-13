@@ -630,7 +630,7 @@ class ExternalUserRepository:
                 self._adapter.commit(conn)
         return count
     
-    def save_batch(self, data_list: List[Dict], batch_size: int = 500) -> int:
+    def save_batch(self, data_list: List[Dict], batch_size: int = 500, debug: bool = False, progress_label: str = '', **kwargs) -> int:
         """
         批量保存数据（兼容 BasePullService 接口）
         
@@ -643,8 +643,7 @@ class ExternalUserRepository:
         Returns:
             成功保存的数量
         """
-        # 从 kwargs 中获取 debug 参数（如果 BasePullService 传递了的话）
-        result = self.save_with_comparison(data_list, batch_size=batch_size, debug=False)
+        result = self.save_with_comparison(data_list, batch_size=batch_size, debug=debug)
         return result['saved']
     
     def find_by_id(self, user_id: str, staff_id: str = None) -> Optional[Dict]:

@@ -19,7 +19,7 @@ class StockinRefundDetailRepository(BaseRepository):
         self.detail_repo = StockinRefundDetailItemRepository(db_manager)
         self.order_detail_repo = StockinRefundOrderDetailRepository(db_manager)
     
-    def save_batch(self, data_list: List[Dict], batch_size: int = 500) -> int:
+    def save_batch(self, data_list: List[Dict], batch_size: int = 500, debug: bool = False, progress_label: str = '', **kwargs) -> int:
         if not data_list:
             return 0
         
@@ -68,16 +68,18 @@ class StockinRefundDetailRepository(BaseRepository):
             stockin_list.append(stockin_copy)
         
         self.logger.info(f"提取到 {len(detail_list)} 条明细, {len(order_detail_list)} 条退款订单明细，开始保存入库单...")
-        count = super().save_batch(stockin_list, batch_size)
+        count = super().save_batch(stockin_list, batch_size, debug=debug, progress_label=progress_label)
         
         if detail_list:
             self.logger.info(f"开始保存 {len(detail_list)} 条入库单明细...")
-            self.detail_repo.save_batch(detail_list, batch_size)
+            sub_d = f"{progress_label}.detail" if progress_label else ""
+            self.detail_repo.save_batch(detail_list, batch_size, debug=debug, progress_label=sub_d)
             self.logger.info(f"保存入库单明细完成")
         
         if order_detail_list:
             self.logger.info(f"开始保存 {len(order_detail_list)} 条退款订单明细...")
-            self.order_detail_repo.save_batch(order_detail_list, batch_size)
+            sub_od = f"{progress_label}.order_detail" if progress_label else ""
+            self.order_detail_repo.save_batch(order_detail_list, batch_size, debug=debug, progress_label=sub_od)
             self.logger.info(f"保存退款订单明细完成")
         
         return count

@@ -104,14 +104,13 @@ class QimenClient:
         debug_print = _get_debug_print()
         
         if debug:
-            debug_print(f"      [API DEBUG] method: {method}")
-            debug_print(f"      [API DEBUG] params: {params}")
-            debug_print(f"      [API DEBUG] pager: {pager}")
+            debug_print(f"  [API] {method} pager={pager} params={params}")
         
         last_result = None
         
         for attempt in range(max_retries):
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+            t0 = time.time()
             
             # 构建参数
             api_params = self._build_api_params(params, pager, timestamp)
@@ -132,11 +131,7 @@ class QimenClient:
             # 构建请求URL
             request_url = f"{self.config.gateway_url}?{urlencode({k: str(v) for k, v in sys_params.items()})}"
             
-            # 发送请求
             try:
-                if debug:
-                    debug_print(f"      [API DEBUG] 发送请求中... (超时: {self.config.timeout}秒)")
-                
                 response = requests.post(
                     request_url,
                     data=api_params,
@@ -144,18 +139,19 @@ class QimenClient:
                     timeout=self.config.timeout
                 )
                 
-                if debug:
-                    debug_print(f"      [API DEBUG] HTTP状态码: {response.status_code}")
-                
                 result = response.json()
                 last_result = result.get('response', result)
                 
                 if debug:
-                    debug_print(f"      [API DEBUG] API status: {last_result.get('status')}, message: {last_result.get('message')}")
-                    # 如果有错误，打印完整响应
+                    elapsed = time.time() - t0
+                    debug_print(
+                        f"  [API] {method} http={response.status_code} "
+                        f"status={last_result.get('status')} msg={last_result.get('message')} "
+                        f"elapsed={elapsed:.2f}s"
+                    )
                     if last_result.get('status') is None:
                         import json as _json
-                        debug_print(f"      [API DEBUG] 完整响应: {_json.dumps(last_result, ensure_ascii=False, indent=2)}")
+                        debug_print(f"  [API] 完整响应: {_json.dumps(last_result, ensure_ascii=False)}")
                 
                 # 检查是否需要重试（status为None表示服务端错误）
                 status = last_result.get('status')
@@ -165,7 +161,7 @@ class QimenClient:
                 
                 if attempt < max_retries - 1:
                     if debug:
-                        debug_print(f"      [API DEBUG] status=None, 第{attempt + 1}次重试...")
+                        debug_print(f"  [API] status=None, 第{attempt + 1}次重试")
                     time.sleep(retry_delay * (attempt + 1))
                 
             except requests.exceptions.RequestException as e:
@@ -175,7 +171,7 @@ class QimenClient:
                 }
                 if attempt < max_retries - 1:
                     if debug:
-                        debug_print(f"      [API DEBUG] 网络异常, 第{attempt + 1}次重试...")
+                        debug_print(f"  [API] 网络异常 第{attempt + 1}次重试: {e}")
                     time.sleep(retry_delay * (attempt + 1))
                     
             except json.JSONDecodeError:

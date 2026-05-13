@@ -229,6 +229,26 @@ def get_job(job_id: str) -> Optional[dict]:
     return _jobs.get(job_id)
 
 
+def load_job_from_disk(job_id: str) -> Optional[dict]:
+    if not job_id or not os.path.exists(JOBS_FILE):
+        return None
+    try:
+        with open(JOBS_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        j = data.get(job_id)
+        return dict(j) if isinstance(j, dict) else None
+    except Exception:
+        return None
+
+
+def resolve_job_for_rerun(job_id: str) -> Optional[dict]:
+    with _lock:
+        j = _jobs.get(job_id)
+        if j:
+            return j
+    return load_job_from_disk(job_id)
+
+
 import re as _re
 
 _INFO_RE = _re.compile(r'\[(API )?DEBUG\]|\[INFO\]')

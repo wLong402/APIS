@@ -94,8 +94,7 @@ class BaseRepository(ABC):
         errors = 0
         sql = self.db.adapter.upsert_sql(table_name, col_names, unique_key[0] if unique_key and len(unique_key) == 1 else unique_key)
         label = progress_label or table_name
-        if debug:
-            debug_print(f"    [SAVE PROGRESS] {label} 开始落库，总量={total:,}，batch_size={batch_size}")
+        milestones = {int(total * p) for p in (0.25, 0.5, 0.75)} if total >= 4 else set()
         
         with self.db.get_connection() as conn:
             cursor = self.db.adapter.get_cursor(conn)
@@ -126,11 +125,9 @@ class BaseRepository(ABC):
                 try:
                     cursor.executemany(sql, batch_data)
                     count += len(batch_data)
-                    if debug:
-                        debug_print(
-                            f"    [SAVE PROGRESS] {label} 批次 {batch_end:,}/{total:,} "
-                            f"本批={len(batch_data):,} 累计成功={count:,}"
-                        )
+                    if debug and (batch_end == total or any(m and abs(batch_end - m) < batch_size for m in milestones)):
+                        pct = int(batch_end * 100 / total) if total else 100
+                        debug_print(f"  [SAVE] {label} {batch_end:,}/{total:,} ({pct}%)")
                 except Exception as e:
                     errors += len(batch_data)
                     self.logger.error(f"批量保存失败: {e}")
@@ -205,6 +202,7 @@ class BaseRepository(ABC):
                 INSERT ({insert_cols})
                 VALUES ({source_vals});
         """
+        milestones = {int(total * p) for p in (0.25, 0.5, 0.75)} if total >= 4 else set()
 
         for attempt in range(1, max_retries + 1):
             count = 0
@@ -242,11 +240,9 @@ class BaseRepository(ABC):
                         cursor.setinputsizes(input_sizes)
                         cursor.executemany(insert_sql, batch_data)
                         count += len(batch_data)
-                        if debug:
-                            debug_print(
-                                f"    [SAVE PROGRESS] {label} 批次 {batch_end:,}/{total:,} "
-                                f"本批={len(batch_data):,} 累计成功={count:,}"
-                            )
+                        if debug and (batch_end == total or any(m and abs(batch_end - m) < batch_size for m in milestones)):
+                            pct = int(batch_end * 100 / total) if total else 100
+                            debug_print(f"  [SAVE] {label} {batch_end:,}/{total:,} ({pct}%)")
 
                     self.db.adapter.commit(conn)
 

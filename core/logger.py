@@ -258,19 +258,12 @@ def log_empty_pages(api_name: str, time_range: str, empty_pages: list,
 
 def debug_print(msg: str, end: str = '\n', flush: bool = False):
     """
-    带时间戳的 DEBUG 打印函数
-    
-    Args:
-        msg: 要打印的消息
-        end: 行结尾符
-        flush: 是否立即刷新
-    
-    注意：如果消息以 \\r 开头（进度条覆盖模式），则不添加时间戳
+    带时间戳的 DEBUG 打印函数（精简：HH:MM:SS 前缀）
     """
-    # 进度条模式：以 \r 开头时不加时间戳，保证回车覆盖正常工作
     if msg.startswith('\r'):
         print(msg, end=end, flush=flush)
     else:
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        print(f"{timestamp} | {msg}", end=end, flush=flush)
+        timestamp = datetime.now().strftime('%H:%M:%S')
+        text = msg.lstrip()
+        print(f"{timestamp} {text}", end=end, flush=flush)
 

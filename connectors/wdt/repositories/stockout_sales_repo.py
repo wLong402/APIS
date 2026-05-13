@@ -17,7 +17,7 @@ class StockoutSalesDetailRepository(BaseRepository):
         super().__init__(db_manager)
         self.detail_item_repo = StockoutSalesDetailItemRepository(db_manager)
     
-    def save_batch(self, data_list: List[Dict], batch_size: int = 500) -> int:
+    def save_batch(self, data_list: List[Dict], batch_size: int = 500, debug: bool = False, progress_label: str = '', **kwargs) -> int:
         if not data_list:
             return 0
         
@@ -50,11 +50,12 @@ class StockoutSalesDetailRepository(BaseRepository):
             stockout_list.append(stockout_copy)
         
         self.logger.info(f"提取到 {len(detail_item_list)} 条明细，开始保存出库单...")
-        count = super().save_batch(stockout_list, batch_size)
+        count = super().save_batch(stockout_list, batch_size, debug=debug, progress_label=progress_label)
         
         if detail_item_list:
             self.logger.info(f"开始保存 {len(detail_item_list)} 条出库单明细...")
-            self.detail_item_repo.save_batch(detail_item_list, batch_size)
+            sub_lbl = f"{progress_label}.detail" if progress_label else ""
+            self.detail_item_repo.save_batch(detail_item_list, batch_size, debug=debug, progress_label=sub_lbl)
             self.logger.info(f"保存出库单明细完成")
         
         return count

@@ -115,8 +115,7 @@ class BillStandardQueryAPI:
             api_params['nextRequestId'] = next_request_id
         
         if debug:
-            debug_print(f"      [API DEBUG] method: {self.METHOD}")
-            debug_print(f"      [API DEBUG] params: {summarize_params(api_params)}")
+            debug_print(f"  [API] {self.METHOD} {summarize_params(api_params)}")
         
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         
@@ -143,11 +142,9 @@ class BillStandardQueryAPI:
         
         headers = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
         
-        if debug:
-            debug_print(f"      [REQUEST DEBUG] method=POST, params={summarize_params(api_params)}")
-        
         max_retries = 3
         for attempt in range(max_retries):
+            t0 = time.time()
             try:
                 response = requests.post(
                     request_url,
@@ -160,17 +157,19 @@ class BillStandardQueryAPI:
                 resp_data = result.get('response', result)
                 
                 if debug:
+                    data_count = len(resp_data.get('data') or []) if isinstance(resp_data, dict) else 0
                     debug_print(
-                        f"      [RESPONSE DEBUG] {summarize_response(resp_data, api_params=api_params, http_status=response.status_code)}"
+                        f"  [API] {self.METHOD} http={response.status_code} "
+                        f"resultCode={resp_data.get('resultCode')} count={data_count} "
+                        f"elapsed={time.time()-t0:.2f}s"
                     )
                 
-                # 检查是否需要重试（没有 resultCode 或系统繁忙）
                 result_code = resp_data.get('resultCode')
                 msg = resp_data.get('message', '')
                 if result_code is None or '繁忙' in msg or 'busy' in msg.lower():
                     if attempt < max_retries - 1:
                         if debug:
-                            debug_print(f"      [API DEBUG] 响应异常，{attempt+1}/{max_retries} 次重试...")
+                            debug_print(f"  [API] 响应异常，{attempt+1}/{max_retries} 次重试")
                         time.sleep(1)
                         continue
                 
@@ -181,7 +180,7 @@ class BillStandardQueryAPI:
                     time.sleep(1)
                     continue
                 if debug:
-                    debug_print(f"      [API DEBUG] 请求失败: {e}")
+                    debug_print(f"  [API] 请求失败: {e}")
                 return {'resultCode': 'error', 'message': str(e)}
             except json.JSONDecodeError:
                 return {'resultCode': 'error', 'message': '响应不是有效的JSON格式'}

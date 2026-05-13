@@ -91,8 +91,7 @@ class BkShareDataQueryAPI:
         api_params['hjySign'] = hjy_sign
 
         if debug:
-            debug_print(f"      [API DEBUG] method: {self.METHOD}")
-            debug_print(f"      [API DEBUG] params: {summarize_params(api_params)}")
+            debug_print(f"  [API] {self.METHOD} {summarize_params(api_params)}")
 
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         sys_params = {
@@ -117,6 +116,7 @@ class BkShareDataQueryAPI:
 
         max_retries = 3
         for attempt in range(max_retries):
+            t0 = time.time()
             try:
                 response = requests.post(
                     request_url,
@@ -128,8 +128,11 @@ class BkShareDataQueryAPI:
                 resp_data = result.get('response', result)
 
                 if debug:
+                    data_count = len(resp_data.get('data') or []) if isinstance(resp_data, dict) else 0
                     debug_print(
-                        f"      [RESPONSE DEBUG] {summarize_response(resp_data, api_params=api_params, http_status=response.status_code)}"
+                        f"  [API] {self.METHOD} http={response.status_code} "
+                        f"resultCode={resp_data.get('resultCode')} count={data_count} "
+                        f"elapsed={time.time()-t0:.2f}s"
                     )
 
                 result_code = resp_data.get('resultCode')

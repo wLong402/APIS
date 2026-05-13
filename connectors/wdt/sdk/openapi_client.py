@@ -71,14 +71,10 @@ class OpenAPIClient:
         request_url = f"{self.GATEWAY_URL}?{urlencode(url_params)}"
         
         if debug:
-            debug_print(f"      [API DEBUG] method: {method}")
-            debug_print(f"      [API DEBUG] params: {params}")
-            debug_print(f"      [API DEBUG] pager: {pager}")
+            debug_print(f"  [API] {method} pager={pager} params={params}")
         
+        t0 = time.time()
         try:
-            if debug:
-                debug_print(f"      [API DEBUG] 发送请求中... (超时: {self.config.timeout}秒)")
-            
             response = requests.post(
                 request_url,
                 data=body_json,
@@ -86,13 +82,14 @@ class OpenAPIClient:
                 timeout=self.config.timeout
             )
             
-            if debug:
-                debug_print(f"      [API DEBUG] HTTP状态码: {response.status_code}")
-            
             result = response.json()
             
             if debug:
-                debug_print(f"      [API DEBUG] API status: {result.get('status')}, message: {result.get('message')}")
+                debug_print(
+                    f"  [API] {method} http={response.status_code} "
+                    f"status={result.get('status')} msg={result.get('message')} "
+                    f"elapsed={time.time()-t0:.2f}s"
+                )
             
             return result
             

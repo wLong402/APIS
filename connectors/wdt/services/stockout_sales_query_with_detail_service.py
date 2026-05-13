@@ -2,6 +2,7 @@
 
 from typing import List, Dict
 
+from core.logger import debug_print
 from common.base_service import BasePullService
 from ..client import WdtClient, get_wdt_client
 from ..repositories import StockoutSalesDetailRepository
@@ -25,8 +26,8 @@ class StockoutSalesQueryWithDetailPullService(BasePullService):
         page_size = kwargs.get('page_size', 200)
         
         if debug:
-            print(f"    [DEBUG] 请求: {start_time} ~ {end_time}")
-            print(f"    [DEBUG] 调用 API: {self.client.stockout_sales_query_with_detail_api.METHOD}")
+            debug_print(f"    [DEBUG] 请求: {start_time} ~ {end_time}")
+            debug_print(f"    [DEBUG] 调用 API: {self.client.stockout_sales_query_with_detail_api.METHOD}")
         
         first_result = self.client.stockout_sales_query_with_detail_api.query(
             start_time=start_time,
@@ -42,7 +43,7 @@ class StockoutSalesQueryWithDetailPullService(BasePullService):
         
         if str(first_result.get('status')) != '0':
             if debug:
-                print(f"    [DEBUG] API错误: {first_result.get('message')}")
+                debug_print(f"    [DEBUG] API错误: {first_result.get('message')}")
             return []
         
         data = first_result.get('data', {})
@@ -50,7 +51,7 @@ class StockoutSalesQueryWithDetailPullService(BasePullService):
         first_orders = data.get('order', [])
         
         if debug:
-            print(f"    [DEBUG] 总数: {total_count}, 第1页: {len(first_orders)}条")
+            debug_print(f"    [DEBUG] 总数: {total_count}, 第1页: {len(first_orders)}条")
         
         if total_count == 0:
             return []
@@ -59,14 +60,14 @@ class StockoutSalesQueryWithDetailPullService(BasePullService):
         
         if total_pages == 1:
             if debug and first_orders:
-                print(f"    [DEBUG] 第一条数据的字段: {list(first_orders[0].keys())}")
+                debug_print(f"    [DEBUG] 第一条数据的字段: {list(first_orders[0].keys())}")
             return first_orders
         
         all_stockouts = list(first_orders)
         
         for page_no in range(2, total_pages + 1):
             if debug:
-                print(f"    [DEBUG] 请求第 {page_no}/{total_pages} 页...")
+                debug_print(f"    [DEBUG] 请求第 {page_no}/{total_pages} 页...")
             
             result = self.client.stockout_sales_query_with_detail_api.query(
                 start_time=start_time,
@@ -85,6 +86,6 @@ class StockoutSalesQueryWithDetailPullService(BasePullService):
                 all_stockouts.extend(stockouts)
         
         if debug:
-            print(f"    [DEBUG] 共获取 {len(all_stockouts)} 条")
+            debug_print(f"    [DEBUG] 共获取 {len(all_stockouts)} 条")
         
         return all_stockouts

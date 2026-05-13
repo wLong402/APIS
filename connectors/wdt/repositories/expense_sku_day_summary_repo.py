@@ -22,7 +22,7 @@ class ExpenseSkuDaySummaryRepository(BaseRepository):
         raw = json.dumps(item, sort_keys=True, ensure_ascii=False, default=str)
         return hashlib.md5(raw.encode('utf-8')).hexdigest()
 
-    def save_batch(self, data_list: List[Dict], batch_size: int = 500) -> int:
+    def save_batch(self, data_list: List[Dict], batch_size: int = 500, debug: bool = False, progress_label: str = '', **kwargs) -> int:
         if not data_list:
             return 0
 
@@ -61,11 +61,12 @@ class ExpenseSkuDaySummaryRepository(BaseRepository):
                     detail_list.append(d_copy)
 
         self.logger.info(f"提取到 {len(detail_list)} 条明细，开始保存主单...")
-        count = super().save_batch(master_list, batch_size)
+        count = super().save_batch(master_list, batch_size, debug=debug, progress_label=progress_label)
 
         if detail_list:
             self.logger.info(f"开始保存 {len(detail_list)} 条明细...")
-            self.detail_repo.save_batch(detail_list, batch_size)
+            sub_lbl = f"{progress_label}.detail" if progress_label else ""
+            self.detail_repo.save_batch(detail_list, batch_size, debug=debug, progress_label=sub_lbl)
             self.logger.info(f"保存账单商品分摊日汇总明细完成")
 
         return count

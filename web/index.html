@@ -106,6 +106,10 @@
   .log .tag-request-debug { color: #a5b4fc; font-weight: 600; }
   .log .tag-response-debug { color: #22d3ee; font-weight: 600; }
   .log .tag-info { color: #34d399; font-weight: 600; }
+  .log .tag-progress { color: #c084fc; font-weight: 600; }
+  .log .tag-save-progress { color: #2dd4bf; font-weight: 600; }
+  .log .tag-api { color: #93c5fd; font-weight: 600; }
+  .log .tag-save { color: #2dd4bf; font-weight: 600; }
   .log .tag-error { color: #fb7185; font-weight: 700; }
   .log .tag-warning { color: #fbbf24; font-weight: 700; }
   .log .hl { background: #ff5570; color: #fff; padding: 0 2px; border-radius: 2px; }
@@ -742,7 +746,7 @@ function scrollToAbsLine(panelKey, absZero) {
 }
 
 function classifyLine(line) {
-  if (/\[(API|REQUEST|RESPONSE)?\s*DEBUG\]|\[INFO\]/.test(line)) return 'ln-info';
+  if (/\[(API|REQUEST|RESPONSE|SAVE)?\s*(DEBUG)?\]|\[INFO\]|\[PROGRESS\]|\[SAVE PROGRESS\]/.test(line)) return 'ln-info';
   if (ERR_PATTERNS.some(r => r.test(line))) return 'ln-err';
   if (WARN_PATTERNS.some(r => r.test(line))) return 'ln-warn';
   let m = line.match(FETCH_SAVE_RE);
@@ -764,6 +768,10 @@ function colorizeLogTags(escapedText) {
     .replace(/\[RESPONSE DEBUG\]/g, '<span class="tag-response-debug">[RESPONSE DEBUG]</span>')
     .replace(/\[REQUEST DEBUG\]/g, '<span class="tag-request-debug">[REQUEST DEBUG]</span>')
     .replace(/\[API DEBUG\]/g, '<span class="tag-api-debug">[API DEBUG]</span>')
+    .replace(/\[SAVE PROGRESS\]/g, '<span class="tag-save-progress">[SAVE PROGRESS]</span>')
+    .replace(/\[PROGRESS\]/g, '<span class="tag-progress">[PROGRESS]</span>')
+    .replace(/\[SAVE\]/g, '<span class="tag-save">[SAVE]</span>')
+    .replace(/\[API\]/g, '<span class="tag-api">[API]</span>')
     .replace(/\[DEBUG\]/g, '<span class="tag-debug">[DEBUG]</span>')
     .replace(/\[INFO\]/g, '<span class="tag-info">[INFO]</span>')
     .replace(/\[ERROR\]/g, '<span class="tag-error">[ERROR]</span>')
@@ -902,7 +910,7 @@ const WDT_SERVICE_ADVANCED_PARAMS = {
   profits_order: ['scheme-name', 'terms-income', 'cost-type', 'stat-mode', 'order-way', 'original-order', 'plat-order-nos', 'erp-order-nos', 'shop-nos'],
   profits_live_sku: ['scheme-name', 'terms-income', 'composite-dim', 'split-suite', 'cost-type', 'shop-nos'],
   profits_live_order: ['terms-income', 'cost-type', 'shop-nos', 'order-tools'],
-  profits_live_refund: ['scheme-name', 'terms-income', 'cost-type', 'shop-nos', 'order-tools'],
+  profits_live_refund: ['terms-income', 'stat-mode', 'cost-type', 'shop-nos', 'order-tools'],
   marketing_share_result: ['spec-no', 'project'],
   expense_sku_day_summary: ['summary-no', 'expense-item-name'],
   sht_recon_detail: ['shop-no', 'shop-nos', 'period-mark', 'reco-status'],
@@ -1136,6 +1144,7 @@ async function loadJobs() {
       <td title="${statusHint(j.status, j.exit_code)}">${j.exit_code === null ? '-' : j.exit_code}</td>
       <td>
         <button class="ghost" onclick="viewJobLog('${j.id}')">日志</button>
+        <button class="ghost" onclick="rerunJob('${j.id}')">重跑</button>
         ${j.status === 'running' ? `<button class="warn" onclick="stopJob('${j.id}')">停止</button>` : ''}
       </td>
     </tr>
@@ -1181,6 +1190,21 @@ async function stopJob(id) {
     toast('已发送停止信号', 'success');
     loadJobs();
   } catch (e) { toast(e.message, 'error'); }
+}
+
+async function rerunJob(id) {
+  try {
+    const job = await api('/api/jobs/rerun', { method: 'POST', body: { from_job_id: id } });
+    toast('已重新启动: ' + job.id, 'success');
+    loadJobs();
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelector('.tab[data-tab="run"]').classList.add('active');
+    ['run', 'schedules', 'jobs'].forEach(n => $('tab-' + n).classList.add('hidden'));
+    $('tab-run').classList.remove('hidden');
+    openLog(job);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
 }
 
 async function loadSchedules() {

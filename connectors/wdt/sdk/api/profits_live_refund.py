@@ -52,7 +52,6 @@ class ProfitsLiveRefundQueryAPI:
         self,
         start_date: str,
         end_date: str,
-        scheme_name: str,
         terms_income: str,
         stat_mode: str,
         shop_nos: Optional[str] = None,
@@ -68,7 +67,6 @@ class ProfitsLiveRefundQueryAPI:
             'sid': self.hjy_sid,
             'startDate': start_date,
             'endDate': end_date,
-            'schemeName': scheme_name,
             'termsIncome': str(terms_income),
             'statMode': str(stat_mode),
         }
@@ -151,7 +149,6 @@ class ProfitsLiveRefundQueryAPI:
         self,
         start_date: str,
         end_date: str,
-        scheme_name: str,
         terms_income: str,
         stat_mode: str,
         shop_nos: Optional[str] = None,
@@ -171,7 +168,6 @@ class ProfitsLiveRefundQueryAPI:
             result = self.query(
                 start_date=start_date,
                 end_date=end_date,
-                scheme_name=scheme_name,
                 terms_income=terms_income,
                 stat_mode=stat_mode,
                 shop_nos=shop_nos,

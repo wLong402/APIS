@@ -45,8 +45,8 @@ class FollowStaffRepository:
             return ''
         return f"{user_id}_{staff_id}"
     
-    def save_batch(self, data_list: List[Dict], batch_size: int = 500, 
-                   debug: bool = False) -> int:
+    def save_batch(self, data_list: List[Dict], batch_size: int = 500,
+                   debug: bool = False, progress_label: str = '', **kwargs) -> int:
         """
         批量保存数据
         

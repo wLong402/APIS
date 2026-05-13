@@ -135,7 +135,6 @@ def _preview_data(payload: dict, limit: int = 5) -> dict:
             resp = service.profits_live_refund_api.query(
                 start_date=start_date,
                 end_date=end_date,
-                scheme_name=payload.get('scheme_name') or '系统方案',
                 terms_income=str(payload.get('terms_income') or '1'),
                 stat_mode=str(payload.get('stat_mode') or '1'),
                 shop_nos=payload.get('shop_nos'),
@@ -334,6 +333,22 @@ def api_jobs():
     return jsonify(jobs_mod.list_jobs(limit=int(request.args.get('limit', 100))))
 
 
+@app.post('/api/jobs/rerun')
+def api_job_rerun_post():
+    data = request.get_json(force=True) or {}
+    job_id = (data.get('from_job_id') or data.get('job_id') or '').strip()
+    if not job_id:
+        return jsonify({'error': 'from_job_id 必填'}), 400
+    j = jobs_mod.resolve_job_for_rerun(job_id)
+    if not j:
+        return jsonify({'error': 'not found'}), 404
+    payload = j.get('payload') or {}
+    if not payload.get('connector') or not payload.get('service'):
+        return jsonify({'error': '历史任务缺少 connector/service，无法重跑'}), 400
+    job = jobs_mod.run_job(payload, source='manual')
+    return jsonify(job)
+
+
 @app.get('/api/jobs/<job_id>')
 def api_job_detail(job_id):
     j = jobs_mod.get_job(job_id)
@@ -368,6 +383,18 @@ def api_job_summary(job_id):
 def api_job_stop(job_id):
     ok = jobs_mod.stop_job(job_id)
     return jsonify({'ok': ok})
+
+
+@app.post('/api/jobs/<job_id>/rerun')
+def api_job_rerun(job_id):
+    j = jobs_mod.resolve_job_for_rerun(job_id)
+    if not j:
+        return jsonify({'error': 'not found'}), 404
+    payload = j.get('payload') or {}
+    if not payload.get('connector') or not payload.get('service'):
+        return jsonify({'error': '历史任务缺少 connector/service，无法重跑'}), 400
+    job = jobs_mod.run_job(payload, source='manual')
+    return jsonify(job)
 
 
 @app.get('/api/schedules')
