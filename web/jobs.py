@@ -71,6 +71,8 @@ def build_command(payload: dict) -> List[str]:
         'start': '--start',
         'end': '--end',
         'past_days': '--past-days',
+        'past_value': '--past',
+        'past_unit': '--past-unit',
         'interval': '--interval',
         'shop_no': '--shop-no',
         'page_size': '--page-size',
@@ -108,6 +110,10 @@ def build_command(payload: dict) -> List[str]:
     for k, flag in mapping.items():
         v = payload.get(k)
         if v in (None, '', False):
+            continue
+        if k == 'past_days' and payload.get('past_value') not in (None, ''):
+            continue
+        if k == 'past_unit' and payload.get('past_value') in (None, ''):
             continue
         cmd.extend([flag, str(v)])
 

@@ -283,15 +283,15 @@ class RawTradeSearchAPI:
         empty_page_list = []  # 记录返回空数据的页码
         
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # 从最后一页往前提交请求（total_pages, total_pages-1, ..., 2, 1）
-            # 倒序提交可以让后面的页先完成，减少分页偏移影响
-            page_order = list(range(total_pages, 0, -1))  # [total_pages, ..., 2, 1]
+            page_order = list(range(total_pages, 0, -1))
             futures = {executor.submit(fetch_page, p): p for p in page_order}
-            
+
             completed = 0
             total_fetched = 0
-            empty_pages = 0  # 记录返回空数据的页数
-            
+            empty_pages = 0
+            milestones = sorted({max(1, total_pages * p // 100) for p in (25, 50, 75, 100)})
+            next_ms_idx = 0
+
             for future in as_completed(futures):
                 page_no, orders, error = future.result()
                 if error:
@@ -303,13 +303,11 @@ class RawTradeSearchAPI:
                         empty_page_list.append(page_no)
                     total_fetched += len(orders)
                 completed += 1
-                if debug:
-                    # 进度条显示（从后往前）
+                if debug and next_ms_idx < len(milestones) and completed >= milestones[next_ms_idx]:
                     progress = completed / total_pages * 100
-                    debug_print(f"\r    [DEBUG] 进度: {completed}/{total_pages} ({progress:.1f}%) | 已获取: {total_fetched} 条 | 空页: {empty_pages}    ", end='', flush=True)
-            
-            if debug:
-                print()  # 换行
+                    debug_print(f"    [PROGRESS] raw_trade 进度: {completed}/{total_pages} ({progress:.0f}%) | 已获取 {total_fetched} 条 | 空页 {empty_pages}")
+                    while next_ms_idx < len(milestones) and completed >= milestones[next_ms_idx]:
+                        next_ms_idx += 1
         
         if debug:
             if failed_pages:
@@ -342,13 +340,10 @@ class RawTradeSearchAPI:
                     if not error and len(orders) > 0:
                         all_orders[page_no] = orders
                         recovered += 1
-                        if debug:
-                            debug_print(f"\r    [DEBUG] 重试第{retry_round+1}轮: 第{page_no}页恢复 {len(orders)} 条", end='', flush=True)
                     else:
                         still_empty.append(page_no)
                 
                 if debug and recovered > 0:
-                    print()
                     debug_print(f"    [DEBUG] 重试第{retry_round+1}轮完成: 恢复 {recovered} 页，剩余 {len(still_empty)} 页为空")
                 
                 empty_page_list = still_empty
@@ -711,14 +706,15 @@ class TradeQueryAPI:
         empty_page_list = []  # 记录返回空数据的页码
         
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # 从最后一页往前提交请求（total_pages, ..., 2, 1）
             page_order = list(range(total_pages, 0, -1))
             futures = {executor.submit(fetch_page, p): p for p in page_order}
-            
+
             completed = 0
             total_fetched = 0
             empty_pages = 0
-            
+            milestones = sorted({max(1, total_pages * p // 100) for p in (25, 50, 75, 100)})
+            next_ms_idx = 0
+
             for future in as_completed(futures):
                 page_no, orders, error = future.result()
                 if error:
@@ -730,13 +726,11 @@ class TradeQueryAPI:
                         empty_page_list.append(page_no)
                     total_fetched += len(orders)
                 completed += 1
-                if debug:
-                    # 进度条显示
+                if debug and next_ms_idx < len(milestones) and completed >= milestones[next_ms_idx]:
                     progress = completed / total_pages * 100
-                    debug_print(f"\r    [DEBUG] 进度: {completed}/{total_pages} ({progress:.1f}%) | 已获取: {total_fetched} 条 | 空页: {empty_pages}    ", end='', flush=True)
-            
-            if debug:
-                print()
+                    debug_print(f"    [PROGRESS] erp_trade 进度: {completed}/{total_pages} ({progress:.0f}%) | 已获取 {total_fetched} 条 | 空页 {empty_pages}")
+                    while next_ms_idx < len(milestones) and completed >= milestones[next_ms_idx]:
+                        next_ms_idx += 1
         
         if debug:
             if failed_pages:
@@ -768,13 +762,10 @@ class TradeQueryAPI:
                     if not error and len(orders) > 0:
                         all_orders[page_no] = orders
                         recovered += 1
-                        if debug:
-                            debug_print(f"\r    [DEBUG] 重试第{retry_round+1}轮: 第{page_no}页恢复 {len(orders)} 条", end='', flush=True)
                     else:
                         still_empty.append(page_no)
                 
                 if debug and recovered > 0:
-                    print()
                     debug_print(f"    [DEBUG] 重试第{retry_round+1}轮完成: 恢复 {recovered} 页，剩余 {len(still_empty)} 页为空")
                 
                 empty_page_list = still_empty
@@ -985,14 +976,16 @@ class HistoryTradeQueryAPI:
         
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {executor.submit(fetch_page, p): p for p in range(2, total_pages + 1)}
+            milestones = sorted({max(1, total_pages * p // 100) for p in (25, 50, 75, 100)})
+            next_ms_idx = 0
             for future in as_completed(futures):
                 page_no, orders, error = future.result()
                 if not error:
                     all_orders[page_no] = orders
-                if debug:
-                    debug_print(f"\r    [DEBUG] 进度: {len(all_orders)}/{total_pages}", end='', flush=True)
-            if debug:
-                print()
+                if debug and next_ms_idx < len(milestones) and len(all_orders) >= milestones[next_ms_idx]:
+                    debug_print(f"    [PROGRESS] history_trade 进度: {len(all_orders)}/{total_pages}")
+                    while next_ms_idx < len(milestones) and len(all_orders) >= milestones[next_ms_idx]:
+                        next_ms_idx += 1
         
         result = []
         for p in sorted(all_orders.keys()):
@@ -1028,6 +1021,9 @@ class HistoryTradeQueryAPI:
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {executor.submit(self.query_all, s, e, shop_no, time_type, page_size, debug): (s, e) for s, e in intervals}
             completed = 0
+            total = len(intervals)
+            milestones = sorted({max(1, total * p // 100) for p in (25, 50, 75, 100)})
+            next_ms_idx = 0
             for future in as_completed(futures):
                 try:
                     orders = future.result()
@@ -1036,10 +1032,10 @@ class HistoryTradeQueryAPI:
                     if debug:
                         debug_print(f"    [DEBUG] 区间查询失败: {e}")
                 completed += 1
-                if debug:
-                    debug_print(f"\r    [DEBUG] 进度: {completed}/{len(intervals)} | 已获取: {len(all_orders)} 条", end='', flush=True)
-            if debug:
-                print()
+                if debug and next_ms_idx < len(milestones) and completed >= milestones[next_ms_idx]:
+                    debug_print(f"    [PROGRESS] 区间进度: {completed}/{total} | 已获取 {len(all_orders)} 条")
+                    while next_ms_idx < len(milestones) and completed >= milestones[next_ms_idx]:
+                        next_ms_idx += 1
         
         if debug:
             debug_print(f"    [DEBUG] 查询完成，共 {len(all_orders)} 条")

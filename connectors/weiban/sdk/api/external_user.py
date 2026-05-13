@@ -218,7 +218,9 @@ class ExternalUserAPI:
             completed = 0
             total_fetched = 0
             empty_pages = 0
-            
+            milestones = sorted({max(1, total_pages * p // 100) for p in (25, 50, 75, 100)})
+            next_ms_idx = 0
+
             for future in as_completed(futures):
                 page_offset, users, error = future.result()
                 if error:
@@ -227,18 +229,14 @@ class ExternalUserAPI:
                     all_users_dict[page_offset] = users
                     if len(users) == 0:
                         empty_pages += 1
-                        empty_page_list.append(page_offset // limit + 1)  # 页码从1开始
+                        empty_page_list.append(page_offset // limit + 1)
                     total_fetched += len(users)
                 completed += 1
-                if debug:
-                    # 进度条显示
+                if debug and next_ms_idx < len(milestones) and completed >= milestones[next_ms_idx]:
                     progress = completed / total_pages * 100
-                    avg_per_page = total_fetched / completed if completed > 0 else 0
-                    debug_print(f"\r    [DEBUG] 进度: {completed}/{total_pages} ({progress:.1f}%) | 已获取: {total_fetched} 条 | 平均: {avg_per_page:.1f}条/页 | 空页: {empty_pages}    ", 
-                               end='', flush=True)
-            
-            if debug:
-                print()  # 换行
+                    debug_print(f"    [PROGRESS] external_user 进度: {completed}/{total_pages} ({progress:.0f}%) | 已获取 {total_fetched} 条 | 空页 {empty_pages}")
+                    while next_ms_idx < len(milestones) and completed >= milestones[next_ms_idx]:
+                        next_ms_idx += 1
         
         if debug:
             if failed_pages:
@@ -272,14 +270,10 @@ class ExternalUserAPI:
                     if not error and len(users) > 0:
                         all_users_dict[page_offset] = users
                         recovered += 1
-                        if debug:
-                            debug_print(f"\r    [DEBUG] 重试第{retry_round+1}轮: 第{page_no}页恢复 {len(users)} 条", 
-                                       end='', flush=True)
                     else:
                         still_empty.append(page_no)
                 
                 if debug and recovered > 0:
-                    print()
                     debug_print(f"    [DEBUG] 重试第{retry_round+1}轮完成: 恢复 {recovered} 页，剩余 {len(still_empty)} 页为空")
                 
                 empty_page_list = still_empty
@@ -429,7 +423,9 @@ class ExternalUserAPI:
             
             completed = 0
             total_fetched = 0
-            
+            milestones = sorted({max(1, total_batches * p // 100) for p in (25, 50, 75, 100)})
+            next_ms_idx = 0
+
             for future in as_completed(futures):
                 batch_idx, users, error = future.result()
                 if error:
@@ -438,14 +434,11 @@ class ExternalUserAPI:
                     all_users.extend(users)
                     total_fetched += len(users)
                 completed += 1
-                
-                if debug:
+                if debug and next_ms_idx < len(milestones) and completed >= milestones[next_ms_idx]:
                     progress = completed / total_batches * 100
-                    debug_print(f"\r    [DEBUG] 进度: {completed}/{total_batches} ({progress:.1f}%) | 已获取: {total_fetched} 条    ", 
-                               end='', flush=True)
-            
-            if debug:
-                print()
+                    debug_print(f"    [PROGRESS] external_user 详情进度: {completed}/{total_batches} ({progress:.0f}%) | 已获取 {total_fetched} 条")
+                    while next_ms_idx < len(milestones) and completed >= milestones[next_ms_idx]:
+                        next_ms_idx += 1
         
         # 重试失败的批次
         if failed_batches:

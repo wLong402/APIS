@@ -95,9 +95,16 @@
     background: var(--code); color: var(--log-text); font-family: Consolas, "Cascadia Code",
                 Monaco, monospace; font-size: 12px;
     padding: 12px; border-radius: 6px; overflow: auto; height: 480px;
-    box-sizing: border-box;
+    box-sizing: border-box; white-space: pre;
   }
-  .log-slot { overflow: visible; white-space: pre; box-sizing: border-box; min-width: 100%; }
+  .log-pager {
+    display: flex; gap: 6px; align-items: center; margin-top: 8px;
+    padding: 6px 8px; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 12px; flex-wrap: wrap;
+  }
+  .log-pager button { padding: 4px 10px; font-size: 12px; }
+  .log-pager input { padding: 3px 6px; font-size: 12px; }
+  .log-pager button.warn { background: var(--warn); color: #1a1a1a; }
   .log .ln-row { box-sizing: border-box; padding: 0; margin: 0; white-space: pre;
                  min-height: 18px; line-height: 18px; }
   .log .ln-err, .log .ln-warn, .log .ln-info { color: inherit; background: none; display: inline; padding: 0; border-radius: 0; }
@@ -219,9 +226,19 @@
           </div>
         </div>
         <div class="row" style="margin-top: 8px;">
-          <div class="col">
-            <label>过去N天 (优先)</label>
-            <input id="run-past-days" type="number" min="0" placeholder="留空" />
+          <div class="col" style="flex: 1 1 260px;">
+            <label>回溯时间 (优先)</label>
+            <div style="display:flex; gap:8px;">
+              <input id="run-past-value" type="number" min="0" step="any" placeholder="留空" style="flex:1;" />
+              <select id="run-past-unit" style="width:88px;">
+                <option value="second">秒</option>
+                <option value="minute">分</option>
+                <option value="hour">时</option>
+                <option value="day" selected>天</option>
+                <option value="week">周</option>
+                <option value="month">月</option>
+              </select>
+            </div>
           </div>
           <div class="col">
             <label>间隔(秒)</label>
@@ -302,7 +319,19 @@
           <button class="ghost" onclick="closeCurrentLog()">关闭</button>
         </div>
         <div class="help hidden" id="run-log-hint"></div>
-        <div class="log" id="run-log"><div id="run-log-slot" class="log-slot"></div></div>
+        <div class="log" id="run-log"></div>
+        <div class="log-pager" id="run-log-pager">
+          <button class="ghost" onclick="logPagerFirst('run')" title="首页">⏮</button>
+          <button class="ghost" id="run-log-pager-prev" onclick="logPagerPrev('run')">← 上一页</button>
+          <span>第</span>
+          <input id="run-log-page-input" type="number" min="1" style="width:60px;text-align:center;" onchange="logPagerJump('run')" />
+          <span>/ <span id="run-log-pager-total">1</span> 页</span>
+          <button class="ghost" id="run-log-pager-next" onclick="logPagerNext('run')">下一页 →</button>
+          <button class="ghost" onclick="logPagerLast('run')" title="末页">⏭</button>
+          <span id="run-log-pager-info" style="color:var(--muted);"></span>
+          <div class="grow"></div>
+          <button class="ghost" id="run-log-follow-btn" onclick="toggleLogFollow('run')">跟随末页：开</button>
+        </div>
         <details id="run-summary-wrap" style="margin-top:10px;">
           <summary>错误 / 警告 摘要（点击展开）</summary>
           <div id="run-summary" style="margin-top:8px;"></div>
@@ -342,7 +371,47 @@
         <div class="toolbar">
           <h2 style="margin:0;">任务记录</h2>
           <div class="grow"></div>
+          <span class="pill" id="jobs-filter-count" style="color:var(--muted);"></span>
+          <button class="ghost" onclick="resetJobsFilter()">清空筛选</button>
           <button class="ghost" onclick="loadJobs()">刷新</button>
+        </div>
+        <div class="row" style="margin-bottom:10px; align-items:flex-end;">
+          <div class="col" style="flex:1 1 160px;">
+            <label>关键字</label>
+            <input id="jobs-filter-kw" placeholder="服务/ID/命令..." oninput="applyJobsFilter()" />
+          </div>
+          <div class="col" style="flex:0 1 120px;">
+            <label>连接器</label>
+            <select id="jobs-filter-connector" onchange="onJobsFilterConnectorChange(); applyJobsFilter();">
+              <option value="">全部</option>
+            </select>
+          </div>
+          <div class="col" style="flex:1 1 180px;">
+            <label>服务</label>
+            <select id="jobs-filter-service" onchange="applyJobsFilter()">
+              <option value="">全部</option>
+            </select>
+          </div>
+          <div class="col" style="flex:0 1 100px;">
+            <label>状态</label>
+            <select id="jobs-filter-status" onchange="applyJobsFilter()">
+              <option value="">全部</option>
+              <option value="running">running</option>
+              <option value="success">success</option>
+              <option value="warning">warning</option>
+              <option value="failed">failed</option>
+              <option value="stopped">stopped</option>
+            </select>
+          </div>
+          <div class="col" style="flex:0 1 120px;">
+            <label>来源</label>
+            <select id="jobs-filter-source" onchange="applyJobsFilter()">
+              <option value="">全部</option>
+              <option value="manual">manual</option>
+              <option value="schedule">schedule</option>
+              <option value="schedule_manual">schedule_manual</option>
+            </select>
+          </div>
         </div>
         <div class="table-scroll">
           <table>
@@ -375,7 +444,19 @@
           <button class="ghost" onclick="closeJobsLog()">关闭</button>
         </div>
         <div class="help hidden" id="jobs-log-hint"></div>
-        <div class="log" id="jobs-log"><div id="jobs-log-slot" class="log-slot"></div></div>
+        <div class="log" id="jobs-log"></div>
+        <div class="log-pager" id="jobs-log-pager">
+          <button class="ghost" onclick="logPagerFirst('jobs')" title="首页">⏮</button>
+          <button class="ghost" id="jobs-log-pager-prev" onclick="logPagerPrev('jobs')">← 上一页</button>
+          <span>第</span>
+          <input id="jobs-log-page-input" type="number" min="1" style="width:60px;text-align:center;" onchange="logPagerJump('jobs')" />
+          <span>/ <span id="jobs-log-pager-total">1</span> 页</span>
+          <button class="ghost" id="jobs-log-pager-next" onclick="logPagerNext('jobs')">下一页 →</button>
+          <button class="ghost" onclick="logPagerLast('jobs')" title="末页">⏭</button>
+          <span id="jobs-log-pager-info" style="color:var(--muted);"></span>
+          <div class="grow"></div>
+          <button class="ghost" id="jobs-log-follow-btn" onclick="toggleLogFollow('jobs')">跟随末页：开</button>
+        </div>
         <details id="jobs-summary-wrap" style="margin-top:10px;" open>
           <summary>错误 / 警告 摘要（点击展开）</summary>
           <div id="jobs-summary" style="margin-top:8px;"></div>
@@ -438,9 +519,19 @@
           <label>结束日期</label>
           <input id="sm-end" placeholder="留空=当天" />
         </div>
-        <div class="col">
-          <label>过去N天</label>
-          <input id="sm-past-days" type="number" placeholder="留空" />
+        <div class="col" style="flex: 1 1 260px;">
+          <label>回溯时间</label>
+          <div style="display:flex; gap:8px;">
+            <input id="sm-past-value" type="number" min="0" step="any" placeholder="留空" style="flex:1;" />
+            <select id="sm-past-unit" style="width:88px;">
+              <option value="second">秒</option>
+              <option value="minute">分</option>
+              <option value="hour">时</option>
+              <option value="day" selected>天</option>
+              <option value="week">周</option>
+              <option value="month">月</option>
+            </select>
+          </div>
         </div>
         <div class="col">
           <label>间隔(秒)</label>
@@ -510,6 +601,7 @@ let currentJobId = null;
 let logTimer = null;
 let jobsLogTimer = null;
 let currentJobsLogId = null;
+let allJobsList = [];
 let editingScheduleId = null;
 let currentTheme = 'light';
 
@@ -539,47 +631,57 @@ const WARN_PATTERNS = [
 ];
 const FETCH_SAVE_RE = /获取\s*(\d+)\s*条[，,]\s*保存\s*(\d+)\s*条/;
 const SUMMARY_ERR_RE = /错误:\s*(\d+)\s*条/;
-const LV = { LH: 18, BUF: 20 };
-const logVpByPanel = {
-  run: { lines: [], rem: '', raf: 0, errCount: 0 },
-  jobs: { lines: [], rem: '', raf: 0, errCount: 0 },
+const LV = { PAGE: 500 };
+const logStByPanel = {
+  run: { lines: [], rem: '', errCount: 0, page: 0, follow: true, filterKw: '' },
+  jobs: { lines: [], rem: '', errCount: 0, page: 0, follow: true, filterKw: '' },
 };
 
-function logVpState(pk) {
-  return logVpByPanel[pk === 'jobs' ? 'jobs' : 'run'];
+function logState(pk) {
+  return logStByPanel[pk === 'jobs' ? 'jobs' : 'run'];
 }
 
 function logViewport(panelKey) {
   return $(panelKey + '-log');
 }
 
-function logSlot(panelKey) {
-  return $(panelKey + '-log-slot');
-}
-
-function bindLogViewportOnce(panelKey) {
+function bindLogScrollOnce(panelKey) {
   const vp = logViewport(panelKey);
-  if (!vp || vp.dataset.vpBound) return;
-  vp.dataset.vpBound = '1';
-  vp._lgStickBottom = true;
+  if (!vp || vp.dataset.lgBound) return;
+  vp.dataset.lgBound = '1';
+  vp._lgLastTop = 0;
+  let scrollRaf = 0;
   vp.addEventListener('scroll', () => {
-    const nearBottom = vp.scrollHeight - vp.scrollTop - vp.clientHeight < 60;
-    vp._lgStickBottom = nearBottom;
-    scheduleLogVpRender(panelKey);
+    if (scrollRaf) return;
+    scrollRaf = requestAnimationFrame(() => {
+      scrollRaf = 0;
+      const st = logState(panelKey);
+      const top = vp.scrollTop;
+      const dist = vp.scrollHeight - top - vp.clientHeight;
+      const total = st.filterKw ? filteredRows(panelKey).length : st.lines.length;
+      const isLastPage = st.page >= pageCountOf(total) - 1;
+      if (st.follow && isLastPage && top < vp._lgLastTop - 1 && dist > 12) {
+        st.follow = false;
+        const followBtn = $(panelKey + '-log-follow-btn');
+        if (followBtn) {
+          followBtn.textContent = '跟随末页：关';
+          followBtn.classList.add('warn');
+        }
+      } else if (!st.follow && isLastPage && dist <= 4) {
+        st.follow = true;
+        const followBtn = $(panelKey + '-log-follow-btn');
+        if (followBtn) {
+          followBtn.textContent = '跟随末页：开';
+          followBtn.classList.remove('warn');
+        }
+      }
+      vp._lgLastTop = top;
+    });
   }, { passive: true });
 }
 
 function escapeRe(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function scheduleLogVpRender(panelKey) {
-  const st = logVpState(panelKey);
-  if (st.raf) return;
-  st.raf = requestAnimationFrame(() => {
-    st.raf = 0;
-    renderLogVp(panelKey);
-  });
 }
 
 function lineHtml(text, kwRaw, absIdx) {
@@ -594,94 +696,96 @@ function lineHtml(text, kwRaw, absIdx) {
   if (cls) {
     body = `<span class="${cls}" data-err="${cls === 'ln-err' ? 1 : 0}">${body}</span>`;
   }
-  return `<div class="ln-row" data-abs="${absIdx}" style="min-height:${LV.LH}px;line-height:${LV.LH}px">${body}</div>`;
+  return `<div class="ln-row" data-abs="${absIdx}">${body}</div>`;
 }
 
-function renderLogVp(panelKey) {
-  const vp = logViewport(panelKey);
-  const slot = logSlot(panelKey);
-  if (!vp || !slot) return;
-  const st = logVpState(panelKey);
-  const kwRaw = (($(panelKey + '-log-keyword')?.value) || '').trim();
-  const kwLower = kwRaw.toLowerCase();
-  const hasFilter = !!kwLower;
-  let count;
-  let filteredRows = null;
-  if (!hasFilter) {
-    count = st.lines.length;
-  } else {
-    filteredRows = [];
-    for (let i = 0; i < st.lines.length; i++) {
-      const txt = st.lines[i];
-      if (txt.toLowerCase().includes(kwLower)) filteredRows.push({ abs: i, text: txt });
-    }
-    count = filteredRows.length;
+function filteredRows(panelKey) {
+  const st = logState(panelKey);
+  const kw = (st.filterKw || '').toLowerCase();
+  if (!kw) {
+    const out = new Array(st.lines.length);
+    for (let i = 0; i < st.lines.length; i++) out[i] = { abs: i, text: st.lines[i] };
+    return out;
   }
+  const out = [];
+  for (let i = 0; i < st.lines.length; i++) {
+    const t = st.lines[i];
+    if (t.toLowerCase().includes(kw)) out.push({ abs: i, text: t });
+  }
+  return out;
+}
+
+function pageCountOf(total) {
+  return Math.max(1, Math.ceil(total / LV.PAGE));
+}
+
+function renderLogPage(panelKey, opts) {
+  const vp = logViewport(panelKey);
+  if (!vp) return;
+  const st = logState(panelKey);
+  const rows = filteredRows(panelKey);
+  const total = rows.length;
+  const pc = pageCountOf(total);
+  const prevPage = st.page;
+  if (st.page > pc - 1) st.page = pc - 1;
+  if (st.page < 0) st.page = 0;
+  const pageChanged = prevPage !== st.page;
+  const scrollMode = (opts && opts.scroll) || (pageChanged ? 'top' : 'keep');
+
   const cntEl = $(panelKey + '-log-err-count');
   if (cntEl) {
     let ec;
-    if (!hasFilter) ec = st.errCount | 0;
-    else {
-      ec = 0;
-      for (let j = 0; j < filteredRows.length; j++) {
-        if (classifyLine(filteredRows[j].text) === 'ln-err') ec++;
-      }
-    }
-    if (ec > 0) {
-      cntEl.style.display = '';
-      cntEl.textContent = '错误 ' + ec;
-    } else cntEl.style.display = 'none';
+    if (!st.filterKw) ec = st.errCount | 0;
+    else { ec = 0; for (const r of rows) if (classifyLine(r.text) === 'ln-err') ec++; }
+    if (ec > 0) { cntEl.style.display = ''; cntEl.textContent = '错误 ' + ec; }
+    else cntEl.style.display = 'none';
   }
-  if (count === 0) {
-    slot.style.paddingTop = '0px';
-    slot.style.paddingBottom = '0px';
-    slot.innerHTML = '';
+
+  const info = $(panelKey + '-log-pager-info');
+  const pageInp = $(panelKey + '-log-page-input');
+  const totalEl = $(panelKey + '-log-pager-total');
+  const prevBtn = $(panelKey + '-log-pager-prev');
+  const nextBtn = $(panelKey + '-log-pager-next');
+  const followBtn = $(panelKey + '-log-follow-btn');
+  if (info) info.textContent = total ? `共 ${total.toLocaleString()} 行` : '暂无日志';
+  if (pageInp) pageInp.value = st.page + 1;
+  if (totalEl) totalEl.textContent = pc;
+  if (prevBtn) prevBtn.disabled = st.page <= 0;
+  if (nextBtn) nextBtn.disabled = st.page >= pc - 1;
+  if (followBtn) {
+    followBtn.textContent = '跟随末页：' + (st.follow ? '开' : '关');
+    followBtn.classList.toggle('warn', !st.follow);
+  }
+
+  const start = st.page * LV.PAGE;
+  const end = Math.min(total, start + LV.PAGE);
+  const kwRaw = st.filterKw;
+  if (total === 0) {
+    vp.innerHTML = '<div style="color:var(--muted);padding:8px;">暂无日志</div>';
     return;
   }
-  const stScroll = vp.scrollTop;
-  let startRow = Math.floor(stScroll / LV.LH) - LV.BUF;
-  if (startRow < 0) startRow = 0;
-  let endRow = Math.ceil((stScroll + vp.clientHeight) / LV.LH) + LV.BUF;
-  if (endRow > count) endRow = count;
-  const padTop = startRow * LV.LH;
-  const padBottom = (count - endRow) * LV.LH;
   let html = '';
-  for (let vi = startRow; vi < endRow; vi++) {
-    let abs;
-    let text;
-    if (!hasFilter) {
-      abs = vi;
-      text = st.lines[vi];
-    } else {
-      const r = filteredRows[vi];
-      abs = r.abs;
-      text = r.text;
-    }
-    html += lineHtml(text, kwRaw, abs);
+  for (let i = start; i < end; i++) {
+    const r = rows[i];
+    html += lineHtml(r.text, kwRaw, r.abs);
   }
-  slot.style.paddingTop = padTop + 'px';
-  slot.style.paddingBottom = padBottom + 'px';
-  slot.innerHTML = html;
+  const prevTop = vp.scrollTop;
+  vp.innerHTML = html;
+  if (scrollMode === 'top') vp.scrollTop = 0;
+  else if (scrollMode === 'bottom') vp.scrollTop = Math.max(0, vp.scrollHeight - vp.clientHeight);
+  else vp.scrollTop = prevTop;
 }
 
 function appendLogChunk(panelKey, chunk, eof) {
-  const st = logVpState(panelKey);
+  const st = logState(panelKey);
   const c = chunk || '';
   if (!eof && !c && !st.rem) return;
   const s = st.rem + c;
-  if (!s) {
-    st.rem = '';
-    return;
-  }
+  if (!s) { st.rem = ''; return; }
   const parts = s.split('\n');
   let complete;
-  if (!eof) {
-    st.rem = parts.pop() ?? '';
-    complete = parts;
-  } else {
-    st.rem = '';
-    complete = parts;
-  }
+  if (!eof) { st.rem = parts.pop() ?? ''; complete = parts; }
+  else { st.rem = ''; complete = parts; }
   for (let i = 0; i < complete.length; i++) {
     const ln = complete[i];
     st.lines.push(ln);
@@ -690,58 +794,81 @@ function appendLogChunk(panelKey, chunk, eof) {
 }
 
 function resetLogView(panelKey) {
-  const st = logVpState(panelKey);
+  const st = logState(panelKey);
   st.lines = [];
   st.rem = '';
   st.errCount = 0;
-  const slot = logSlot(panelKey);
-  const vp = logViewport(panelKey);
-  if (slot) {
-    slot.innerHTML = '';
-    slot.style.paddingTop = '0px';
-    slot.style.paddingBottom = '0px';
-  }
-  if (vp) {
-    vp.scrollTop = 0;
-    vp._lgStickBottom = true;
-  }
-  bindLogViewportOnce(panelKey);
+  st.page = 0;
+  st.follow = true;
+  st.filterKw = '';
+  const kw = $(panelKey + '-log-keyword'); if (kw) kw.value = '';
+  renderLogPage(panelKey);
 }
 
 function afterLogAppend(panelKey) {
-  scheduleLogVpRender(panelKey);
-  requestAnimationFrame(() => {
-    const vp = logViewport(panelKey);
-    if (!vp || !vp._lgStickBottom) return;
-    vp.scrollTop = vp.scrollHeight - vp.clientHeight;
-  });
+  const st = logState(panelKey);
+  if (st.follow) {
+    const total = st.filterKw ? filteredRows(panelKey).length : st.lines.length;
+    st.page = pageCountOf(total) - 1;
+    renderLogPage(panelKey, { scroll: 'bottom' });
+  } else {
+    renderLogPage(panelKey, { scroll: 'keep' });
+  }
 }
 
-function scrollToAbsLine(panelKey, absZero) {
-  const vp = logViewport(panelKey);
-  const kwEl = $(panelKey + '-log-keyword');
-  if (kwEl) kwEl.value = '';
-  if (vp) vp._lgStickBottom = false;
-  scheduleLogVpRender(panelKey);
+function gotoLogPage(panelKey, page) {
+  const st = logState(panelKey);
+  const total = st.filterKw ? filteredRows(panelKey).length : st.lines.length;
+  const pc = pageCountOf(total);
+  st.page = Math.max(0, Math.min(pc - 1, page));
+  st.follow = st.page >= pc - 1;
+  renderLogPage(panelKey, { scroll: 'top' });
+}
+
+function logPagerPrev(panelKey) { gotoLogPage(panelKey, logState(panelKey).page - 1); }
+function logPagerNext(panelKey) { gotoLogPage(panelKey, logState(panelKey).page + 1); }
+function logPagerFirst(panelKey) { gotoLogPage(panelKey, 0); }
+function logPagerLast(panelKey) {
+  const st = logState(panelKey);
+  const total = st.filterKw ? filteredRows(panelKey).length : st.lines.length;
+  gotoLogPage(panelKey, pageCountOf(total) - 1);
+}
+function logPagerJump(panelKey) {
+  const v = parseInt($(panelKey + '-log-page-input').value, 10);
+  if (!isFinite(v) || v < 1) { renderLogPage(panelKey); return; }
+  gotoLogPage(panelKey, v - 1);
+}
+function toggleLogFollow(panelKey) {
+  const st = logState(panelKey);
+  st.follow = !st.follow;
+  if (st.follow) {
+    const total = st.filterKw ? filteredRows(panelKey).length : st.lines.length;
+    st.page = pageCountOf(total) - 1;
+    renderLogPage(panelKey, { scroll: 'bottom' });
+  } else {
+    renderLogPage(panelKey, { scroll: 'keep' });
+  }
+}
+
+function jumpToAbsLine(panelKey, absIdx) {
+  const st = logState(panelKey);
+  if (st.filterKw) {
+    st.filterKw = '';
+    const kw = $(panelKey + '-log-keyword'); if (kw) kw.value = '';
+  }
+  const n = st.lines.length;
+  if (n === 0) return;
+  const idx = Math.max(0, Math.min(n - 1, absIdx));
+  st.page = Math.floor(idx / LV.PAGE);
+  st.follow = st.page >= pageCountOf(n) - 1;
+  renderLogPage(panelKey, { scroll: 'top' });
   requestAnimationFrame(() => {
-    if (!vp) return;
-    const st = logVpState(panelKey);
-    const n = st.lines.length;
-    if (n === 0) return;
-    const idx = Math.max(0, Math.min(n - 1, absZero));
-    const t = idx * LV.LH;
-    vp.scrollTop = Math.min(
-      Math.max(0, vp.scrollHeight - vp.clientHeight),
-      Math.max(0, t - vp.clientHeight * 0.35)
-    );
-    scheduleLogVpRender(panelKey);
-    requestAnimationFrame(() => {
-      const row = logSlot(panelKey)?.querySelector('[data-abs="' + idx + '"]');
-      if (row) {
-        row.classList.add('flash');
-        setTimeout(() => row.classList.remove('flash'), 1400);
-      }
-    });
+    const row = logViewport(panelKey)?.querySelector('[data-abs="' + idx + '"]');
+    if (row) {
+      row.scrollIntoView({ block: 'center' });
+      row.classList.add('flash');
+      setTimeout(() => row.classList.remove('flash'), 1400);
+    }
   });
 }
 
@@ -780,16 +907,18 @@ function colorizeLogTags(escapedText) {
 }
 
 function applyLogFilter(panelKey) {
-  const vp = logViewport(panelKey);
-  if (vp) vp.scrollTop = 0;
-  scheduleLogVpRender(panelKey);
+  const st = logState(panelKey);
+  st.filterKw = ($(panelKey + '-log-keyword')?.value || '').trim();
+  st.page = 0;
+  st.follow = false;
+  renderLogPage(panelKey, { scroll: 'top' });
 }
 
 function jumpFirstError(panelKey) {
-  const lines = logVpState(panelKey).lines;
+  const lines = logState(panelKey).lines;
   for (let i = 0; i < lines.length; i++) {
     if (classifyLine(lines[i]) === 'ln-err') {
-      scrollToAbsLine(panelKey, i);
+      jumpToAbsLine(panelKey, i);
       return;
     }
   }
@@ -825,9 +954,9 @@ async function loadSummary(panelKey, id) {
 
 function scrollToLogLine(panelKey, lineNo) {
   const idx = lineNo - 1;
-  const st = logVpState(panelKey).lines;
-  if (idx < 0 || idx >= st.length) return;
-  scrollToAbsLine(panelKey, idx);
+  const lines = logState(panelKey).lines;
+  if (idx < 0 || idx >= lines.length) return;
+  jumpToAbsLine(panelKey, idx);
 }
 
 function downloadLog(id) {
@@ -868,8 +997,11 @@ async function init() {
   connectors = await api('/api/connectors');
   fillConnectorSelect($('run-connector'), $('run-service'));
   fillConnectorSelect($('sm-connector'), $('sm-service'));
-  bindLogViewportOnce('run');
-  bindLogViewportOnce('jobs');
+  fillJobsFilterConnectors();
+  bindLogScrollOnce('run');
+  bindLogScrollOnce('jobs');
+  renderLogPage('run');
+  renderLogPage('jobs');
 
   document.querySelectorAll('.tab').forEach(t => {
     t.onclick = () => {
@@ -1002,7 +1134,8 @@ function collectPayload(prefix='run') {
     service: v('service'),
     start: v('start'),
     end: v('end'),
-    past_days: v('past-days') ? Number(v('past-days')) : null,
+    past_value: v('past-value') ? Number(v('past-value')) : null,
+    past_unit: v('past-value') ? (v('past-unit') || 'day') : null,
     interval: v('interval') ? Number(v('interval')) : null,
     page_size: v('page-size') ? Number(v('page-size')) : null,
     workers: v('workers') ? Number(v('workers')) : null,
@@ -1131,8 +1264,68 @@ async function stopCurrentJob() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-async function loadJobs() {
-  const items = await api('/api/jobs');
+function fillJobsFilterConnectors() {
+  const sel = $('jobs-filter-connector');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">全部</option>' + connectors.map(c =>
+    `<option value="${c.name}">${c.name}</option>`
+  ).join('');
+  sel.value = cur || '';
+  fillJobsFilterServices(sel.value);
+}
+
+function fillJobsFilterServices(connector) {
+  const sel = $('jobs-filter-service');
+  if (!sel) return;
+  const cur = sel.value;
+  const list = connector
+    ? (connectors.find(c => c.name === connector)?.services || [])
+    : connectors.flatMap(c => (c.services || []).map(s => ({ ...s, connector: c.name })));
+  sel.innerHTML = '<option value="">全部</option>' + list.map(s =>
+    `<option value="${s.name}">${s.label || s.name}${connector ? '' : ` (${s.connector})`}</option>`
+  ).join('');
+  sel.value = list.some(s => s.name === cur) ? cur : '';
+}
+
+function onJobsFilterConnectorChange() {
+  fillJobsFilterServices($('jobs-filter-connector').value);
+}
+
+function resetJobsFilter() {
+  $('jobs-filter-kw').value = '';
+  $('jobs-filter-connector').value = '';
+  $('jobs-filter-status').value = '';
+  $('jobs-filter-source').value = '';
+  fillJobsFilterServices('');
+  applyJobsFilter();
+}
+
+function applyJobsFilter() {
+  const kw = ($('jobs-filter-kw').value || '').trim().toLowerCase();
+  const conn = $('jobs-filter-connector').value;
+  const svc = $('jobs-filter-service').value;
+  const status = $('jobs-filter-status').value;
+  const source = $('jobs-filter-source').value;
+  const items = allJobsList.filter(j => {
+    if (conn && j.connector !== conn) return false;
+    if (svc && j.service !== svc) return false;
+    if (status && j.status !== status) return false;
+    if (source && j.source !== source) return false;
+    if (!kw) return true;
+    const hay = [
+      j.id, j.connector, j.service, serviceDisplay(j.connector, j.service),
+      j.source, j.status, j.progress_text, j.cmd, j.started_at, j.finished_at,
+    ].filter(Boolean).join(' ').toLowerCase();
+    return hay.includes(kw);
+  });
+  renderJobsTable(items);
+  const el = $('jobs-filter-count');
+  if (el) el.textContent = items.length === allJobsList.length
+    ? `${items.length} 条` : `${items.length} / ${allJobsList.length}`;
+}
+
+function renderJobsTable(items) {
   $('jobs-tbody').innerHTML = items.map(j => `
     <tr>
       <td>${j.started_at || '-'}</td>
@@ -1149,6 +1342,11 @@ async function loadJobs() {
       </td>
     </tr>
   `).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--muted);">暂无记录</td></tr>`;
+}
+
+async function loadJobs() {
+  allJobsList = await api('/api/jobs');
+  applyJobsFilter();
 }
 
 async function viewJobLog(id) {
@@ -1238,8 +1436,9 @@ async function loadSchedules() {
 function openScheduleModal() {
   editingScheduleId = null;
   $('sched-modal-title').textContent = '新建定时任务';
-  ['name','trigger-time','trigger-seconds','trigger-expr','start','end','past-days',
+  ['name','trigger-time','trigger-seconds','trigger-expr','start','end','past-value',
    'interval','shop-no'].forEach(k => { const el=$('sm-'+k); if(el) el.value=''; });
+  $('sm-past-unit').value = 'day';
   $('sm-trigger-time').value = '01:00';
   $('sm-trigger-seconds').value = '3600';
   $('sm-page-size').value = 200;
@@ -1265,7 +1464,16 @@ function editSchedule(s) {
   setTimeout(() => { $('sm-service').value = p.service || ''; }, 0);
   $('sm-start').value = p.start || '';
   $('sm-end').value = p.end || '';
-  $('sm-past-days').value = p.past_days || '';
+  if (p.past_value != null && p.past_value !== '') {
+    $('sm-past-value').value = p.past_value;
+    $('sm-past-unit').value = p.past_unit || 'day';
+  } else if (p.past_days) {
+    $('sm-past-value').value = p.past_days;
+    $('sm-past-unit').value = 'day';
+  } else {
+    $('sm-past-value').value = '';
+    $('sm-past-unit').value = 'day';
+  }
   $('sm-interval').value = p.interval || '';
   $('sm-page-size').value = p.page_size || 200;
   $('sm-workers').value = p.workers || 10;
@@ -1320,7 +1528,16 @@ async function saveAsSchedule() {
   setTimeout(() => { $('sm-service').value = p.service || ''; }, 0);
   $('sm-start').value = p.start || '';
   $('sm-end').value = p.end || '';
-  $('sm-past-days').value = p.past_days || '';
+  if (p.past_value != null && p.past_value !== '') {
+    $('sm-past-value').value = p.past_value;
+    $('sm-past-unit').value = p.past_unit || 'day';
+  } else if (p.past_days) {
+    $('sm-past-value').value = p.past_days;
+    $('sm-past-unit').value = 'day';
+  } else {
+    $('sm-past-value').value = '';
+    $('sm-past-unit').value = 'day';
+  }
   $('sm-interval').value = p.interval || '';
   $('sm-page-size').value = p.page_size || 200;
   $('sm-workers').value = p.workers || 10;

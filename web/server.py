@@ -3,7 +3,7 @@
 
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timedelta
 from flask import Flask, request, jsonify, send_from_directory
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -34,14 +34,12 @@ def _normalize_time_range(payload: dict):
     start = payload.get('start')
     end = payload.get('end')
     past_days = payload.get('past_days')
+    from common.past_range import resolve_past_amount, compute_past_time_range
+    past_amount, past_unit = resolve_past_amount(payload)
+    if past_amount is not None:
+        return compute_past_time_range(past_amount, past_unit) + (today,)
     if past_days:
-        end_time = datetime.now()
-        start_time = end_time - timedelta(days=int(past_days))
-        return (
-            start_time.strftime('%Y-%m-%d 00:00:00'),
-            end_time.strftime('%Y-%m-%d 23:59:59'),
-            today,
-        )
+        return compute_past_time_range(int(past_days), 'day') + (today,)
     if connector == 'wdt' and service_name in ('sht_recon_detail', 'recon_delivery_detail') and not start and not end:
         return None, None, today
     s = start or today

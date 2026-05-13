@@ -329,7 +329,9 @@ class StockinRefundQueryAPI:
             completed = 0
             total_fetched = 0
             empty_pages = 0
-            
+            milestones = sorted({max(1, total_pages * p // 100) for p in (25, 50, 75, 100)})
+            next_ms_idx = 0
+
             for future in as_completed(futures):
                 page_no, stockins, error = future.result()
                 if error:
@@ -341,13 +343,11 @@ class StockinRefundQueryAPI:
                         empty_page_list.append(page_no)
                     total_fetched += len(stockins)
                 completed += 1
-                if debug:
-                    # 进度条显示
+                if debug and next_ms_idx < len(milestones) and completed >= milestones[next_ms_idx]:
                     progress = completed / total_pages * 100
-                    debug_print(f"\r[DEBUG] 进度: {completed}/{total_pages} ({progress:.1f}%) | 已获取: {total_fetched} 条 | 空页: {empty_pages}    ", end='', flush=True)
-            
-            if debug:
-                print()
+                    debug_print(f"    [PROGRESS] stockin 进度: {completed}/{total_pages} ({progress:.0f}%) | 已获取 {total_fetched} 条 | 空页 {empty_pages}")
+                    while next_ms_idx < len(milestones) and completed >= milestones[next_ms_idx]:
+                        next_ms_idx += 1
         
         if debug:
             if failed_pages:
@@ -379,13 +379,10 @@ class StockinRefundQueryAPI:
                     if not error and len(stockins) > 0:
                         all_stockins[page_no] = stockins
                         recovered += 1
-                        if debug:
-                            debug_print(f"\r[DEBUG] 重试第{retry_round+1}轮: 第{page_no}页恢复 {len(stockins)} 条", end='', flush=True)
                     else:
                         still_empty.append(page_no)
                 
                 if debug and recovered > 0:
-                    print()
                     debug_print(f"[DEBUG] 重试第{retry_round+1}轮完成: 恢复 {recovered} 页，剩余 {len(still_empty)} 页为空")
                 
                 empty_page_list = still_empty

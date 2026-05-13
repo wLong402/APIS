@@ -221,6 +221,9 @@ class MarketingDetailQueryAPI:
             }
             
             completed = 0
+            total = len(dates_to_query)
+            milestones = sorted({max(1, total * p // 100) for p in (25, 50, 75, 100)})
+            next_ms_idx = 0
             for future in as_completed(futures):
                 date_str = futures[future]
                 try:
@@ -230,11 +233,10 @@ class MarketingDetailQueryAPI:
                     if debug:
                         debug_print(f"    [DEBUG] {date_str} 查询失败: {e}")
                 completed += 1
-                if debug:
-                    debug_print(f"\r    [DEBUG] 进度: {completed}/{len(dates_to_query)} | 已获取: {len(all_data)} 条", end='', flush=True)
-            
-            if debug:
-                print()
+                if debug and next_ms_idx < len(milestones) and completed >= milestones[next_ms_idx]:
+                    debug_print(f"    [PROGRESS] marketing 进度: {completed}/{total} | 已获取 {len(all_data)} 条")
+                    while next_ms_idx < len(milestones) and completed >= milestones[next_ms_idx]:
+                        next_ms_idx += 1
         
         if debug:
             debug_print(f"    [DEBUG] 日期范围查询完成，共 {len(all_data)} 条")

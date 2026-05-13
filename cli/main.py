@@ -26,12 +26,14 @@ def pull_command(args):
     service_name = args.service
     
     today = datetime.now().strftime('%Y-%m-%d')
-    # 时间处理
-    if args.past_days:
-        end_time = datetime.now()
-        start_time = end_time - timedelta(days=args.past_days)
-        start_time = start_time.strftime('%Y-%m-%d 00:00:00')
-        end_time = end_time.strftime('%Y-%m-%d 23:59:59')
+    from common.past_range import resolve_past_amount, compute_past_time_range
+    past_amount, past_unit = resolve_past_amount({
+        'past_value': getattr(args, 'past', None),
+        'past_days': getattr(args, 'past_days', None),
+        'past_unit': getattr(args, 'past_unit', None),
+    })
+    if past_amount is not None:
+        start_time, end_time = compute_past_time_range(past_amount, past_unit)
     else:
         if connector == 'wdt' and service_name in ('sht_recon_detail', 'recon_delivery_detail') and args.start is None and args.end is None:
             start_time = None
@@ -329,7 +331,19 @@ def cli():
     pull_parser.add_argument(
         '--past-days',
         type=int,
-        help='拉取过去N天的数据（如 7 表示过去7天，优先于 --start/--end）'
+        help='拉取过去N天的数据（兼容旧参数，等同 --past N --past-unit day）'
+    )
+    pull_parser.add_argument(
+        '--past',
+        type=float,
+        default=None,
+        help='回溯时间数值（配合 --past-unit，优先于 --start/--end）'
+    )
+    pull_parser.add_argument(
+        '--past-unit',
+        default='day',
+        choices=['second', 'minute', 'hour', 'day', 'week', 'month'],
+        help='回溯时间单位，默认 day'
     )
     
     # 可选参数
