@@ -33,6 +33,7 @@ from .profits_live_refund_repo import ProfitsLiveRefundRepository
 from .marketing_share_result_repo import MarketingShareResultRepository
 from .expense_sku_day_summary_repo import ExpenseSkuDaySummaryRepository
 from .expense_sku_day_summary_detail_repo import ExpenseSkuDaySummaryDetailRepository
+from .expense_sku_share_day_detail_repo import ExpenseSkuShareDayDetailRepository
 
 __all__ = [
     'TradeRepository',
@@ -66,5 +67,6 @@ __all__ = [
     'MarketingShareResultRepository',
     'ExpenseSkuDaySummaryRepository',
     'ExpenseSkuDaySummaryDetailRepository',
+    'ExpenseSkuShareDayDetailRepository',
 ]
 

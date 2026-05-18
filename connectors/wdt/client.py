@@ -35,6 +35,7 @@ from .sdk.api import (
     ProfitsLiveRefundQueryAPI,
     MarketingShareResultQueryAPI,
     ExpenseSkuDaySummaryQueryAPI,
+    ExpenseSkuShareDayDetailQueryAPI,
 )
 
 
@@ -109,6 +110,7 @@ class WdtClient(BaseAPIClient):
         self._profits_live_refund_api = None
         self._marketing_share_result_api = None
         self._expense_sku_day_summary_api = None
+        self._expense_sku_share_day_detail_api = None
     
     def call(self, method: str, params: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """
@@ -350,6 +352,19 @@ class WdtClient(BaseAPIClient):
                 hjy_gateway_url=self._hjy_gateway_url,
             )
         return self._expense_sku_day_summary_api
+
+    @property
+    def expense_sku_share_day_detail_api(self) -> ExpenseSkuShareDayDetailQueryAPI:
+        if self._expense_sku_share_day_detail_api is None:
+            self._expense_sku_share_day_detail_api = ExpenseSkuShareDayDetailQueryAPI(
+                client=self._qimen_client,
+                config=self._wdt_config,
+                hjy_app_id=self._hjy_app_id,
+                hjy_sid=self._hjy_sid,
+                hjy_app_key=self._hjy_app_key,
+                hjy_gateway_url=self._hjy_gateway_url,
+            )
+        return self._expense_sku_share_day_detail_api
 
     def health_check(self) -> bool:
         """健康检查 - 尝试调用一个简单的 API"""

@@ -64,6 +64,12 @@ def _resolve_python() -> str:
 
 def build_command(payload: dict) -> List[str]:
     """根据前端参数构建 run.py pull 命令行"""
+    if payload.get('dwd_task'):
+        return _build_dwd_cmd(
+            str(payload['dwd_task']),
+            str(payload.get('connector') or 'wdt'),
+            debug=bool(payload.get('debug')),
+        )
     cmd = [_resolve_python(), '-u', os.path.join(ROOT, 'run.py'), 'pull',
            '-c', payload['connector'], '-s', payload['service']]
 
@@ -126,11 +132,33 @@ def build_command(payload: dict) -> List[str]:
     return cmd
 
 
+def _build_dwd_cmd(dwd_task: str, connector: str = 'wdt', debug: bool = False) -> List[str]:
+    cmd = [
+        _resolve_python(), '-u', os.path.join(ROOT, 'run.py'), 'dwd',
+        '-c', str(connector or 'wdt'), '-t', str(dwd_task),
+    ]
+    if debug:
+        cmd.append('--debug')
+    return cmd
+
+
 def run_job(payload: dict, source: str = 'manual', schedule_id: Optional[str] = None) -> dict:
     """启动一个拉取任务（异步）"""
     job_id = uuid.uuid4().hex[:12]
     cmd = build_command(payload)
     log_path = os.path.join(LOGS_DIR, f'{job_id}.log')
+
+    cmd_line = ' '.join(cmd)
+    if payload.get('after_pull_dwd') and not payload.get('dwd_task'):
+        try:
+            from connectors.wdt.dwd_cleanse import pull_service_to_dwd_task
+            dt = pull_service_to_dwd_task(payload.get('service') or '')
+            if dt:
+                cmd_line += '  |  完成后: ' + ' '.join(
+                    _build_dwd_cmd(dt, str(payload.get('connector') or 'wdt'), debug=True)
+                )
+        except Exception:
+            pass
 
     job = {
         'id': job_id,
@@ -138,8 +166,9 @@ def run_job(payload: dict, source: str = 'manual', schedule_id: Optional[str] = 
         'schedule_id': schedule_id,
         'connector': payload.get('connector'),
         'service': payload.get('service'),
+        'run_mode': 'dwd' if payload.get('dwd_task') else 'pull',
         'payload': payload,
-        'cmd': ' '.join(cmd),
+        'cmd': cmd_line,
         'status': 'running',
         'exit_code': None,
         'started_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -152,9 +181,19 @@ def run_job(payload: dict, source: str = 'manual', schedule_id: Optional[str] = 
         _save()
 
     def _runner():
+        exit_code = -1
+        pl = job.get('payload') or {}
+        dwd_next = None
+        if pl.get('after_pull_dwd') and not pl.get('dwd_task'):
+            try:
+                from connectors.wdt.dwd_cleanse import pull_service_to_dwd_task
+                dwd_next = pull_service_to_dwd_task(pl.get('service') or '')
+            except Exception:
+                dwd_next = None
         try:
             with open(log_path, 'w', encoding='utf-8', errors='replace') as f:
-                f.write(f'$ {job["cmd"]}\n\n')
+                pull_header = job['cmd'].split('  |  ')[0].strip()
+                f.write(f'$ {pull_header}\n\n')
                 f.flush()
                 env = os.environ.copy()
                 env['PYTHONIOENCODING'] = 'utf-8'
@@ -167,7 +206,25 @@ def run_job(payload: dict, source: str = 'manual', schedule_id: Optional[str] = 
                 )
                 _processes[job_id] = proc
                 proc.wait()
-                exit_code = proc.returncode
+                exit_code = proc.returncode if proc.returncode is not None else -1
+
+                if exit_code == 0 and pl.get('after_pull_dwd'):
+                    conn = str(pl.get('connector') or 'wdt')
+                    if dwd_next:
+                        dwd_cmd = _build_dwd_cmd(dwd_next, conn, debug=True)
+                        f.write('\n\n--- 拉取成功，开始 DWD 清洗 ---\n\n')
+                        f.write(f'$ {" ".join(dwd_cmd)}\n\n')
+                        f.flush()
+                        proc2 = subprocess.Popen(
+                            dwd_cmd, cwd=ROOT, stdout=f, stderr=subprocess.STDOUT,
+                            env=env, creationflags=creationflags,
+                        )
+                        _processes[job_id] = proc2
+                        proc2.wait()
+                        exit_code = proc2.returncode if proc2.returncode is not None else -1
+                    else:
+                        f.write('\n\n[!] 当前服务无对应 DWD 清洗任务，已跳过\n')
+                        f.flush()
         except Exception as e:
             exit_code = -1
             try:

@@ -336,7 +336,10 @@ class BaseRepository(ABC):
                 unique_col = sanitize_column_name(self.UNIQUE_KEY)
         else:
             unique_col = None
-        create_sql = self.db.adapter.build_create_table_sql(table_name, columns, unique_col)
+        pk_col = getattr(self, 'SQLSERVER_PRIMARY_KEY', None)
+        create_sql = self.db.adapter.build_create_table_sql(
+            table_name, columns, unique_col, sqlserver_pk_column=pk_col
+        )
         
         with self.db.get_connection() as conn:
             cursor = self.db.adapter.get_cursor(conn)

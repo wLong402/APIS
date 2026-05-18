@@ -24,6 +24,7 @@ from .profits_live_order_service import ProfitsLiveOrderPullService
 from .profits_live_refund_service import ProfitsLiveRefundPullService
 from .marketing_share_result_service import MarketingShareResultPullService
 from .expense_sku_day_summary_service import ExpenseSkuDaySummaryPullService
+from .expense_sku_share_day_detail_service import ExpenseSkuShareDayDetailPullService
 
 __all__ = [
     'TradePullService',
@@ -47,5 +48,6 @@ __all__ = [
     'ProfitsLiveRefundPullService',
     'MarketingShareResultPullService',
     'ExpenseSkuDaySummaryPullService',
+    'ExpenseSkuShareDayDetailPullService',
 ]
 

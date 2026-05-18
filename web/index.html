@@ -298,10 +298,26 @@
           <label style="display:flex; gap:6px; align-items:center; margin:0;">
             <input id="run-no-ehr" type="checkbox" style="width:auto;" /> 不读 EHR (微伴)
           </label>
+          <label id="run-after-pull-dwd-wrap" class="hidden" style="display:flex; gap:6px; align-items:center; margin:0;">
+            <input id="run-after-pull-dwd" type="checkbox" style="width:auto;" /> 拉取完成后 DWD 清洗
+          </label>
           <div class="grow"></div>
           <button type="button" class="ghost" id="btn-preview-raw" onclick="previewRawData()">预览原始返回(5条)</button>
           <button class="ghost" onclick="saveAsSchedule()">保存为定时任务</button>
           <button onclick="runNow()">立即运行</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>DWD 清洗</h2>
+        <div class="row" style="align-items:flex-end;">
+          <div class="col" style="flex:1 1 320px;">
+            <label>任务（对应拉取已成功后才可选）</label>
+            <select id="run-dwd-task"></select>
+          </div>
+          <div class="col">
+            <button type="button" onclick="runDwdCleanse()">执行清洗</button>
+          </div>
         </div>
       </div>
 
@@ -551,9 +567,12 @@
           <label>店铺编号</label>
           <input id="sm-shop-no" />
         </div>
-        <div class="col" style="display:flex; align-items:center; gap:6px;">
+        <div class="col" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
           <label style="display:flex;gap:4px;align-items:center;">
             <input id="sm-debug" type="checkbox" style="width:auto;" /> debug
+          </label>
+          <label id="sm-after-pull-dwd-wrap" class="hidden" style="display:flex;gap:4px;align-items:center;">
+            <input id="sm-after-pull-dwd" type="checkbox" style="width:auto;" /> 拉取后 DWD
           </label>
         </div>
       </div>
@@ -1002,6 +1021,7 @@ async function init() {
   bindLogScrollOnce('jobs');
   renderLogPage('run');
   renderLogPage('jobs');
+  refreshDwdSelect();
 
   document.querySelectorAll('.tab').forEach(t => {
     t.onclick = () => {
@@ -1011,6 +1031,7 @@ async function init() {
       $('tab-'+t.dataset.tab).classList.remove('hidden');
       if (t.dataset.tab === 'schedules') loadSchedules();
       if (t.dataset.tab === 'jobs') loadJobs();
+      if (t.dataset.tab === 'run') refreshDwdSelect();
     };
   });
 }
@@ -1045,6 +1066,7 @@ const WDT_SERVICE_ADVANCED_PARAMS = {
   profits_live_refund: ['terms-income', 'stat-mode', 'cost-type', 'shop-nos', 'order-tools'],
   marketing_share_result: ['spec-no', 'project'],
   expense_sku_day_summary: ['summary-no', 'expense-item-name'],
+  expense_sku_share_day_detail: ['shop-nos', 'summary-no'],
   sht_recon_detail: ['shop-no', 'shop-nos', 'period-mark', 'reco-status'],
   recon_delivery_detail: ['shop-no', 'shop-nos', 'warehouse-no', 'summary-no', 'spec-no', 'plat-order-nos', 'period-mark', 'reco-status', 'salesman-name', 'start-business-time', 'end-business-time'],
 };
@@ -1057,12 +1079,76 @@ const WDT_PULL_BY_DAY_SERVICES = new Set([
   'profits_live_refund',
 ]);
 
+const WDT_DWD_BY_SERVICE = {
+  aftersales_refund: 'aftersales_refund',
+  profits_live_order: 'profits_live_order',
+  profits_live_refund: 'profits_live_refund',
+};
+
+async function refreshDwdSelect() {
+  try {
+    const r = await api('/api/dwd/available');
+    const arr = r.tasks || [];
+    const sel = $('run-dwd-task');
+    if (!sel) return;
+    sel.innerHTML = arr.length
+      ? '<option value="">请选择</option>' + arr.map(t => `<option value="${t.id}">${t.label}</option>`).join('')
+      : '<option value="">（暂无：请先成功完成对应拉取）</option>';
+  } catch (e) {}
+}
+
+async function runDwdCleanse() {
+  const el = $('run-dwd-task');
+  const task = el ? String(el.value || '').trim() : '';
+  if (!task) {
+    toast('请选择清洗任务或先成功完成对应拉取', 'error');
+    return;
+  }
+  try {
+    const job = await api('/api/run', { method: 'POST', body: { connector: 'wdt', dwd_task: task } });
+    toast('清洗任务已启动: ' + job.id, 'success');
+    openLog(job);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+async function runDwdFromJob(task) {
+  const tid = String(task || '').trim();
+  if (!tid) return;
+  try {
+    const job = await api('/api/run', { method: 'POST', body: { connector: 'wdt', dwd_task: tid } });
+    toast('清洗任务已启动: ' + job.id, 'success');
+    loadJobs();
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelector('.tab[data-tab="run"]').classList.add('active');
+    ['run', 'schedules', 'jobs'].forEach(n => $('tab-' + n).classList.add('hidden'));
+    $('tab-run').classList.remove('hidden');
+    openLog(job);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
 function toggleRunAdvancedField(fieldKey, visible) {
   const input = $('run-' + fieldKey);
   if (!input) return;
   const wrap = input.closest('div');
   if (!wrap) return;
   wrap.classList.toggle('hidden', !visible);
+}
+
+function updateAfterPullDwdVisibility(prefix) {
+  const conn = $(prefix + '-connector')?.value;
+  const svc = $(prefix + '-service')?.value;
+  const wrap = $(prefix + '-after-pull-dwd-wrap');
+  if (!wrap) return;
+  const show = conn === 'wdt' && svc && WDT_DWD_BY_SERVICE[svc];
+  wrap.classList.toggle('hidden', !show);
+  if (!show) {
+    const cb = $(prefix + '-after-pull-dwd');
+    if (cb) cb.checked = false;
+  }
 }
 
 function updateRunAdvancedParamsVisibility() {
@@ -1103,24 +1189,28 @@ function fillConnectorSelect(connSel, svcSel) {
     ).join('');
     if (connSel.id === 'run-connector' && svcSel.id === 'run-service') {
       updateRunAdvancedParamsVisibility();
+      updateAfterPullDwdVisibility('run');
     }
     if (connSel.id === 'run-connector' && svcSel.id === 'run-service') {
       updateIntervalInputAvailability('run', connSel.value, svcSel.value);
     }
     if (connSel.id === 'sm-connector' && svcSel.id === 'sm-service') {
       updateIntervalInputAvailability('sm', connSel.value, svcSel.value);
+      updateAfterPullDwdVisibility('sm');
     }
   };
   connSel.onchange = fillSvc;
   svcSel.onchange = () => {
     if (connSel.id === 'run-connector' && svcSel.id === 'run-service') {
       updateRunAdvancedParamsVisibility();
+      updateAfterPullDwdVisibility('run');
     }
     if (connSel.id === 'run-connector' && svcSel.id === 'run-service') {
       updateIntervalInputAvailability('run', connSel.value, svcSel.value);
     }
     if (connSel.id === 'sm-connector' && svcSel.id === 'sm-service') {
       updateIntervalInputAvailability('sm', connSel.value, svcSel.value);
+      updateAfterPullDwdVisibility('sm');
     }
   };
   fillSvc();
@@ -1128,7 +1218,7 @@ function fillConnectorSelect(connSel, svcSel) {
 
 function collectPayload(prefix='run') {
   const v = (id) => $(prefix+'-'+id).value || null;
-  const c = (id) => $(prefix+'-'+id).checked;
+  const c = (id) => { const el = $(prefix+'-'+id); return el ? el.checked : false; };
   return {
     connector: v('connector'),
     service: v('service'),
@@ -1172,6 +1262,7 @@ function collectPayload(prefix='run') {
     by_day: prefix==='run' ? c('by-day') : false,
     debug: c('debug'),
     no_ehr: prefix==='run' ? c('no-ehr') : false,
+    after_pull_dwd: (prefix === 'run' || prefix === 'sm') ? c('after-pull-dwd') : false,
   };
 }
 
@@ -1329,7 +1420,7 @@ function renderJobsTable(items) {
   $('jobs-tbody').innerHTML = items.map(j => `
     <tr>
       <td>${j.started_at || '-'}</td>
-      <td>${serviceDisplay(j.connector, j.service)}</td>
+      <td>${j.run_mode === 'dwd' ? '<span class="pill">DWD</span> ' : ''}${serviceDisplay(j.connector, j.service)}</td>
       <td>${j.progress_text || '-'}</td>
       <td>${j.source}</td>
       <td><span class="status ${j.status}">${j.status}</span></td>
@@ -1338,6 +1429,7 @@ function renderJobsTable(items) {
       <td>
         <button class="ghost" onclick="viewJobLog('${j.id}')">日志</button>
         <button class="ghost" onclick="rerunJob('${j.id}')">重跑</button>
+        ${j.status === 'success' && j.connector === 'wdt' && j.run_mode !== 'dwd' && WDT_DWD_BY_SERVICE[j.service] ? `<button class="ghost" onclick="runDwdFromJob('${WDT_DWD_BY_SERVICE[j.service]}')">DWD清洗</button>` : ''}
         ${j.status === 'running' ? `<button class="warn" onclick="stopJob('${j.id}')">停止</button>` : ''}
       </td>
     </tr>
@@ -1347,6 +1439,7 @@ function renderJobsTable(items) {
 async function loadJobs() {
   allJobsList = await api('/api/jobs');
   applyJobsFilter();
+  refreshDwdSelect();
 }
 
 async function viewJobLog(id) {
@@ -1416,7 +1509,7 @@ async function loadSchedules() {
     return `
     <tr>
       <td>${s.name}</td>
-      <td>${serviceDisplay(s.payload.connector, s.payload.service)}</td>
+      <td>${(s.payload && s.payload.after_pull_dwd) ? '<span class="pill">+DWD</span> ' : ''}${serviceDisplay(s.payload.connector, s.payload.service)}</td>
       <td>${trigText}</td>
       <td>${s.enabled
         ? '<span class="status running">已启用</span>'
@@ -1444,6 +1537,8 @@ function openScheduleModal() {
   $('sm-page-size').value = 200;
   $('sm-workers').value = 10;
   $('sm-debug').checked = false;
+  const ap = $('sm-after-pull-dwd');
+  if (ap) ap.checked = false;
   $('sm-trigger-type').value = 'daily';
   onTriggerTypeChange();
   $('sched-modal').classList.remove('hidden');
@@ -1479,7 +1574,10 @@ function editSchedule(s) {
   $('sm-workers').value = p.workers || 10;
   $('sm-shop-no').value = p.shop_no || '';
   $('sm-debug').checked = !!p.debug;
+  const ap = $('sm-after-pull-dwd');
+  if (ap) ap.checked = !!p.after_pull_dwd;
   $('sched-modal').classList.remove('hidden');
+  setTimeout(() => updateAfterPullDwdVisibility('sm'), 50);
 }
 
 function closeScheduleModal() {
@@ -1543,6 +1641,9 @@ async function saveAsSchedule() {
   $('sm-workers').value = p.workers || 10;
   $('sm-shop-no').value = p.shop_no || '';
   $('sm-debug').checked = !!p.debug;
+  const ap = $('sm-after-pull-dwd');
+  if (ap) ap.checked = !!p.after_pull_dwd;
+  setTimeout(() => updateAfterPullDwdVisibility('sm'), 50);
 }
 
 async function toggleSchedule(id) {

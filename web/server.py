@@ -11,6 +11,10 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 from connectors import list_connectors  # noqa: E402
+from connectors.wdt.dwd_cleanse import (  # noqa: E402
+    DWD_PULL_SERVICE,
+    available_dwd_task_options,
+)
 from web import jobs as jobs_mod  # noqa: E402
 from web import scheduler as sched_mod  # noqa: E402
 
@@ -307,10 +311,26 @@ def api_connectors():
 @app.post('/api/run')
 def api_run():
     data = request.get_json(force=True) or {}
+    tid = str(data.get('dwd_task', '')).strip()
+    if tid:
+        svc = DWD_PULL_SERVICE.get(tid)
+        if not svc:
+            return jsonify({'error': f'未知清洗任务: {tid}'}), 400
+        data['connector'] = data.get('connector') or 'wdt'
+        data['service'] = svc
+        data['dwd_task'] = tid
+        job = jobs_mod.run_job(data, source='manual')
+        return jsonify(job)
     if not data.get('connector') or not data.get('service'):
         return jsonify({'error': 'connector / service 必填'}), 400
     job = jobs_mod.run_job(data, source='manual')
     return jsonify(job)
+
+
+@app.get('/api/dwd/available')
+def api_dwd_available():
+    jobs = jobs_mod.list_jobs(limit=int(request.args.get('limit', 500)))
+    return jsonify({'tasks': available_dwd_task_options(jobs)})
 
 
 @app.post('/api/preview')

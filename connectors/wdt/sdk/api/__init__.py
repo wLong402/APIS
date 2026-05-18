@@ -56,6 +56,7 @@ from .profits_live_order import ProfitsLiveOrderQueryAPI
 from .profits_live_refund import ProfitsLiveRefundQueryAPI
 from .marketing_share_result import MarketingShareResultQueryAPI
 from .expense_sku_day_summary import ExpenseSkuDaySummaryQueryAPI
+from .expense_sku_share_day_detail import ExpenseSkuShareDayDetailQueryAPI
 
 __all__ = [
     # 出库单API
@@ -111,4 +112,5 @@ __all__ = [
     'ProfitsLiveRefundQueryAPI',
     'MarketingShareResultQueryAPI',
     'ExpenseSkuDaySummaryQueryAPI',
+    'ExpenseSkuShareDayDetailQueryAPI',
 ]

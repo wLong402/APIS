@@ -293,11 +293,11 @@ class DatabaseManager:
         with self.get_connection() as conn:
             cursor = self.adapter.get_cursor(conn)
             if params is not None:
-                affected = cursor.execute(sql, params)
+                cursor.execute(sql, params)
             else:
-                affected = cursor.execute(sql)
+                cursor.execute(sql)
             self.adapter.commit(conn)
-            return affected
+            return cursor.rowcount
     
     def fetch_one(self, sql: str, params: tuple = None) -> Optional[Dict]:
         """查询单条记录"""

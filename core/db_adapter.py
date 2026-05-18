@@ -69,7 +69,13 @@ class DatabaseAdapter(ABC):
         pass
     
     @abstractmethod
-    def build_create_table_sql(self, table_name: str, columns: List[tuple], unique_key: str = None) -> str:
+    def build_create_table_sql(
+        self,
+        table_name: str,
+        columns: List[tuple],
+        unique_key: str = None,
+        sqlserver_pk_column: str = None,
+    ) -> str:
         """构建创建表SQL"""
         pass
 
@@ -165,7 +171,7 @@ class MySQLAdapter(DatabaseAdapter):
             return 'TEXT'
         return 'TEXT'
     
-    def build_create_table_sql(self, table_name: str, columns: List[tuple], unique_key = None) -> str:
+    def build_create_table_sql(self, table_name: str, columns: List[tuple], unique_key = None, sqlserver_pk_column: str = None) -> str:
         col_defs = []
         for col_name, col_type in columns:
             col_defs.append(f'`{col_name}` {col_type}')
@@ -292,12 +298,22 @@ class SQLServerAdapter(DatabaseAdapter):
             return 'NVARCHAR(MAX)'
         return 'NVARCHAR(MAX)'
     
-    def build_create_table_sql(self, table_name: str, columns: List[tuple], unique_key = None) -> str:
+    def build_create_table_sql(self, table_name: str, columns: List[tuple], unique_key = None, sqlserver_pk_column: str = None) -> str:
+        from core.database import sanitize_column_name
+
+        pk_s = sanitize_column_name(sqlserver_pk_column) if sqlserver_pk_column else None
         col_defs = []
-        col_defs.append('[id] BIGINT IDENTITY(1,1) PRIMARY KEY')
-        
+        if not pk_s:
+            col_defs.append('[id] BIGINT IDENTITY(1,1) PRIMARY KEY')
+
         for col_name, col_type in columns:
-            col_defs.append(f'[{col_name}] {col_type}')
+            if pk_s and col_name.lower() == pk_s.lower():
+                ct = col_type
+                if isinstance(ct, str) and 'MAX' in ct.upper():
+                    ct = 'NVARCHAR(200)'
+                col_defs.append(f'[{col_name}] {ct} NOT NULL PRIMARY KEY')
+            else:
+                col_defs.append(f'[{col_name}] {col_type}')
         
         col_defs.append('[created_at] DATETIME DEFAULT GETDATE()')
         col_defs.append('[updated_at] DATETIME DEFAULT GETDATE()')

@@ -161,7 +161,7 @@ def pull_command(args):
                 debug=args.debug,
                 max_workers=args.workers
             )
-        elif connector == 'wdt' and service_name in ('bill_standard', 'bk_share_data', 'fixbill_data_summary', 'sht_recon_detail', 'recon_delivery_detail', 'marketing_share_result', 'expense_sku_day_summary'):
+        elif connector == 'wdt' and service_name in ('bill_standard', 'bk_share_data', 'fixbill_data_summary', 'sht_recon_detail', 'recon_delivery_detail', 'marketing_share_result', 'expense_sku_day_summary', 'expense_sku_share_day_detail'):
             result = service.pull(
                 start_time=start_time,
                 end_time=end_time,
@@ -246,6 +246,24 @@ def list_command(args):
     
     print()
     return 0
+
+
+def dwd_command(args):
+    if args.connector != 'wdt':
+        print(f'暂不支持的连接器: {args.connector}')
+        return 1
+    try:
+        from connectors.wdt.dwd_cleanse import ALL_DWD_TASK_NAMES, run_dwd_task
+        if args.task not in ALL_DWD_TASK_NAMES:
+            print(f'未知任务: {args.task}，可选: {list(ALL_DWD_TASK_NAMES)}')
+            return 1
+        n = run_dwd_task(args.task, debug=getattr(args, 'debug', False))
+        print(f'DWD {args.task}: 写入 {n} 行')
+        return 0
+    except Exception as e:
+        logger.error(f'DWD 失败: {e}')
+        print(f'DWD 失败: {e}')
+        return 1
 
 
 def stats_command(args):
@@ -443,7 +461,7 @@ def cli():
     )
     pull_parser.add_argument(
         '--shop-nos',
-        help='店铺编码，逗号分隔（利润表接口）'
+        help='店铺编码，逗号分隔（利润表接口、expense_sku_share_day_detail）'
     )
     pull_parser.add_argument(
         '--spec-no',
@@ -456,7 +474,7 @@ def cli():
     )
     pull_parser.add_argument(
         '--summary-no',
-        help='汇总单号，逗号分隔（仅 expense_sku_day_summary）'
+        help='汇总单号，逗号分隔（expense_sku_day_summary / expense_sku_share_day_detail）'
     )
     pull_parser.add_argument(
         '--expense-item-name',
@@ -519,6 +537,16 @@ def cli():
     
     pull_parser.set_defaults(func=pull_command)
     
+    dwd_parser = subparsers.add_parser('dwd', help='ODS 清洗写入 DWD（SQL Server）')
+    dwd_parser.add_argument('-c', '--connector', default='wdt', help='连接器，默认 wdt')
+    dwd_parser.add_argument(
+        '-t', '--task',
+        required=True,
+        help='清洗任务',
+    )
+    dwd_parser.add_argument('--debug', action='store_true', help='打印 DWD 执行 SQL（入 core 日志）')
+    dwd_parser.set_defaults(func=dwd_command)
+
     # ========== list 命令 ==========
     list_parser = subparsers.add_parser('list', help='列出可用的连接器和服务')
     list_parser.set_defaults(func=list_command)
