@@ -56,6 +56,13 @@ def _auto_register():
         register_connector('weiban', WEIBAN_INFO)
     except ImportError:
         pass
+
+    # 微信小店连接器
+    try:
+        from .wechat_store import CONNECTOR_INFO as WECHAT_STORE_INFO
+        register_connector('wechat_store', WECHAT_STORE_INFO)
+    except ImportError:
+        pass
     
     # 其他连接器可以在这里添加...
 

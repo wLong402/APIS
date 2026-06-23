@@ -1,10 +1,23 @@
 # -*- coding: utf-8 -*-
 
+import hashlib
 import json
-from typing import List, Dict
+from typing import Dict, List
 
 from common.base_repository import BaseRepository
 from .raw_refund_detail_repo import RawRefundDetailRepository
+
+
+def _normalize_refund_detail_rec_id(detail_item: Dict, refund_id) -> None:
+    rid = detail_item.get('rec_id')
+    if rid is None:
+        rid = detail_item.get('recId')
+    if rid is None:
+        oid = detail_item.get('oid') or detail_item.get('oid_str') or ''
+        sku = detail_item.get('sku_no') or detail_item.get('spec_no') or ''
+        rid = hashlib.md5(f'{refund_id}|{oid}|{sku}'.encode('utf-8')).hexdigest()
+    detail_item['rec_id'] = str(rid)
+    detail_item.pop('recId', None)
 
 
 class RefundRepository(BaseRepository):
@@ -41,6 +54,7 @@ class RefundRepository(BaseRepository):
                     if isinstance(detail, dict):
                         detail_item = detail.copy()
                         detail_item['refund_id'] = refund_id
+                        _normalize_refund_detail_rec_id(detail_item, refund_id)
                         detail_list.append(detail_item)
             
             refund_copy = refund.copy()

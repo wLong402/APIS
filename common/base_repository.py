@@ -34,6 +34,10 @@ class BaseRepository(ABC):
     
     # 系统前缀（可选）
     SYSTEM_PREFIX: str = None
+
+    # 预留列：接口偶发返回的稀疏字段，建表/补列时保证存在（子类可覆盖）
+    # 例: {'roomId': 'NVARCHAR(64)', 'authorId': 'NVARCHAR(64)'}
+    RESERVED_COLUMNS: Dict[str, str] = {}
     
     def __init__(self, db_manager: DatabaseManager = None):
         """
@@ -293,31 +297,67 @@ class BaseRepository(ABC):
 
         return 0
     
-    def _analyze_fields(self, data_list: List[Dict], sample_size: int = 100) -> Dict[str, str]:
-        """分析数据字段和类型（带实例级缓存，新字段增量合并）"""
+    def _default_string_column_type(self) -> str:
         db_type = self.db.config.database.type
-        
+        return 'NVARCHAR(MAX)' if db_type.lower() == 'sqlserver' else 'TEXT'
+
+    def _analyze_fields(self, data_list: List[Dict], sample_size: int = 100) -> Dict[str, str]:
+        """分析数据字段和类型（全量 key 并集 + 预留列，类型从前 sample_size 条推断）"""
+        db_type = self.db.config.database.type
+        default_str = self._default_string_column_type()
+
         if self._fields_cache is None:
-            fields = {}
+            fields: Dict[str, str] = {}
         else:
-            fields = self._fields_cache
-        
+            fields = dict(self._fields_cache)
+
         new_keys = False
+        pending_type: Set[str] = set()
+
+        reserved = getattr(type(self), 'RESERVED_COLUMNS', None) or {}
+        for key, col_type in reserved.items():
+            if key not in fields:
+                fields[key] = col_type
+                new_keys = True
+
+        for item in data_list:
+            for key in item.keys():
+                if key not in fields:
+                    fields[key] = default_str
+                    pending_type.add(key)
+                    new_keys = True
+
         for item in data_list[:sample_size]:
             for key, value in item.items():
-                if key not in fields:
-                    fields[key] = infer_column_type(value, db_type)
+                if value is None:
+                    continue
+                new_type = infer_column_type(value, db_type)
+                if key in pending_type:
+                    fields[key] = new_type
+                    pending_type.discard(key)
                     new_keys = True
-                elif value is not None:
+                elif key not in fields:
+                    fields[key] = new_type
+                    new_keys = True
+                else:
                     current_type = fields[key]
-                    new_type = infer_column_type(value, db_type)
                     if current_type in ('TEXT', 'NVARCHAR(MAX)') and new_type not in ('TEXT', 'NVARCHAR(MAX)'):
                         fields[key] = new_type
                         new_keys = True
-        
+
+        for key in pending_type:
+            resolved = None
+            for item in data_list:
+                val = item.get(key)
+                if val is not None:
+                    resolved = infer_column_type(val, db_type)
+                    break
+            fields[key] = resolved or default_str
+            new_keys = True
+
         if self._fields_cache is None or new_keys:
             self._fields_cache = fields
-        
+
         return fields
     
     def _ensure_table(self, fields: Dict[str, str]):

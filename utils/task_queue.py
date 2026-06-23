@@ -261,19 +261,23 @@ def create_task_queue_from_config(config_path: str = 'config/config.yaml') -> Op
         return None
     
     try:
+        import os
         import yaml
-        with open(config_path, 'r', encoding='utf-8') as f:
+        from core.config import resolve_config_path
+
+        path = resolve_config_path(config_path if config_path != 'config/config.yaml' else None)
+        with open(path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
         
         redis_config = config.get('redis', {})
-        if not redis_config:
+        if not redis_config and not os.getenv('REDIS_HOST'):
             return None
         
         return TaskQueue(
-            host=redis_config.get('host', 'localhost'),
-            port=redis_config.get('port', 6379),
+            host=os.getenv('REDIS_HOST') or redis_config.get('host', 'localhost'),
+            port=int(os.getenv('REDIS_PORT') or redis_config.get('port', 6379)),
             db=redis_config.get('db', 0),
-            password=redis_config.get('password')
+            password=os.getenv('REDIS_PASSWORD') or redis_config.get('password')
         )
     except Exception as e:
         print(f"[TaskQueue] 初始化失败: {e}")

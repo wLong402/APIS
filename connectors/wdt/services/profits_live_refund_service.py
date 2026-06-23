@@ -5,6 +5,7 @@ import json
 from typing import List, Dict
 
 from common.base_service import BasePullService
+from common.wdt_pull_policy import profits_live_query_date_range
 from ..client import WdtClient, get_wdt_client
 from ..repositories import ProfitsLiveRefundRepository
 from ..sdk.api import ProfitsLiveRefundQueryAPI
@@ -29,8 +30,7 @@ class ProfitsLiveRefundPullService(BasePullService):
         return hashlib.md5(raw.encode('utf-8')).hexdigest()
 
     def _fetch_data(self, start_time: str, end_time: str, **kwargs) -> List[Dict]:
-        start_date = start_time.split(' ')[0] if ' ' in start_time else start_time
-        end_date = end_time.split(' ')[0] if ' ' in end_time else end_time
+        start_date, end_date = profits_live_query_date_range(start_time, end_time)
 
         call_params = dict(
             start_date=start_date,

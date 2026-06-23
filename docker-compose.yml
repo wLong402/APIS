@@ -1,13 +1,66 @@
-version: '3.8'
-
 services:
   redis:
     image: redis:7-alpine
     container_name: data_pull_redis
     ports:
-      - "6379:6379"
+      - "${REDIS_HOST_PORT:-6379}:6379"
     volumes:
-      # 数据持久化
-      - ./redis_data:/data
+      - redis_data:/data
     command: redis-server --appendonly yes --appendfsync everysec
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hjy-data-pull:latest
+    container_name: data_pull_web
+    ports:
+      - "${WEB_PORT:-8765}:8765"
+    environment:
+      CONFIG_PATH: ${CONFIG_PATH:-config/config.yaml}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: "6379"
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - ./config:/app/config
+      - ./logs:/app/logs
+      - app_tokens:/app/tokens
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["python", "-m", "web.server", "--host", "0.0.0.0", "--port", "8765"]
+
+  cli:
+    profiles: ["cli"]
+    image: hjy-data-pull:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      CONFIG_PATH: ${CONFIG_PATH:-config/config.yaml}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: "6379"
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      - ./config:/app/config
+      - ./logs:/app/logs
+      - app_tokens:/app/tokens
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+    entrypoint: ["docker/entrypoint.sh", "python", "run.py"]
+
+volumes:
+  redis_data:
+  app_tokens:

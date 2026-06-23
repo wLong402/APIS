@@ -55,6 +55,13 @@ logging:
   log_dir: logs
   log_file: data_pull.log
 
+# 微信小店（直播 DWD authorid → talent_id 映射）
+wechat_store:
+  appid: 'wx10b28330b6da0fc0'
+  secret: 'a5f0d1369a46b2f79bc565992593ab89'
+  token_cache_path: './wechat_store_token.conf'
+  timeout: 30
+
 # 微伴助手配置
 weiban:
   # API 基础地址

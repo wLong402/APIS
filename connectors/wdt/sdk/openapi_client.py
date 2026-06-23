@@ -5,7 +5,7 @@ import time
 import hashlib
 import requests
 from urllib.parse import urlencode
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, Union
 
 from .config import WdtConfig
 
@@ -19,28 +19,32 @@ def _get_debug_print():
 
 
 class OpenAPIClient:
-    
+
     GATEWAY_URL = 'http://wdt.wangdian.cn/openapi'
-    
+
     def __init__(self, config: Optional[WdtConfig] = None):
         self.config = config or WdtConfig.default()
-    
+
     def _generate_sign(self, params: Dict, secret: str) -> str:
         sign_str = ''.join(f"{k}{params[k]}" for k in sorted(params.keys()))
         full_str = secret + sign_str + secret
         return hashlib.md5(full_str.encode('utf-8')).hexdigest()
-    
-    def call(self, method: str, params: Dict, pager: Optional[Dict] = None,
+
+    def call(self, method: str, params: Union[Dict, List], pager: Optional[Dict] = None,
              debug: bool = False) -> Dict:
         pager = pager or {'page_size': 20, 'page_no': 0}
         debug_print = _get_debug_print()
         timestamp = int(time.time()) - 1325347200
-        
-        body_json = json.dumps(params, ensure_ascii=False)
+
+        if isinstance(params, list):
+            body_json = json.dumps(params, ensure_ascii=False)
+        else:
+            body_json = json.dumps([params], ensure_ascii=False)
+
         page_size = str(pager.get('page_size', 20))
         page_no = str(pager.get('page_no', 0))
         calc_total = str(pager.get('calc_total', 1))
-        
+
         sign_params = {
             'method': method,
             'v': '1.0',
@@ -53,9 +57,9 @@ class OpenAPIClient:
             'page_no': page_no,
             'calc_total': calc_total,
         }
-        
+
         sign = self._generate_sign(sign_params, self.config.wdt_secret)
-        
+
         url_params = {
             'method': method,
             'v': '1.0',
@@ -69,30 +73,31 @@ class OpenAPIClient:
             'calc_total': calc_total,
         }
         request_url = f"{self.GATEWAY_URL}?{urlencode(url_params)}"
-        
+
         if debug:
-            debug_print(f"  [API] {method} pager={pager} params={params}")
-        
+            debug_print(f"  [API] {method} pager={pager} body={body_json}")
+
         t0 = time.time()
         try:
             response = requests.post(
                 request_url,
-                data=body_json,
+                data=body_json.encode('utf-8'),
                 headers={'Content-Type': 'application/json'},
                 timeout=self.config.timeout
             )
-            
+
             result = response.json()
-            
+
             if debug:
                 debug_print(
                     f"  [API] {method} http={response.status_code} "
                     f"status={result.get('status')} msg={result.get('message')} "
+                    f"code={result.get('code', '')} "
                     f"elapsed={time.time()-t0:.2f}s"
                 )
-            
+
             return result
-            
+
         except requests.exceptions.RequestException as e:
             return {'status': 'error', 'message': f'网络请求异常: {str(e)}'}
         except json.JSONDecodeError:

@@ -29,6 +29,7 @@ from .services import (
     MarketingShareResultPullService,
     ExpenseSkuDaySummaryPullService,
     ExpenseSkuShareDayDetailPullService,
+    LogisticsTracePullService,
 )
 from .repositories import (
     TradeRepository,
@@ -52,6 +53,7 @@ from .repositories import (
     MarketingShareResultRepository,
     ExpenseSkuDaySummaryRepository,
     ExpenseSkuShareDayDetailRepository,
+    LogisticsTraceRepository,
 )
 
 # 连接器元信息
@@ -153,6 +155,10 @@ CONNECTOR_INFO = {
             'name': '账单分摊日明细',
             'class': ExpenseSkuShareDayDetailPullService,
         },
+        'logistics_trace': {
+            'name': '物流轨迹查询',
+            'class': LogisticsTracePullService,
+        },
     },
 }
 
@@ -216,6 +222,7 @@ __all__ = [
     'MarketingShareResultPullService',
     'ExpenseSkuDaySummaryPullService',
     'ExpenseSkuShareDayDetailPullService',
+    'LogisticsTracePullService',
     # 仓库
     'TradeRepository',
     'RefundRepository',
@@ -238,6 +245,7 @@ __all__ = [
     'MarketingShareResultRepository',
     'ExpenseSkuDaySummaryRepository',
     'ExpenseSkuShareDayDetailRepository',
+    'LogisticsTraceRepository',
     # 元信息
     'CONNECTOR_INFO',
     # 工厂方法

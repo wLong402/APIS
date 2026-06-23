@@ -38,8 +38,68 @@ data_sync_platform/
 ├── logs/                     # 日志目录
 ├── docs/                     # 文档
 ├── requirements.txt
-└── docker-compose.yml
+├── Dockerfile
+├── docker-compose.yml
+└── docker/
+    └── entrypoint.sh
 ```
+
+## Docker 部署
+
+### 1. 准备配置
+
+```bash
+cp config/config.docker.example.yaml config/config.yaml
+# 编辑 config/config.yaml，填写 API 密钥与数据库连接
+# 容器内 Redis 主机名固定为 redis（已在示例配置中设置）
+# 数据库在宿主机时使用 host.docker.internal
+```
+
+可选：复制环境变量模板
+
+```bash
+cp .env.example .env
+```
+
+### 2. 启动服务
+
+```bash
+docker compose up -d --build
+```
+
+- Web 控制台: http://localhost:8765
+- Redis: localhost:6379（任务队列 / 重试）
+
+查看日志：
+
+```bash
+docker compose logs -f web
+```
+
+### 3. 一次性 CLI 拉取
+
+```bash
+docker compose --profile cli run --rm cli pull -c wdt -s trade --start 2025-12-01 --end 2025-12-07
+```
+
+### 4. 常用命令
+
+```bash
+# 停止
+docker compose down
+
+# 重建镜像
+docker compose build --no-cache web
+
+# 进入容器
+docker compose exec web bash
+```
+
+说明：
+
+- `config/`、`logs/`、`tokens/`（Token 缓存）通过 volume 挂载，容器重启不丢
+- 环境变量 `CONFIG_PATH`、`REDIS_HOST`、`REDIS_PORT` 可覆盖配置（见 `.env.example`）
+- SQL Server 需使用镜像内已安装的 `ODBC Driver 18 for SQL Server`
 
 ## 快速开始
 

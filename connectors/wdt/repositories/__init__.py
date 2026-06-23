@@ -34,6 +34,7 @@ from .marketing_share_result_repo import MarketingShareResultRepository
 from .expense_sku_day_summary_repo import ExpenseSkuDaySummaryRepository
 from .expense_sku_day_summary_detail_repo import ExpenseSkuDaySummaryDetailRepository
 from .expense_sku_share_day_detail_repo import ExpenseSkuShareDayDetailRepository
+from .logistics_trace_repo import LogisticsTraceRepository
 
 __all__ = [
     'TradeRepository',
@@ -68,5 +69,6 @@ __all__ = [
     'ExpenseSkuDaySummaryRepository',
     'ExpenseSkuDaySummaryDetailRepository',
     'ExpenseSkuShareDayDetailRepository',
+    'LogisticsTraceRepository',
 ]
 

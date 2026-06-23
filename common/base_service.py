@@ -225,17 +225,25 @@ class BasePullService(ABC):
         按时间间隔拉取数据
         
         将大的时间范围切分为小间隔，逐个拉取。
-        
-        Args:
-            start_time: 开始时间
-            end_time: 结束时间
-            interval_seconds: 间隔秒数（如 3600 表示 1 小时）
-            debug: 是否打印调试信息
-            **kwargs: 传递给 pull() 的其他参数
-            
-        Returns:
-            PullResult 汇总结果
         """
+        from common.wdt_pull_policy import is_wdt_day_only_service
+
+        if is_wdt_day_only_service(self.SERVICE_NAME):
+            start_date = start_time.split(' ')[0] if ' ' in start_time else start_time[:10]
+            end_date = end_time.split(' ')[0] if ' ' in end_time else end_time[:10]
+            msg = (
+                f'{self.SYSTEM_NAME}.{self.SERVICE_NAME} 仅支持按天查询，'
+                f'已忽略 interval_seconds={interval_seconds}，改为按日拉取 {start_date} ~ {end_date}'
+            )
+            self.logger.warning(msg)
+            print(f'\n[警告] {msg}\n', flush=True)
+            return self.pull_by_day(
+                start_date, end_date,
+                interval_seconds=0,
+                debug=debug,
+                **kwargs,
+            )
+
         start_ts = time.time()
         
         start_dt = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
@@ -323,6 +331,17 @@ class BasePullService(ABC):
         Returns:
             PullResult 汇总结果
         """
+        from common.wdt_pull_policy import is_wdt_day_only_service
+
+        if interval_seconds > 0 and is_wdt_day_only_service(self.SERVICE_NAME):
+            msg = (
+                f'{self.SYSTEM_NAME}.{self.SERVICE_NAME} 仅支持按天查询，'
+                f'已忽略 interval_seconds={interval_seconds}（避免同一天重复请求）'
+            )
+            self.logger.warning(msg)
+            print(f'\n[警告] {msg}\n', flush=True)
+            interval_seconds = 0
+
         start_ts = time.time()
         
         start = datetime.strptime(start_date, '%Y-%m-%d')

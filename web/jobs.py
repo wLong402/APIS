@@ -64,6 +64,8 @@ def _resolve_python() -> str:
 
 def build_command(payload: dict) -> List[str]:
     """根据前端参数构建 run.py pull 命令行"""
+    from common.wdt_pull_policy import is_wdt_day_only_service
+
     if payload.get('dwd_task'):
         return _build_dwd_cmd(
             str(payload['dwd_task']),
@@ -112,10 +114,14 @@ def build_command(payload: dict) -> List[str]:
         'salesman_name': '--salesman-name',
         'start_business_time': '--start-business-time',
         'end_business_time': '--end-business-time',
+        'logistics_no': '--logistics-no',
+        'logistics_status': '--logistics-status',
     }
     for k, flag in mapping.items():
         v = payload.get(k)
         if v in (None, '', False):
+            continue
+        if k == 'interval' and is_wdt_day_only_service(str(payload.get('service') or '')):
             continue
         if k == 'past_days' and payload.get('past_value') not in (None, ''):
             continue
@@ -127,6 +133,8 @@ def build_command(payload: dict) -> List[str]:
         cmd.append('--by-day')
     if payload.get('debug'):
         cmd.append('--debug')
+    if payload.get('need_detail'):
+        cmd.append('--need-detail')
     if payload.get('no_ehr'):
         cmd.append('--no-ehr')
     return cmd

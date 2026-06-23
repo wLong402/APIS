@@ -23,6 +23,9 @@ WEB_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__, static_folder=None)
 
 _WDT_FIXED_BY_DAY = {
+    'marketing_share_result',
+    'expense_sku_day_summary',
+    'expense_sku_share_day_detail',
     'profits_sku',
     'profits_order',
     'profits_live_sku',
@@ -45,6 +48,8 @@ def _normalize_time_range(payload: dict):
     if past_days:
         return compute_past_time_range(int(past_days), 'day') + (today,)
     if connector == 'wdt' and service_name in ('sht_recon_detail', 'recon_delivery_detail') and not start and not end:
+        return None, None, today
+    if connector == 'wdt' and service_name == 'logistics_trace' and payload.get('logistics_no') and not start and not end:
         return None, None, today
     s = start or today
     e = end or today
@@ -89,6 +94,9 @@ def _build_pull_kwargs(payload: dict, limit: int) -> dict:
         'salesman_name': payload.get('salesman_name'),
         'start_business_time': payload.get('start_business_time'),
         'end_business_time': payload.get('end_business_time'),
+        'logistics_no': payload.get('logistics_no'),
+        'logistics_status': payload.get('logistics_status'),
+        'need_detail': bool(payload.get('need_detail')),
         'debug': bool(payload.get('debug')),
     }
 
@@ -118,8 +126,11 @@ def _preview_data(payload: dict, limit: int = 5) -> dict:
         data = service._fetch_data('', '', staff_id=payload.get('shop_no'), **kwargs)
     else:
         if service_name == 'profits_live_order':
-            start_date = (start_time or f'{today} 00:00:00').split(' ')[0]
-            end_date = (end_time or f'{today} 23:59:59').split(' ')[0]
+            from common.wdt_pull_policy import profits_live_query_date_range
+            start_date, end_date = profits_live_query_date_range(
+                start_time or f'{today} 00:00:00',
+                end_time or f'{today} 23:59:59',
+            )
             resp = service.profits_live_order_api.query(
                 start_date=start_date,
                 end_date=end_date,
@@ -132,8 +143,11 @@ def _preview_data(payload: dict, limit: int = 5) -> dict:
             rows = resp.get('data', []) if isinstance(resp, dict) else []
             return {'items': rows[:limit], 'count': len(rows)}
         if service_name == 'profits_live_refund':
-            start_date = (start_time or f'{today} 00:00:00').split(' ')[0]
-            end_date = (end_time or f'{today} 23:59:59').split(' ')[0]
+            from common.wdt_pull_policy import profits_live_query_date_range
+            start_date, end_date = profits_live_query_date_range(
+                start_time or f'{today} 00:00:00',
+                end_time or f'{today} 23:59:59',
+            )
             resp = service.profits_live_refund_api.query(
                 start_date=start_date,
                 end_date=end_date,

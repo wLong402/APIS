@@ -12,6 +12,7 @@ from core.config import get_config
 
 # 底层 SDK
 from .sdk import QimenClient, WdtConfig
+from .sdk.openapi_client import OpenAPIClient
 from .sdk.api import (
     RawTradeSearchAPI,
     RawRefundSearchAPI,
@@ -36,6 +37,7 @@ from .sdk.api import (
     MarketingShareResultQueryAPI,
     ExpenseSkuDaySummaryQueryAPI,
     ExpenseSkuShareDayDetailQueryAPI,
+    SearchLogisticsTraceAPI,
 )
 
 
@@ -111,6 +113,8 @@ class WdtClient(BaseAPIClient):
         self._marketing_share_result_api = None
         self._expense_sku_day_summary_api = None
         self._expense_sku_share_day_detail_api = None
+        self._logistics_trace_api = None
+        self._openapi_client = None
     
     def call(self, method: str, params: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """
@@ -365,6 +369,24 @@ class WdtClient(BaseAPIClient):
                 hjy_gateway_url=self._hjy_gateway_url,
             )
         return self._expense_sku_share_day_detail_api
+
+    @property
+    def openapi_client(self) -> OpenAPIClient:
+        if self._openapi_client is None:
+            self._openapi_client = OpenAPIClient(self._wdt_config)
+            gw = self.config.get('openapi_gateway_url')
+            if gw:
+                self._openapi_client.GATEWAY_URL = gw
+        return self._openapi_client
+
+    @property
+    def logistics_trace_api(self) -> SearchLogisticsTraceAPI:
+        if self._logistics_trace_api is None:
+            self._logistics_trace_api = SearchLogisticsTraceAPI(
+                client=self.openapi_client,
+                gateway_url=self.config.get('openapi_gateway_url'),
+            )
+        return self._logistics_trace_api
 
     def health_check(self) -> bool:
         """健康检查 - 尝试调用一个简单的 API"""

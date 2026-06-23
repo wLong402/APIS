@@ -1,0 +1,57 @@
+# Docker 部署示例配置
+# 用法: cp config/config.docker.example.yaml config/config.yaml 后按需修改
+
+wdt:
+  app_key: 'YOUR_APP_KEY'
+  app_secret: 'YOUR_SECRET:YOUR_SALT'
+  hjy_app_id: 'YOUR_HJY_APP_ID'
+  hjy_sid: 'YOUR_SID'
+  hjy_app_key: 'YOUR_HJY_APP_KEY'
+  hjy_gateway_url: 'http://xxx.api.taobao.com/router/qm'
+  qimen_appkey: 'YOUR_QIMEN_APPKEY'
+  qimen_appsecret: 'YOUR_QIMEN_APPSECRET'
+  gateway_url: 'http://xxx.api.taobao.com/router/qm'
+  target_appkey: 'YOUR_TARGET_APPKEY'
+  wdt3_customer_id: 'YOUR_CUSTOMER_ID'
+  timeout: 30
+
+database:
+  type: sqlserver
+  # 数据库在宿主机时使用 host.docker.internal；内网 IP 则填实际地址
+  host: host.docker.internal
+  port: 1433
+  user: your_user
+  password: your_password
+  database: your_database
+  charset: utf8mb4
+  driver: ODBC Driver 18 for SQL Server
+
+logging:
+  level: INFO
+  log_dir: logs
+  log_file: data_pull.log
+
+wechat_store:
+  appid: 'YOUR_WECHAT_APPID'
+  secret: 'YOUR_WECHAT_SECRET'
+  token_cache_path: './tokens/wechat_store_token.conf'
+  timeout: 30
+
+weiban:
+  base_url: 'https://open.weibanzhushou.com'
+  corp_id: 'YOUR_CORP_ID'
+  secret: 'YOUR_SECRET'
+  token_cache_path: './tokens/access_token.conf'
+  timeout: 30
+  ehr_database:
+    host: host.docker.internal
+    port: 1433
+    user: your_user
+    password: your_password
+    database: your_database
+
+redis:
+  host: redis
+  port: 6379
+  db: 0
+  password: null

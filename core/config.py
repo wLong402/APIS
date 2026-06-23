@@ -282,6 +282,10 @@ class Config:
         if 'weiban' in raw_config and 'weiban' not in connectors:
             connectors['weiban'] = raw_config['weiban']
             connectors['weiban']['enabled'] = True
+        # 处理 wechat_store
+        if 'wechat_store' in raw_config and 'wechat_store' not in connectors:
+            connectors['wechat_store'] = raw_config['wechat_store']
+            connectors['wechat_store']['enabled'] = True
         
         # 应用配置
         app_conf = raw_config.get('app', {})
@@ -387,6 +391,26 @@ class Config:
 _config: Optional[Config] = None
 
 
+def resolve_config_path(config_path: Optional[str] = None) -> str:
+    """解析配置文件路径，支持 CONFIG_PATH 环境变量。"""
+    if config_path:
+        return config_path
+    return os.getenv('CONFIG_PATH', 'config/config.yaml')
+
+
+def _apply_env_overrides(config: 'Config') -> None:
+    """允许 Docker / 部署环境通过环境变量覆盖部分配置。"""
+    redis_host = os.getenv('REDIS_HOST')
+    if redis_host:
+        config.redis.host = redis_host
+    redis_port = os.getenv('REDIS_PORT')
+    if redis_port:
+        config.redis.port = int(redis_port)
+    redis_password = os.getenv('REDIS_PASSWORD')
+    if redis_password is not None:
+        config.redis.password = redis_password or None
+
+
 def get_config(config_path: str = 'config/config.yaml', 
                reload: bool = False,
                validate: bool = True) -> Config:
@@ -402,8 +426,10 @@ def get_config(config_path: str = 'config/config.yaml',
         Config 实例
     """
     global _config
+    path = resolve_config_path(config_path if config_path != 'config/config.yaml' else None)
     if _config is None or reload:
-        _config = Config.from_yaml(config_path, validate=validate)
+        _config = Config.from_yaml(path, validate=validate)
+        _apply_env_overrides(_config)
     return _config
 
 
@@ -418,7 +444,9 @@ def validate_config(config_path: str = 'config/config.yaml') -> List[str]:
         错误信息列表，空列表表示验证通过
     """
     try:
-        config = Config.from_yaml(config_path, validate=False)
+        path = resolve_config_path(config_path if config_path != 'config/config.yaml' else None)
+        config = Config.from_yaml(path, validate=False)
+        _apply_env_overrides(config)
         return config.validate()
     except Exception as e:
         return [str(e)]

@@ -3,6 +3,10 @@
 import logging
 from typing import Any, Dict, List, Optional, Set
 
+from connectors.wechat_store.services.author_talent_mapping import (
+    enrich_profits_live_order_talent_id,
+    enrich_profits_live_refund_talent_id,
+)
 from core.database import get_db_manager
 from core.logger import DATE_FORMAT, LOG_FORMAT, get_logger
 
@@ -19,6 +23,9 @@ DWD_TASK_LABEL: Dict[str, str] = {
     'profits_live_order': '利润表明细(订单) → DWD',
     'profits_live_refund': '利润表明细(退款) → DWD',
 }
+
+# DWD 后写入字段：ODS 无对应列，MERGE/INSERT 不能从 ODS 选取
+DWD_ENRICHMENT_COLUMNS = frozenset({'talent_id'})
 
 
 def pull_service_to_dwd_task(service: str) -> Optional[str]:
@@ -432,6 +439,22 @@ def _ordered_ods_columns(db, table_name: str) -> List[str]:
     return [r['col_name'] for r in rows]
 
 
+def _dwd_merge_insert_cols(db, ods: str, dwd: str, id_cols: Set[str]) -> List[str]:
+    """DWD 列序下，仅保留 ODS 也有的列（排除标识列与后写入 enrichment 列）。"""
+    dwd_cols = _ordered_ods_columns(db, dwd)
+    ods_cols = set(_ordered_ods_columns(db, ods))
+    merge_cols = [
+        c for c in dwd_cols
+        if c not in id_cols
+        and c in ods_cols
+        and c not in DWD_ENRICHMENT_COLUMNS
+    ]
+    skipped = [c for c in dwd_cols if c in DWD_ENRICHMENT_COLUMNS and c not in id_cols]
+    if skipped:
+        logger.debug('dwd %s: MERGE 跳过 ODS 无来源列 %s', dwd, skipped)
+    return merge_cols
+
+
 def _identity_column_names_sqlserver(db, table_name: str) -> List[str]:
     rows = db.fetch_all(
         """
@@ -508,7 +531,7 @@ def _run_dwd_profits_live_refund(db, debug: bool = False) -> int:
     if 'datano' not in cols:
         raise RuntimeError('ODS/DWD 缺少 dataNo 列，无法清洗')
     id_cols = set(_identity_column_names_sqlserver(db, dwd))
-    insert_cols = [c for c in cols if c not in id_cols]
+    insert_cols = _dwd_merge_insert_cols(db, ods, dwd, id_cols)
     if not insert_cols:
         raise RuntimeError('DWD 表无可插入列（可能全部为标识列）')
     qcols = ', '.join(f'[{c}]' for c in insert_cols)
@@ -543,22 +566,29 @@ SELECT {qcols} FROM src;
 """
         if debug:
             logger.info('dwd profits_live_refund SQL:\n%s', sql.strip())
-        return db.execute(sql.strip())
-
-    upd_cols = [c for c in insert_cols if c != 'datano']
-    update_set = ', '.join(f'tgt.[{c}] = src.[{c}]' for c in upd_cols)
-    vals = ', '.join(f'src.[{c}]' for c in insert_cols)
-    logger.info('dwd profits_live_refund: 增量 MERGE（目标表已有 %s 行）', n_existing)
-    merge_sql = f"""
+        n = db.execute(sql.strip())
+    else:
+        upd_cols = [c for c in insert_cols if c != 'datano']
+        update_set = ', '.join(f'tgt.[{c}] = src.[{c}]' for c in upd_cols)
+        vals = ', '.join(f'src.[{c}]' for c in insert_cols)
+        logger.info('dwd profits_live_refund: 增量 MERGE（目标表已有 %s 行）', n_existing)
+        merge_sql = f"""
 {cte}
 MERGE dbo.[{dwd}] AS tgt
 USING src ON tgt.[datano] = src.[datano]
 WHEN MATCHED THEN UPDATE SET {update_set}
 WHEN NOT MATCHED BY TARGET THEN INSERT ({qcols}) VALUES ({vals});
 """
-    if debug:
-        logger.info('dwd profits_live_refund SQL:\n%s', merge_sql.strip())
-    return db.execute(merge_sql.strip())
+        if debug:
+            logger.info('dwd profits_live_refund SQL:\n%s', merge_sql.strip())
+        n = db.execute(merge_sql.strip())
+
+    try:
+        n_talent = enrich_profits_live_refund_talent_id(db, ods_table=ods, dwd_table=dwd, debug=debug)
+        logger.info('dwd profits_live_refund: talent_id 回填完成，更新 %s 行', n_talent)
+    except Exception as exc:
+        logger.exception('dwd profits_live_refund: talent_id 回填失败（不影响主清洗）: %s', exc)
+    return n
 
 
 def _run_dwd_profits_live_order(db, debug: bool = False) -> int:
@@ -577,7 +607,7 @@ def _run_dwd_profits_live_order(db, debug: bool = False) -> int:
     if 'datano' not in cols:
         raise RuntimeError('ODS/DWD 缺少 dataNo 列，无法清洗')
     id_cols = set(_identity_column_names_sqlserver(db, dwd))
-    insert_cols = [c for c in cols if c not in id_cols]
+    insert_cols = _dwd_merge_insert_cols(db, ods, dwd, id_cols)
     if not insert_cols:
         raise RuntimeError('DWD 表无可插入列（可能全部为标识列）')
     qcols = ', '.join(f'[{c}]' for c in insert_cols)
@@ -610,22 +640,29 @@ SELECT {qcols} FROM src;
 """
         if debug:
             logger.info('dwd profits_live_order SQL:\n%s', sql.strip())
-        return db.execute(sql.strip())
-
-    upd_cols = [c for c in insert_cols if c != 'datano']
-    update_set = ', '.join(f'tgt.[{c}] = src.[{c}]' for c in upd_cols)
-    vals = ', '.join(f'src.[{c}]' for c in insert_cols)
-    logger.info('dwd profits_live_order: 增量 MERGE（目标表已有 %s 行）', n_existing)
-    merge_sql = f"""
+        n = db.execute(sql.strip())
+    else:
+        upd_cols = [c for c in insert_cols if c != 'datano']
+        update_set = ', '.join(f'tgt.[{c}] = src.[{c}]' for c in upd_cols)
+        vals = ', '.join(f'src.[{c}]' for c in insert_cols)
+        logger.info('dwd profits_live_order: 增量 MERGE（目标表已有 %s 行）', n_existing)
+        merge_sql = f"""
 {cte}
 MERGE dbo.[{dwd}] AS tgt
 USING src ON tgt.[datano] = src.[datano]
 WHEN MATCHED THEN UPDATE SET {update_set}
 WHEN NOT MATCHED BY TARGET THEN INSERT ({qcols}) VALUES ({vals});
 """
-    if debug:
-        logger.info('dwd profits_live_order SQL:\n%s', merge_sql.strip())
-    return db.execute(merge_sql.strip())
+        if debug:
+            logger.info('dwd profits_live_order SQL:\n%s', merge_sql.strip())
+        n = db.execute(merge_sql.strip())
+
+    try:
+        n_talent = enrich_profits_live_order_talent_id(db, ods_table=ods, dwd_table=dwd, debug=debug)
+        logger.info('dwd profits_live_order: talent_id 回填完成，更新 %s 行', n_talent)
+    except Exception as exc:
+        logger.exception('dwd profits_live_order: talent_id 回填失败（不影响主清洗）: %s', exc)
+    return n
 
 
 def _ensure_dwd_console_log() -> None:

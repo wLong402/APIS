@@ -18,6 +18,34 @@ from core.logger import get_logger, debug_print
 logger = get_logger('cli')
 
 
+def _resolve_pull_date_range(args, start_time: str, end_time: str, today: str) -> tuple:
+    """从已解析的 start_time/end_time 取 YYYY-MM-DD（与顶部时间横幅一致）。"""
+    if start_time and end_time:
+        start_date = start_time.split(' ')[0]
+        end_date = end_time.split(' ')[0]
+        return start_date, end_date
+    start_date = args.start or today
+    end_date = args.end or args.start or today
+    return start_date, end_date
+
+
+def _effective_interval_seconds(service_name: str, interval: Optional[int]) -> int:
+    """日粒度接口忽略 interval，避免同一天被拉 N 次。"""
+    from common.wdt_pull_policy import is_wdt_day_only_service
+
+    if not interval or interval <= 0:
+        return 0
+    if is_wdt_day_only_service(service_name):
+        print(
+            f'\n[警告] {service_name} 仅支持按天查询，已忽略 --interval {interval}'
+            f'（避免同一天重复拉取）\n',
+            flush=True,
+        )
+        logger.warning('忽略 interval=%s，service=%s 为日粒度接口', interval, service_name)
+        return 0
+    return int(interval)
+
+
 def pull_command(args):
     """执行数据拉取"""
     from connectors.wdt import create_service
@@ -43,6 +71,9 @@ def pull_command(args):
             e = args.end or args.start or today
             start_time = s if ' ' in s else f"{s} 00:00:00"
             end_time = e if ' ' in e else f"{e} 23:59:59"
+        elif connector == 'wdt' and service_name == 'logistics_trace' and getattr(args, 'logistics_no', None) and args.start is None and args.end is None:
+            start_time = None
+            end_time = None
         else:
             s = args.start or today
             e = args.end or today
@@ -58,8 +89,9 @@ def pull_command(args):
         print(f"时间:   未指定（不传 startDate/endDate）")
     else:
         print(f"时间:   {start_time} ~ {end_time}")
-    if args.interval:
-        print(f"间隔:   {args.interval} 秒")
+    interval_effective = _effective_interval_seconds(service_name, args.interval)
+    if interval_effective:
+        print(f"间隔:   {interval_effective} 秒")
     print(f"{'='*60}\n")
 
     pull_kwargs = {
@@ -94,6 +126,9 @@ def pull_command(args):
         'salesman_name': getattr(args, 'salesman_name', None),
         'start_business_time': getattr(args, 'start_business_time', None),
         'end_business_time': getattr(args, 'end_business_time', None),
+        'logistics_no': getattr(args, 'logistics_no', None),
+        'logistics_status': getattr(args, 'logistics_status', None),
+        'need_detail': getattr(args, 'need_detail', False),
     }
     
     # 微伴 external_user 服务优先使用 database(mysql) 配置
@@ -161,25 +196,61 @@ def pull_command(args):
                 debug=args.debug,
                 max_workers=args.workers
             )
-        elif connector == 'wdt' and service_name in ('bill_standard', 'bk_share_data', 'fixbill_data_summary', 'sht_recon_detail', 'recon_delivery_detail', 'marketing_share_result', 'expense_sku_day_summary', 'expense_sku_share_day_detail'):
-            result = service.pull(
-                start_time=start_time,
-                end_time=end_time,
-                debug=args.debug,
-                **pull_kwargs,
-            )
+        elif connector == 'wdt' and service_name in (
+            'bill_standard', 'bk_share_data', 'fixbill_data_summary',
+            'sht_recon_detail', 'recon_delivery_detail',
+            'marketing_share_result', 'expense_sku_day_summary', 'expense_sku_share_day_detail',
+        ):
+            from common.wdt_pull_policy import is_wdt_day_only_service
+
+            if is_wdt_day_only_service(service_name):
+                pull_start_date, pull_end_date = _resolve_pull_date_range(args, start_time, end_time, today)
+                result = service.pull_by_day(
+                    start_date=pull_start_date,
+                    end_date=pull_end_date,
+                    interval_seconds=0,
+                    debug=args.debug,
+                    **pull_kwargs,
+                )
+            elif interval_effective > 0:
+                result = service.pull_by_interval(
+                    start_time=start_time,
+                    end_time=end_time,
+                    interval_seconds=interval_effective,
+                    debug=args.debug,
+                    **pull_kwargs,
+                )
+            elif args.by_day:
+                result = service.pull_by_day(
+                    start_date=args.start or today,
+                    end_date=args.end or args.start or today,
+                    interval_seconds=0,
+                    debug=args.debug,
+                    **pull_kwargs,
+                )
+            else:
+                result = service.pull(
+                    start_time=start_time,
+                    end_time=end_time,
+                    debug=args.debug,
+                    **pull_kwargs,
+                )
         elif connector == 'wdt' and service_name in ('profits_sku', 'profits_order', 'profits_live_sku', 'profits_live_order', 'profits_live_refund'):
+            pull_start_date, pull_end_date = _resolve_pull_date_range(args, start_time, end_time, today)
+            if args.debug:
+                debug_print(f"profits 按日拉取: {pull_start_date} ~ {pull_end_date}")
             result = service.pull_by_day(
-                start_date=args.start or today,
-                end_date=args.end or args.start or today,
+                start_date=pull_start_date,
+                end_date=pull_end_date,
+                interval_seconds=0,
                 debug=args.debug,
                 **pull_kwargs,
             )
-        elif args.interval and args.interval > 0:
+        elif interval_effective > 0:
             result = service.pull_by_interval(
                 start_time=start_time,
                 end_time=end_time,
-                interval_seconds=args.interval,
+                interval_seconds=interval_effective,
                 debug=args.debug,
                 **pull_kwargs,
             )
@@ -187,7 +258,7 @@ def pull_command(args):
             result = service.pull_by_day(
                 start_date=args.start or today,
                 end_date=args.end or args.start or today,
-                interval_seconds=args.interval or 0,
+                interval_seconds=0,
                 debug=args.debug,
                 **pull_kwargs,
             )
@@ -512,6 +583,22 @@ def cli():
         '--end-business-time',
         default=None,
         help='业务结束时间（发货对账明细）'
+    )
+    pull_parser.add_argument(
+        '--logistics-no',
+        default=None,
+        help='物流单号（物流轨迹查询，传入时可不传时间）'
+    )
+    pull_parser.add_argument(
+        '--logistics-status',
+        type=int,
+        default=None,
+        help='物流状态（物流轨迹查询，默认5已签收）'
+    )
+    pull_parser.add_argument(
+        '--need-detail',
+        action='store_true',
+        help='返回物流详情（物流轨迹查询，page_size最大100）'
     )
     pull_parser.add_argument(
         '--page-size', '-ps',

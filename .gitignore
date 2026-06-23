@@ -50,4 +50,8 @@ data/
 temp/
 tmp/
 
+# Docker 本地数据
+redis_data/
+tokens/
+
 

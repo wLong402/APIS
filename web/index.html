@@ -286,6 +286,9 @@
             <div><label>业务员名称</label><input id="run-salesman-name" /></div>
             <div><label>业务开始时间</label><input id="run-start-business-time" placeholder="YYYY-MM-DD HH:MM:SS" /></div>
             <div><label>业务结束时间</label><input id="run-end-business-time" placeholder="YYYY-MM-DD HH:MM:SS" /></div>
+            <div><label>物流单号</label><input id="run-logistics-no" /></div>
+            <div><label>物流状态</label><input id="run-logistics-status" placeholder="0-13,99，默认5" /></div>
+            <div><label>返回物流详情</label><input id="run-need-detail" type="checkbox" style="width:auto;" /></div>
           </div>
         </details>
         <div class="toolbar" style="margin-top: 16px;">
@@ -1044,6 +1047,7 @@ const RUN_ADVANCED_FIELDS = [
   'shop-nos', 'spec-no', 'project', 'summary-no', 'expense-item-name',
   'staff-ids', 'start-config-record-time', 'end-config-record-time', 'order-tools',
   'period-mark', 'reco-status', 'salesman-name', 'start-business-time', 'end-business-time',
+  'logistics-no', 'logistics-status', 'need-detail',
 ];
 
 const WDT_SERVICE_ADVANCED_PARAMS = {
@@ -1069,9 +1073,13 @@ const WDT_SERVICE_ADVANCED_PARAMS = {
   expense_sku_share_day_detail: ['shop-nos', 'summary-no'],
   sht_recon_detail: ['shop-no', 'shop-nos', 'period-mark', 'reco-status'],
   recon_delivery_detail: ['shop-no', 'shop-nos', 'warehouse-no', 'summary-no', 'spec-no', 'plat-order-nos', 'period-mark', 'reco-status', 'salesman-name', 'start-business-time', 'end-business-time'],
+  logistics_trace: ['shop-no', 'warehouse-no', 'logistics-no', 'logistics-status', 'need-detail'],
 };
 
 const WDT_PULL_BY_DAY_SERVICES = new Set([
+  'marketing_share_result',
+  'expense_sku_day_summary',
+  'expense_sku_share_day_detail',
   'profits_sku',
   'profits_order',
   'profits_live_sku',
@@ -1259,6 +1267,9 @@ function collectPayload(prefix='run') {
     salesman_name: prefix==='run' ? v('salesman-name') : null,
     start_business_time: prefix==='run' ? v('start-business-time') : null,
     end_business_time: prefix==='run' ? v('end-business-time') : null,
+    logistics_no: prefix==='run' ? v('logistics-no') : null,
+    logistics_status: prefix==='run' && v('logistics-status') ? Number(v('logistics-status')) : null,
+    need_detail: prefix==='run' ? c('need-detail') : false,
     by_day: prefix==='run' ? c('by-day') : false,
     debug: c('debug'),
     no_ehr: prefix==='run' ? c('no-ehr') : false,
