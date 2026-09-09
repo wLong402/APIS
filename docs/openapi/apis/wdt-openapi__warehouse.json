@@ -1,0 +1,131 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "query warehouse",
+    "description": "WDT OpenAPI method=setting.Warehouse.queryWarehouse. Real upstream: http://wdt.wangdian.cn/openapi",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://wdt.wangdian.cn"
+    }
+  ],
+  "tags": [
+    {
+      "name": "wdt-openapi"
+    }
+  ],
+  "paths": {
+    "/openapi/setting_warehouse_querywarehouse": {
+      "post": {
+        "operationId": "wdt-openapi_warehouse",
+        "summary": "query warehouse",
+        "description": "WDT OpenAPI method=setting.Warehouse.queryWarehouse. Real upstream: http://wdt.wangdian.cn/openapi",
+        "tags": [
+          "wdt-openapi"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "setting.Warehouse.queryWarehouse"
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "1.0"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sid",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "salt",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page_no",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

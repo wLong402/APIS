@@ -1,0 +1,133 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "marketing share result",
+    "description": "HJY API method=wdt.hjy.bill.ext.marketing.share.result. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+    "version": "1.0.0"
+  },
+  "host": "332wh0cyoi.api.taobao.com",
+  "basePath": "/",
+  "schemes": [
+    "http"
+  ],
+  "tags": [
+    {
+      "name": "wdt-hjy"
+    }
+  ],
+  "paths": {
+    "/router/qm/wdt_hjy_bill_ext_marketing_share_result": {
+      "post": {
+        "operationId": "wdt-hjy_marketing_share_result",
+        "summary": "marketing share result",
+        "description": "HJY API method=wdt.hjy.bill.ext.marketing.share.result. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          }
+        },
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "appId": {
+                  "type": "string"
+                },
+                "sid": {
+                  "type": "string"
+                },
+                "hjySign": {
+                  "type": "string"
+                },
+                "startDate": {
+                  "type": "string"
+                },
+                "endDate": {
+                  "type": "string"
+                },
+                "nextRequestId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "appId",
+                "sid",
+                "hjySign"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

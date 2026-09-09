@@ -1,0 +1,111 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "query warehouse",
+    "description": "WDT OpenAPI method=setting.Warehouse.queryWarehouse. Real upstream: http://wdt.wangdian.cn/openapi",
+    "version": "1.0.0"
+  },
+  "host": "wdt.wangdian.cn",
+  "basePath": "/",
+  "schemes": [
+    "http"
+  ],
+  "tags": [
+    {
+      "name": "wdt-openapi"
+    }
+  ],
+  "paths": {
+    "/openapi/setting_warehouse_querywarehouse": {
+      "post": {
+        "operationId": "wdt-openapi_warehouse",
+        "summary": "query warehouse",
+        "description": "WDT OpenAPI method=setting.Warehouse.queryWarehouse. Real upstream: http://wdt.wangdian.cn/openapi",
+        "tags": [
+          "wdt-openapi"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          }
+        },
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "sid",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "salt",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page_no",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

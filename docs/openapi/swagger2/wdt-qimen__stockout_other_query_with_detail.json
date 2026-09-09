@@ -1,0 +1,138 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "stockout other query with detail",
+    "description": "WDT Qimen API method=wdt.wms.stockout.other.querywithdetail. Real upstream: http://3ldsmu02o9.api.taobao.com/router/qm",
+    "version": "1.0.0"
+  },
+  "host": "3ldsmu02o9.api.taobao.com",
+  "basePath": "/",
+  "schemes": [
+    "http"
+  ],
+  "tags": [
+    {
+      "name": "wdt-qimen"
+    }
+  ],
+  "paths": {
+    "/router/qm/wdt_wms_stockout_other_querywithdetail": {
+      "post": {
+        "operationId": "wdt-qimen_stockout_other_query_with_detail",
+        "summary": "stockout other query with detail",
+        "description": "WDT Qimen API method=wdt.wms.stockout.other.querywithdetail. Real upstream: http://3ldsmu02o9.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-qimen"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          }
+        },
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "params": {
+                  "type": "string",
+                  "description": "business params JSON string"
+                },
+                "pager": {
+                  "type": "string",
+                  "description": "pager JSON string"
+                },
+                "datetime": {
+                  "type": "string"
+                },
+                "wdt_appkey": {
+                  "type": "string"
+                },
+                "wdt_salt": {
+                  "type": "string"
+                },
+                "wdt3_customer_id": {
+                  "type": "string"
+                },
+                "wdt_sign": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "params",
+                "pager",
+                "wdt_sign"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

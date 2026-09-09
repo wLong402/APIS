@@ -180,9 +180,15 @@ class MarketingShareResultQueryAPI:
                     debug_print(f"    [DEBUG] 查询失败: {result.get('message')}")
                 break
 
-            data_list = result.get('data', [])
+            data_list = result.get('data', []) or []
             if data_list:
                 all_data.extend(data_list)
+                first_id = data_list[0].get('platSpecId')
+                last_id = data_list[-1].get('platSpecId')
+                debug_print(
+                    f"    [DEBUG] 第 {page_no} 页: 本页={len(data_list)}条, "
+                    f"首platSpecId={first_id}, 尾platSpecId={last_id}"
+                )
 
             next_request_id = result.get('nextRequestId')
             if not next_request_id or next_request_id == 'false':

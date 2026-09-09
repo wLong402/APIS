@@ -18,6 +18,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: ${DOCKER_BASE_IMAGE:-python:3.11-slim-bookworm}
     image: hjy-data-pull:latest
     container_name: data_pull_web
     ports:
@@ -45,6 +47,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: ${DOCKER_BASE_IMAGE:-python:3.11-slim-bookworm}
     environment:
       CONFIG_PATH: ${CONFIG_PATH:-config/config.yaml}
       REDIS_HOST: ${REDIS_HOST:-redis}

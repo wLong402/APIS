@@ -62,8 +62,31 @@ def _resolve_python() -> str:
     return os.environ.get('DATA_SYNC_PYTHON') or sys.executable
 
 
+def normalize_payload(payload: dict) -> dict:
+    """校正 payload 里的 connector：服务迁移后旧的定时任务/历史记录仍可直接跑。"""
+    service = str(payload.get('service') or '').strip()
+    connector = str(payload.get('connector') or '').strip()
+    if not service or not connector:
+        return payload
+    try:
+        from connectors import resolve_connector
+        actual = resolve_connector(connector, service)
+    except Exception:
+        return payload
+    if actual == connector:
+        return payload
+    out = dict(payload)
+    out['connector'] = actual
+    return out
+
+
 def build_command(payload: dict) -> List[str]:
-    """根据前端参数构建 run.py pull 命令行"""
+    """根据前端参数构建 run.py 命令行"""
+    payload = normalize_payload(payload)
+    if payload.get('bi_task'):
+        return _build_bi_cmd(payload)
+    if payload.get('operant_task'):
+        return _build_operant_cmd(payload)
     from common.wdt_pull_policy import is_wdt_day_only_service
 
     if payload.get('dwd_task'):
@@ -109,11 +132,30 @@ def build_command(payload: dict) -> List[str]:
         'expense_item_name': '--expense-item-name',
         'order_tools': '--order-tools',
         'warehouse_no': '--warehouse-no',
+        'goods_no': '--goods-no',
+        'brand_name': '--brand-name',
+        'class_name': '--class-name',
+        'barcode': '--barcode',
+        'hide_deleted': '--hide-deleted',
+        'time_type': '--time-type',
+        'stockin_no': '--stockin-no',
+        'refund_no': '--refund-no',
+        'status': '--status',
+        'need_sn': '--need-sn',
         'period_mark': '--period-mark',
         'reco_status': '--reco-status',
+        'refund_type': '--refund-type',
         'salesman_name': '--salesman-name',
         'start_business_time': '--start-business-time',
         'end_business_time': '--end-business-time',
+        'author_name': '--author-name',
+        'oms_stockout_no': '--oms-stockout-no',
+        'oms_order_no': '--oms-order-no',
+        'province_names': '--province-names',
+        'city_names': '--city-names',
+        'district_names': '--district-names',
+        'goods_batch_no': '--goods-batch-no',
+        'refund_stage': '--refund-stage',
         'logistics_no': '--logistics-no',
         'logistics_status': '--logistics-status',
     }
@@ -140,6 +182,66 @@ def build_command(payload: dict) -> List[str]:
     return cmd
 
 
+def _build_bi_cmd(payload: dict) -> List[str]:
+    cmd = [
+        _resolve_python(), '-u', os.path.join(ROOT, 'run.py'), 'bi',
+        '-t', str(payload['bi_task']),
+    ]
+    mapping = {
+        'start': '--start',
+        'end': '--end',
+        'past_value': '--past',
+        'past_days': '--past-days',
+        'past_unit': '--past-unit',
+        'mode': '--mode',
+    }
+    for k, flag in mapping.items():
+        v = payload.get(k)
+        if v in (None, '', False):
+            continue
+        if k == 'past_days' and payload.get('past_value') not in (None, ''):
+            continue
+        if k == 'past_unit' and payload.get('past_value') in (None, ''):
+            continue
+        cmd.extend([flag, str(v)])
+    if payload.get('debug'):
+        cmd.append('--debug')
+    return cmd
+
+
+def _build_operant_cmd(payload: dict) -> List[str]:
+    cmd = [
+        _resolve_python(), '-u', os.path.join(ROOT, 'run.py'), 'operant',
+        '-t', str(payload['operant_task']),
+    ]
+    mapping = {
+        'start': '--start',
+        'end': '--end',
+        'past_value': '--past',
+        'past_days': '--past-days',
+        'past_unit': '--past-unit',
+        'account': '--account',
+        'login_url': '--login-url',
+        'instruction': '--instruction',
+        'target_table': '--target-table',
+        'unique_key': '--unique-key',
+    }
+    for k, flag in mapping.items():
+        v = payload.get(k)
+        if v in (None, '', False):
+            continue
+        if k == 'past_days' and payload.get('past_value') not in (None, ''):
+            continue
+        if k == 'past_unit' and payload.get('past_value') in (None, ''):
+            continue
+        cmd.extend([flag, str(v)])
+    if payload.get('headed') or payload.get('headless') is False:
+        cmd.append('--headed')
+    if payload.get('debug'):
+        cmd.append('--debug')
+    return cmd
+
+
 def _build_dwd_cmd(dwd_task: str, connector: str = 'wdt', debug: bool = False) -> List[str]:
     cmd = [
         _resolve_python(), '-u', os.path.join(ROOT, 'run.py'), 'dwd',
@@ -153,6 +255,7 @@ def _build_dwd_cmd(dwd_task: str, connector: str = 'wdt', debug: bool = False) -
 def run_job(payload: dict, source: str = 'manual', schedule_id: Optional[str] = None) -> dict:
     """启动一个拉取任务（异步）"""
     job_id = uuid.uuid4().hex[:12]
+    payload = normalize_payload(payload)
     cmd = build_command(payload)
     log_path = os.path.join(LOGS_DIR, f'{job_id}.log')
 
@@ -172,9 +275,14 @@ def run_job(payload: dict, source: str = 'manual', schedule_id: Optional[str] = 
         'id': job_id,
         'source': source,
         'schedule_id': schedule_id,
-        'connector': payload.get('connector'),
-        'service': payload.get('service'),
-        'run_mode': 'dwd' if payload.get('dwd_task') else 'pull',
+        'connector': payload.get('connector') or (
+            'operant' if payload.get('operant_task') else ('bi' if payload.get('bi_task') else None)
+        ),
+        'service': payload.get('operant_task') or payload.get('bi_task') or payload.get('service'),
+        'run_mode': (
+            'operant' if payload.get('operant_task')
+            else ('bi' if payload.get('bi_task') else ('dwd' if payload.get('dwd_task') else 'pull'))
+        ),
         'payload': payload,
         'cmd': cmd_line,
         'status': 'running',

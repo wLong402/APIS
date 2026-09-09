@@ -28,6 +28,20 @@ _thread: Optional[threading.Thread] = None
 _stop_evt = threading.Event()
 
 
+def _migrate_connectors() -> bool:
+    """把服务迁移前保存的旧 connector 归正，否则前端会一直显示错误的连接器。"""
+    changed = False
+    for s in _schedules:
+        pl = s.get('payload')
+        if not isinstance(pl, dict):
+            continue
+        fixed = jobs_mod.normalize_payload(pl)
+        if fixed is not pl and fixed.get('connector') != pl.get('connector'):
+            s['payload'] = fixed
+            changed = True
+    return changed
+
+
 def _load():
     global _schedules
     if os.path.exists(SCHED_FILE):
@@ -38,6 +52,8 @@ def _load():
             _schedules = []
     else:
         _schedules = []
+    if _migrate_connectors():
+        _save()
 
 
 def _save():
@@ -198,9 +214,20 @@ def list_schedules() -> List[dict]:
 
 def add_schedule(name: str, payload: dict, trigger: dict, enabled: bool = True) -> dict:
     sid = uuid.uuid4().hex[:10]
+    payload = jobs_mod.normalize_payload(payload)
+    if name:
+        default_name = name
+    elif payload.get('bi_task'):
+        default_name = f"bi.{payload.get('bi_task')}"
+    elif payload.get('operant_task'):
+        default_name = f"operant.{payload.get('operant_task')}"
+    elif payload.get('dwd_task'):
+        default_name = f"dwd.{payload.get('dwd_task')}"
+    else:
+        default_name = f'{payload.get("connector")}.{payload.get("service")}'
     s = {
         'id': sid,
-        'name': name or f'{payload.get("connector")}.{payload.get("service")}',
+        'name': default_name,
         'payload': payload,
         'trigger': trigger,
         'enabled': enabled,
@@ -219,7 +246,9 @@ def update_schedule(sid: str, **fields) -> Optional[dict]:
         for s in _schedules:
             if s['id'] == sid:
                 for k, v in fields.items():
-                    if k in ('name', 'payload', 'trigger', 'enabled'):
+                    if k == 'payload' and isinstance(v, dict):
+                        s[k] = jobs_mod.normalize_payload(v)
+                    elif k in ('name', 'trigger', 'enabled'):
                         s[k] = v
                 _save()
                 return s

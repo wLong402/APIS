@@ -45,6 +45,8 @@ logs/
 # 数据文件
 data/
 !data/.gitkeep
+web/data/operant_downloads/
+!web/data/operant_downloads/.gitkeep
 
 # 临时文件
 temp/

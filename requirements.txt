@@ -8,3 +8,6 @@ pandas>=2.2.0
 pymssql>=2.2.11
 concurrent-log-handler>=0.9.25
 flask>=3.0.0
+# 实验性 OperantID 任务（任务中心「OperantID任务」），按需安装:
+# operantid>=0.1.3
+# 安装后还需: playwright install chromium

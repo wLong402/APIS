@@ -1,0 +1,66 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "get access token",
+    "description": "weiban - get access token (access_token_get)",
+    "version": "1.0.0"
+  },
+  "host": "open.weibanzhushou.com",
+  "basePath": "/",
+  "schemes": [
+    "https"
+  ],
+  "tags": [
+    {
+      "name": "weiban"
+    }
+  ],
+  "paths": {
+    "/open-api/access_token/get": {
+      "post": {
+        "operationId": "weiban_access_token",
+        "summary": "get access token",
+        "description": "weiban - get access token (access_token_get)",
+        "tags": [
+          "weiban"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          }
+        },
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "corp_id": {
+                  "type": "string"
+                },
+                "secret": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "corp_id",
+                "secret"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

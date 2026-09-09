@@ -1,0 +1,2186 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "wdt-hjy",
+    "description": "wdt-hjy APIs, count=16",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://332wh0cyoi.api.taobao.com"
+    }
+  ],
+  "tags": [
+    {
+      "name": "wdt-hjy"
+    }
+  ],
+  "paths": {
+    "/router/qm/wdt_hjy_bill_billsatndard_query": {
+      "post": {
+        "operationId": "wdt-hjy_bill_standard",
+        "summary": "bill standard query",
+        "description": "HJY API method=wdt.hjy.bill.billsatndard.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.bill.billsatndard.query"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  },
+                  "businesstime": {
+                    "type": "string"
+                  },
+                  "shopNo": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/router/qm/wdt_hjy_bk_share_datas_query": {
+      "post": {
+        "operationId": "wdt-hjy_bk_share_data",
+        "summary": "bk share datas query",
+        "description": "HJY API method=wdt.hjy.bk.share.datas.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.bk.share.datas.query"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/router/qm/wdt_hjy_fixbill_datas_summary_query": {
+      "post": {
+        "operationId": "wdt-hjy_fixbill_data_summary",
+        "summary": "fixbill datas summary query",
+        "description": "HJY API method=wdt.hjy.fixbill.datas.summary.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.fixbill.datas.summary.query"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/router/qm/wdt_hjy_bill_marketing_detail_query": {
+      "post": {
+        "operationId": "wdt-hjy_marketing_detail",
+        "summary": "marketing detail query",
+        "description": "HJY API method=wdt.hjy.bill.marketing.detail.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.bill.marketing.detail.query"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/router/qm/wdt_hjy_bill_ext_marketing_share_result": {
+      "post": {
+        "operationId": "wdt-hjy_marketing_share_result",
+        "summary": "marketing share result",
+        "description": "HJY API method=wdt.hjy.bill.ext.marketing.share.result. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.bill.ext.marketing.share.result"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/router/qm/wdt_hjy_expense_sku_day_summary_main_query": {
+      "post": {
+        "operationId": "wdt-hjy_expense_sku_day_summary",
+        "summary": "expense sku day summary",
+        "description": "HJY API method=wdt.hjy.expense.sku.day.summary.main.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.expense.sku.day.summary.main.query"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/router/qm/wdt_hjy_expense_sku_share_day_detail_query": {
+      "post": {
+        "operationId": "wdt-hjy_expense_sku_share_day_detail",
+        "summary": "expense sku share day detail",
+        "description": "HJY API method=wdt.hjy.expense.sku.share.day.detail.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.expense.sku.share.day.detail.query"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/router/qm/wdt_hjy_ba_profits_sku_query": {
+      "post": {
+        "operationId": "wdt-hjy_profits_sku",
+        "summary": "profits sku query",
+        "description": "HJY API method=wdt.hjy.ba.profits.sku.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.ba.profits.sku.query"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/router/qm/wdt_hjy_bac_profits_order_query": {
+      "post": {
+        "operationId": "wdt-hjy_profits_order",
+        "summary": "profits order query",
+        "description": "HJY API method=wdt.hjy.bac.profits.order.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.bac.profits.order.query"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/router/qm/wdt_hjy_ba_profits_live_sku_query": {
+      "post": {
+        "operationId": "wdt-hjy_profits_live_sku",
+        "summary": "profits live sku query",
+        "description": "HJY API method=wdt.hjy.ba.profits.live.sku.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.ba.profits.live.sku.query"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/router/qm/wdt_hjy_ba_profits_live_order_query": {
+      "post": {
+        "operationId": "wdt-hjy_profits_live_order",
+        "summary": "profits live order query",
+        "description": "HJY API method=wdt.hjy.ba.profits.live.order.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.ba.profits.live.order.query"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/router/qm/wdt_hjy_bac_profits_live_re_order_query": {
+      "post": {
+        "operationId": "wdt-hjy_profits_live_refund",
+        "summary": "profits live refund query",
+        "description": "HJY API method=wdt.hjy.bac.profits.live.re.order.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.bac.profits.live.re.order.query"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/router/qm/wdt_hjy_recon_shtrecondetail_query": {
+      "post": {
+        "operationId": "wdt-hjy_sht_recon_detail",
+        "summary": "sht recon detail query",
+        "description": "HJY API method=wdt.hjy.recon.shtrecondetail.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.recon.shtrecondetail.query"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/router/qm/wdt_hjy_recon_delivery_details_query": {
+      "post": {
+        "operationId": "wdt-hjy_recon_delivery_detail",
+        "summary": "recon delivery details query",
+        "description": "HJY API method=wdt.hjy.recon.delivery.details.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.recon.delivery.details.query"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/router/qm/wdt_hjy_recon_order_confirm_summary_query": {
+      "post": {
+        "operationId": "wdt-hjy_recon_order_confirm_summary",
+        "summary": "recon order confirm summary",
+        "description": "HJY API method=wdt.hjy.recon.order.confirm.summary.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.recon.order.confirm.summary.query"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/router/qm/wdt_hjy_recon_dztk_summary_query": {
+      "post": {
+        "operationId": "wdt-hjy_recon_dztk_summary",
+        "summary": "recon dztk summary query",
+        "description": "HJY API method=wdt.hjy.recon.dztk.summary.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.recon.dztk.summary.query"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

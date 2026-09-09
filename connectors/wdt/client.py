@@ -31,6 +31,9 @@ from .sdk.api import (
     ProfitsOrderQueryAPI,
     ShtReconDetailQueryAPI,
     ReconDeliveryDetailQueryAPI,
+    HjyDeliveryDetailQueryAPI,
+    ReconOrderConfirmSummaryQueryAPI,
+    ReconDztkSummaryQueryAPI,
     ProfitsLiveSkuQueryAPI,
     ProfitsLiveOrderQueryAPI,
     ProfitsLiveRefundQueryAPI,
@@ -38,6 +41,9 @@ from .sdk.api import (
     ExpenseSkuDaySummaryQueryAPI,
     ExpenseSkuShareDayDetailQueryAPI,
     SearchLogisticsTraceAPI,
+    QueryWarehouseAPI,
+    QueryGoodsWithSpecAPI,
+    QueryStockinRefundOpenAPI,
 )
 
 
@@ -107,6 +113,9 @@ class WdtClient(BaseAPIClient):
         self._profits_order_api = None
         self._sht_recon_detail_api = None
         self._recon_delivery_detail_api = None
+        self._hjy_delivery_detail_api = None
+        self._recon_order_confirm_summary_api = None
+        self._recon_dztk_summary_api = None
         self._profits_live_sku_api = None
         self._profits_live_order_api = None
         self._profits_live_refund_api = None
@@ -114,6 +123,9 @@ class WdtClient(BaseAPIClient):
         self._expense_sku_day_summary_api = None
         self._expense_sku_share_day_detail_api = None
         self._logistics_trace_api = None
+        self._warehouse_api = None
+        self._goods_query_with_spec_api = None
+        self._stockin_refund_openapi_api = None
         self._openapi_client = None
     
     def call(self, method: str, params: Dict[str, Any], **kwargs) -> Dict[str, Any]:
@@ -293,6 +305,45 @@ class WdtClient(BaseAPIClient):
         return self._recon_delivery_detail_api
 
     @property
+    def hjy_delivery_detail_api(self) -> HjyDeliveryDetailQueryAPI:
+        if self._hjy_delivery_detail_api is None:
+            self._hjy_delivery_detail_api = HjyDeliveryDetailQueryAPI(
+                client=self._qimen_client,
+                config=self._wdt_config,
+                hjy_app_id=self._hjy_app_id,
+                hjy_sid=self._hjy_sid,
+                hjy_app_key=self._hjy_app_key,
+                hjy_gateway_url=self._hjy_gateway_url,
+            )
+        return self._hjy_delivery_detail_api
+
+    @property
+    def recon_order_confirm_summary_api(self) -> ReconOrderConfirmSummaryQueryAPI:
+        if self._recon_order_confirm_summary_api is None:
+            self._recon_order_confirm_summary_api = ReconOrderConfirmSummaryQueryAPI(
+                client=self._qimen_client,
+                config=self._wdt_config,
+                hjy_app_id=self._hjy_app_id,
+                hjy_sid=self._hjy_sid,
+                hjy_app_key=self._hjy_app_key,
+                hjy_gateway_url=self._hjy_gateway_url,
+            )
+        return self._recon_order_confirm_summary_api
+
+    @property
+    def recon_dztk_summary_api(self) -> ReconDztkSummaryQueryAPI:
+        if self._recon_dztk_summary_api is None:
+            self._recon_dztk_summary_api = ReconDztkSummaryQueryAPI(
+                client=self._qimen_client,
+                config=self._wdt_config,
+                hjy_app_id=self._hjy_app_id,
+                hjy_sid=self._hjy_sid,
+                hjy_app_key=self._hjy_app_key,
+                hjy_gateway_url=self._hjy_gateway_url,
+            )
+        return self._recon_dztk_summary_api
+
+    @property
     def profits_live_sku_api(self) -> ProfitsLiveSkuQueryAPI:
         if self._profits_live_sku_api is None:
             self._profits_live_sku_api = ProfitsLiveSkuQueryAPI(
@@ -387,6 +438,33 @@ class WdtClient(BaseAPIClient):
                 gateway_url=self.config.get('openapi_gateway_url'),
             )
         return self._logistics_trace_api
+
+    @property
+    def warehouse_api(self) -> QueryWarehouseAPI:
+        if self._warehouse_api is None:
+            self._warehouse_api = QueryWarehouseAPI(
+                client=self.openapi_client,
+                gateway_url=self.config.get('openapi_gateway_url'),
+            )
+        return self._warehouse_api
+
+    @property
+    def goods_query_with_spec_api(self) -> QueryGoodsWithSpecAPI:
+        if self._goods_query_with_spec_api is None:
+            self._goods_query_with_spec_api = QueryGoodsWithSpecAPI(
+                client=self.openapi_client,
+                gateway_url=self.config.get('openapi_gateway_url'),
+            )
+        return self._goods_query_with_spec_api
+
+    @property
+    def stockin_refund_openapi_api(self) -> QueryStockinRefundOpenAPI:
+        if self._stockin_refund_openapi_api is None:
+            self._stockin_refund_openapi_api = QueryStockinRefundOpenAPI(
+                client=self.openapi_client,
+                config=self._wdt_config,
+            )
+        return self._stockin_refund_openapi_api
 
     def health_check(self) -> bool:
         """健康检查 - 尝试调用一个简单的 API"""

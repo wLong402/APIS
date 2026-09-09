@@ -1,0 +1,119 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "wechat-store",
+    "description": "wechat-store APIs, count=2",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.weixin.qq.com"
+    }
+  ],
+  "tags": [
+    {
+      "name": "wechat-store"
+    }
+  ],
+  "paths": {
+    "/cgi-bin/stable_token": {
+      "post": {
+        "operationId": "wechat-store_stable_token",
+        "summary": "get stable token",
+        "description": "wechat-store - get stable token (stable_token)",
+        "tags": [
+          "wechat-store"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "grant_type": {
+                    "type": "string",
+                    "example": "client_credential"
+                  },
+                  "appid": {
+                    "type": "string"
+                  },
+                  "secret": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "grant_type",
+                  "appid",
+                  "secret"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/channels/ec/order/get": {
+      "post": {
+        "operationId": "wechat-store_order_get",
+        "summary": "get order",
+        "description": "wechat-store - get order (order_get)",
+        "tags": [
+          "wechat-store"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "access_token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -53,8 +53,9 @@ class QimenClient:
         Returns:
             API参数字典
         """
+        cleaned = {k: v for k, v in (params or {}).items() if v is not None}
         return {
-            'params': json.dumps(params, ensure_ascii=False),
+            'params': json.dumps(cleaned, ensure_ascii=False),
             'pager': json.dumps(pager, ensure_ascii=False),
             'datetime': timestamp,
             'wdt_appkey': self.config.app_key,

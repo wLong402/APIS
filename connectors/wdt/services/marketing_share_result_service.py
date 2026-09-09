@@ -24,8 +24,13 @@ class MarketingShareResultPullService(BasePullService):
     def marketing_share_result_api(self) -> MarketingShareResultQueryAPI:
         return self.client.marketing_share_result_api
 
-    def _build_row_key(self, item: Dict) -> str:
+    def _build_row_key(self, item: Dict, occurrence: int = 0) -> str:
         raw = json.dumps(item, sort_keys=True, ensure_ascii=False, default=str)
+        # 接口无业务主键，同一天可能返回多条所有字段都相同的真实记录。
+        # 用“相同内容的出现次序”参与哈希，避免真实重复被去重折叠导致少存数据。
+        # occurrence=0 时与历史 rowKey 完全一致：不改动存量、重复拉取仍幂等。
+        if occurrence:
+            raw = f"{raw}#{occurrence}"
         return hashlib.md5(raw.encode('utf-8')).hexdigest()
 
     def _fetch_data(self, start_time: str, end_time: str, **kwargs) -> List[Dict]:
@@ -42,7 +47,11 @@ class MarketingShareResultPullService(BasePullService):
             debug=kwargs.get('debug', False),
         )
 
+        occurrence_counter: Dict[str, int] = {}
         for item in data:
-            item['rowKey'] = self._build_row_key(item)
+            content_key = json.dumps(item, sort_keys=True, ensure_ascii=False, default=str)
+            occ = occurrence_counter.get(content_key, 0)
+            occurrence_counter[content_key] = occ + 1
+            item['rowKey'] = self._build_row_key(item, occurrence=occ)
 
         return data

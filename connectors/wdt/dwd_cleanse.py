@@ -93,7 +93,8 @@ ALL_DWD_TASK_NAMES: tuple = tuple(sorted(set(SQL_DWD_TASKS.keys()) | {'profits_l
 
 
 def _job_is_wdt_success_pull(j: Dict[str, Any]) -> bool:
-    if j.get('connector') != 'wdt':
+    # 直播利润类服务已迁到 hjy 连接器，DWD 仍按 service 名解锁
+    if j.get('connector') not in ('wdt', 'hjy'):
         return False
     if j.get('status') != 'success' or j.get('exit_code') != 0:
         return False
@@ -197,6 +198,70 @@ def _dwd_varchar_width(ods_max_len: int) -> int:
     return min(ods_max_len * 3, 4000)
 
 
+def _measure_ods_varchar_max_lens(db, ods: str, skip_cols: Set[str]) -> Dict[str, int]:
+    """从 ODS 实测各字符串列 MAX(LEN(col))，用于 DWD 列宽对齐。"""
+    rows = db.fetch_all(
+        """
+        SELECT COLUMN_NAME, DATA_TYPE
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = N'dbo' AND TABLE_NAME = ?
+          AND DATA_TYPE IN ('varchar', 'nvarchar', 'char', 'nchar')
+        ORDER BY ORDINAL_POSITION
+        """,
+        (ods,),
+    )
+    out: Dict[str, int] = {}
+    for r in rows:
+        col = r['COLUMN_NAME']
+        col_lower = col.lower()
+        if col_lower in skip_cols:
+            continue
+        row = db.fetch_one(f'SELECT MAX(LEN([{col}])) AS m FROM dbo.[{ods}]')
+        out[col_lower] = int(list(row.values())[0] or 0) if row else 0
+    return out
+
+
+def _dwd_datano_width(db, ods: str, static_max_lens: Dict[str, int]) -> int:
+    measured = _measure_ods_varchar_max_lens(db, ods, set())
+    ods_max = max(static_max_lens.get('datano', 0), measured.get('datano', 0))
+    return _dwd_varchar_width(ods_max)
+
+
+def _ensure_dwd_varchar_widths(
+    db,
+    ods: str,
+    dwd: str,
+    static_max_lens: Dict[str, int],
+    sql_type_cols: Set[str],
+) -> None:
+    """按 ODS 实测长度 + 静态下限，扩宽 DWD 字符串列，避免 INSERT/MERGE 8152 截断。"""
+    measured = _measure_ods_varchar_max_lens(db, ods, sql_type_cols)
+    cols_to_fix = set(static_max_lens.keys()) | set(measured.keys())
+    for col_lower in sorted(cols_to_fix):
+        if col_lower == 'datano':
+            continue
+        if col_lower in sql_type_cols:
+            continue
+        phys = _dwd_physical_col_name(db, dwd, col_lower)
+        if not phys:
+            continue
+        dt_row = db.fetch_one(
+            """
+            SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = N'dbo' AND TABLE_NAME = ? AND COLUMN_NAME = ?
+            """,
+            (dwd, phys),
+        )
+        cur = (list(dt_row.values())[0] if dt_row else '').lower()
+        if cur not in ('varchar', 'nvarchar', 'char', 'nchar'):
+            continue
+        ods_max = max(static_max_lens.get(col_lower, 0), measured.get(col_lower, 0))
+        w = _dwd_varchar_width(ods_max)
+        sql_type = f'NVARCHAR({w})'
+        db.execute(f'ALTER TABLE dbo.[{dwd}] ALTER COLUMN [{phys}] {sql_type} NULL')
+        logger.info('dwd %s: ALTER [%s] -> %s (ods_max=%s)', dwd, phys, sql_type, ods_max)
+
+
 PROFITS_LIVE_ORDER_DWD_VARCHAR_WIDTHS: Dict[str, int] = {
     k: _dwd_varchar_width(v) for k, v in PROFITS_LIVE_ORDER_ODS_MAX_LEN.items()
 }
@@ -227,6 +292,7 @@ PROFITS_LIVE_REFUND_ODS_MAX_LEN: Dict[str, int] = {
     'authorname': 20,
     'datano': 32,
     'flowtypename': 7,
+    'isspecordername': 3,
     'livesessionid': 19,
     'omsgoodsname': 33,
     'omsgoodsno': 13,
@@ -299,26 +365,24 @@ def _ensure_profits_live_order_dwd_types(db, dwd: str) -> None:
         logger.info('dwd %s: ALTER [%s] -> %s', dwd, phys, sql_type)
 
 
-def _ensure_profits_live_order_dwd_varchar_widths(db, dwd: str) -> None:
-    for col_lower, w in PROFITS_LIVE_ORDER_DWD_VARCHAR_WIDTHS.items():
-        if col_lower == 'datano':
-            continue
-        phys = _profits_live_order_physical_col_name(db, dwd, col_lower)
-        if not phys:
-            continue
-        dt_row = db.fetch_one(
-            """
-            SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE TABLE_SCHEMA = N'dbo' AND TABLE_NAME = ? AND COLUMN_NAME = ?
-            """,
-            (dwd, phys),
-        )
-        cur = (list(dt_row.values())[0] if dt_row else '').lower()
-        if cur not in ('varchar', 'nvarchar', 'char', 'nchar'):
-            continue
-        sql_type = f'NVARCHAR({w})'
-        db.execute(f'ALTER TABLE dbo.[{dwd}] ALTER COLUMN [{phys}] {sql_type} NULL')
-        logger.info('dwd %s: ALTER [%s] -> %s', dwd, phys, sql_type)
+def _ensure_profits_live_order_dwd_varchar_widths(db, ods: str, dwd: str) -> None:
+    _ensure_dwd_varchar_widths(
+        db,
+        ods,
+        dwd,
+        PROFITS_LIVE_ORDER_ODS_MAX_LEN,
+        set(PROFITS_LIVE_ORDER_DWD_SQL_TYPES.keys()),
+    )
+
+
+def _ensure_profits_live_refund_dwd_varchar_widths(db, ods: str, dwd: str) -> None:
+    _ensure_dwd_varchar_widths(
+        db,
+        ods,
+        dwd,
+        PROFITS_LIVE_REFUND_ODS_MAX_LEN,
+        set(PROFITS_LIVE_REFUND_DWD_SQL_TYPES.keys()),
+    )
 
 
 def _profits_live_order_src_expr(col: str) -> str:
@@ -366,28 +430,6 @@ def _ensure_profits_live_refund_dwd_types(db, dwd: str) -> None:
         cur = (list(dt.values())[0] if dt else '').lower()
         if cur not in ('varchar', 'nvarchar', 'char', 'nchar'):
             continue
-        db.execute(f'ALTER TABLE dbo.[{dwd}] ALTER COLUMN [{phys}] {sql_type} NULL')
-        logger.info('dwd %s: ALTER [%s] -> %s', dwd, phys, sql_type)
-
-
-def _ensure_profits_live_refund_dwd_varchar_widths(db, dwd: str) -> None:
-    for col_lower, w in PROFITS_LIVE_REFUND_DWD_VARCHAR_WIDTHS.items():
-        if col_lower == 'datano':
-            continue
-        phys = _dwd_physical_col_name(db, dwd, col_lower)
-        if not phys:
-            continue
-        dt_row = db.fetch_one(
-            """
-            SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE TABLE_SCHEMA = N'dbo' AND TABLE_NAME = ? AND COLUMN_NAME = ?
-            """,
-            (dwd, phys),
-        )
-        cur = (list(dt_row.values())[0] if dt_row else '').lower()
-        if cur not in ('varchar', 'nvarchar', 'char', 'nchar'):
-            continue
-        sql_type = f'NVARCHAR({w})'
         db.execute(f'ALTER TABLE dbo.[{dwd}] ALTER COLUMN [{phys}] {sql_type} NULL')
         logger.info('dwd %s: ALTER [%s] -> %s', dwd, phys, sql_type)
 
@@ -525,8 +567,8 @@ def _run_dwd_profits_live_refund(db, debug: bool = False) -> int:
         f"SELECT TOP 0 * INTO dbo.{dwd} FROM dbo.{ods};"
     )
     _ensure_profits_live_refund_dwd_types(db, dwd)
-    _ensure_profits_live_refund_dwd_varchar_widths(db, dwd)
-    _ensure_dwd_datano_pk(db, dwd, PROFITS_LIVE_REFUND_DWD_VARCHAR_WIDTHS.get('datano', 96))
+    _ensure_profits_live_refund_dwd_varchar_widths(db, ods, dwd)
+    _ensure_dwd_datano_pk(db, dwd, _dwd_datano_width(db, ods, PROFITS_LIVE_REFUND_ODS_MAX_LEN))
     cols = _ordered_ods_columns(db, dwd)
     if 'datano' not in cols:
         raise RuntimeError('ODS/DWD 缺少 dataNo 列，无法清洗')
@@ -601,8 +643,8 @@ def _run_dwd_profits_live_order(db, debug: bool = False) -> int:
         f"SELECT TOP 0 * INTO dbo.{dwd} FROM dbo.{ods};"
     )
     _ensure_profits_live_order_dwd_types(db, dwd)
-    _ensure_profits_live_order_dwd_varchar_widths(db, dwd)
-    _ensure_dwd_datano_pk(db, dwd, PROFITS_LIVE_ORDER_DWD_VARCHAR_WIDTHS.get('datano', 96))
+    _ensure_profits_live_order_dwd_varchar_widths(db, ods, dwd)
+    _ensure_dwd_datano_pk(db, dwd, _dwd_datano_width(db, ods, PROFITS_LIVE_ORDER_ODS_MAX_LEN))
     cols = _ordered_ods_columns(db, dwd)
     if 'datano' not in cols:
         raise RuntimeError('ODS/DWD 缺少 dataNo 列，无法清洗')

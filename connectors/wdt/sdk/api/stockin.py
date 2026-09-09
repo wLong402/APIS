@@ -483,10 +483,12 @@ class StockinRefundQueryWithDetailAPI:
               page_size: int = 50,
               page_no: int = 1,
               debug: bool = False) -> Dict:
+        if time_type is None or time_type == '':
+            time_type = 1
         params = {
             'start_time': start_time,
             'end_time': end_time,
-            'time_type': time_type
+            'time_type': int(time_type),
         }
         
         if status is not None:

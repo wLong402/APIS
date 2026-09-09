@@ -27,6 +27,9 @@ from .profits_sku_repo import ProfitsSkuRepository
 from .profits_order_repo import ProfitsOrderRepository
 from .sht_recon_detail_repo import ShtReconDetailRepository
 from .recon_delivery_detail_repo import ReconDeliveryDetailRepository
+from .hjy_delivery_detail_repo import HjyDeliveryDetailRepository
+from .recon_order_confirm_summary_repo import ReconOrderConfirmSummaryRepository
+from .recon_dztk_summary_repo import ReconDztkSummaryRepository
 from .profits_live_sku_repo import ProfitsLiveSkuRepository
 from .profits_live_order_repo import ProfitsLiveOrderRepository
 from .profits_live_refund_repo import ProfitsLiveRefundRepository
@@ -35,6 +38,14 @@ from .expense_sku_day_summary_repo import ExpenseSkuDaySummaryRepository
 from .expense_sku_day_summary_detail_repo import ExpenseSkuDaySummaryDetailRepository
 from .expense_sku_share_day_detail_repo import ExpenseSkuShareDayDetailRepository
 from .logistics_trace_repo import LogisticsTraceRepository
+from .warehouse_repo import WarehouseRepository
+from .goods_repo import GoodsRepository
+from .goods_spec_repo import GoodsSpecRepository
+from .openapi_stockin_refund_repo import (
+    OpenapiStockinRefundRepository,
+    OpenapiStockinRefundDetailItemRepository,
+    OpenapiStockinRefundOrderDetailRepository,
+)
 
 __all__ = [
     'TradeRepository',
@@ -62,6 +73,9 @@ __all__ = [
     'ProfitsOrderRepository',
     'ShtReconDetailRepository',
     'ReconDeliveryDetailRepository',
+    'HjyDeliveryDetailRepository',
+    'ReconOrderConfirmSummaryRepository',
+    'ReconDztkSummaryRepository',
     'ProfitsLiveSkuRepository',
     'ProfitsLiveOrderRepository',
     'ProfitsLiveRefundRepository',
@@ -70,5 +84,11 @@ __all__ = [
     'ExpenseSkuDaySummaryDetailRepository',
     'ExpenseSkuShareDayDetailRepository',
     'LogisticsTraceRepository',
+    'WarehouseRepository',
+    'GoodsRepository',
+    'GoodsSpecRepository',
+    'OpenapiStockinRefundRepository',
+    'OpenapiStockinRefundDetailItemRepository',
+    'OpenapiStockinRefundOrderDetailRepository',
 ]
 

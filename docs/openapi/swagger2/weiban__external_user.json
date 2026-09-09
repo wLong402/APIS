@@ -1,0 +1,67 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "external user staff relation list",
+    "description": "weiban - external user staff relation list (external_user_staff_relation_list)",
+    "version": "1.0.0"
+  },
+  "host": "open.weibanzhushou.com",
+  "basePath": "/",
+  "schemes": [
+    "https"
+  ],
+  "tags": [
+    {
+      "name": "weiban"
+    }
+  ],
+  "paths": {
+    "/open-api/external_user_staff_relation/list": {
+      "get": {
+        "operationId": "weiban_external_user",
+        "summary": "external user staff relation list",
+        "description": "weiban - external user staff relation list (external_user_staff_relation_list)",
+        "tags": [
+          "weiban"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "access_token",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "staff_id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer"
+          }
+        ]
+      }
+    }
+  }
+}

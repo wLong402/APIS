@@ -22,7 +22,11 @@ class StockinRefundQueryWithDetailPullService(BasePullService):
     def _fetch_data(self, start_time: str, end_time: str, **kwargs) -> List[Dict]:
         debug = kwargs.get('debug', False)
         page_size = kwargs.get('page_size', 200)
-        time_type = kwargs.get('time_type', 1)
+        time_type = kwargs.get('time_type')
+        if time_type is None or time_type == '':
+            time_type = 1
+        else:
+            time_type = int(time_type)
         
         if debug:
             print(f"    [DEBUG] 请求: {start_time} ~ {end_time}")

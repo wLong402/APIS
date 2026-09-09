@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>数据同步控制台</title>
+<title>任务管理平台</title>
 <style>
   :root {
     --bg: #f5f7fa;
@@ -36,24 +36,109 @@
     --log-text: #cdd9e5;
   }
   * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
+  html { height: 100%; }
   body {
+    margin: 0; height: 100%;
+    display: flex; flex-direction: column;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
                  "Microsoft YaHei", sans-serif;
     background: var(--bg); color: var(--text); font-size: 13px;
+    overflow: hidden;
   }
   header {
+    flex-shrink: 0;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 20px; background: var(--bg2); border-bottom: 1px solid var(--border);
+    padding: 10px 20px; background: var(--bg2); border-bottom: 1px solid var(--border);
   }
-  header h1 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: 0.5px; }
+  header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; }
+  header .brand-sub { font-size: 11px; color: var(--muted); font-weight: 400; margin-top: 1px; }
   header .tabs { display: flex; gap: 4px; }
   header .tab {
     padding: 6px 14px; border-radius: 6px; cursor: pointer; color: var(--muted);
   }
   header .tab.active { background: var(--bg3); color: var(--text); }
   header .tab:hover { color: var(--text); }
-  main { padding: 16px 20px; max-width: 1400px; margin: 0 auto; }
+
+  /* ── App Shell: header 下方左右分栏 ── */
+  .app-shell {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    overflow: hidden;
+  }
+  .sidebar {
+    width: 200px;
+    flex: 0 0 200px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    padding: 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px; cursor: pointer; color: var(--muted);
+    font-size: 13px; border-left: 3px solid transparent;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+  }
+  .nav-item:hover { background: var(--row-hover); color: var(--text); }
+  .nav-item.active {
+    background: rgba(79,142,255,0.08); color: var(--primary);
+    border-left-color: var(--primary); font-weight: 500;
+  }
+  .nav-item .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+  .nav-divider { height: 1px; background: var(--border); margin: 8px 16px; }
+  .sidebar-footer {
+    margin-top: auto; padding: 12px 16px; font-size: 11px; color: var(--muted);
+    border-top: 1px solid var(--border); line-height: 1.6;
+  }
+  .main-area {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 20px 24px;
+    align-self: stretch;
+  }
+  .main-area > section {
+    display: block;
+    width: 100%;
+    max-width: 1400px;
+  }
+
+  /* ── Page Header ── */
+  .page-header { margin-bottom: 16px; }
+  .page-header h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
+  .page-header p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+
+  /* ── Sub Nav (任务中心) ── */
+  .sub-nav {
+    display: flex; gap: 4px; margin-bottom: 16px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 4px; width: fit-content;
+  }
+  .sub-tab {
+    padding: 6px 16px; border-radius: 6px; cursor: pointer;
+    color: var(--muted); font-size: 13px; white-space: nowrap;
+  }
+  .sub-tab:hover { color: var(--text); }
+  .sub-tab.active { background: var(--primary); color: #fff; font-weight: 500; }
+
+  /* ── Stat Cards ── */
+  .stat-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat-card {
+    flex: 1 1 140px; background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 16px;
+  }
+  .stat-card .stat-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .stat-card .stat-value { font-size: 20px; font-weight: 600; }
+  main { padding: 0; max-width: none; margin: 0; min-width: 0; }
   .panel {
     background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
     padding: 16px; margin-bottom: 16px;
@@ -175,38 +260,62 @@
   }
   #preview-modal .modal { position: relative; }
   .theme-toggle {
-    position: fixed;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 220;
-    padding: 8px 10px;
-    border-radius: 8px;
+    padding: 5px 10px;
+    border-radius: 6px;
     border: 1px solid var(--border);
     background: var(--bg3);
     color: var(--text);
     cursor: pointer;
-    font-size: 12px;
+    font-size: 14px;
   }
 </style>
 </head>
 <body>
   <header>
-    <h1>数据同步控制台</h1>
-    <div class="tabs">
-      <div class="tab active" data-tab="run">手动运行</div>
-      <div class="tab" data-tab="schedules">定时任务</div>
-      <div class="tab" data-tab="jobs">任务记录</div>
+    <div>
+      <h1>任务管理平台</h1>
+      <div class="brand-sub">Task Management Platform</div>
     </div>
-    <div style="color: var(--muted); font-size: 12px;" id="server-status">就绪</div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="color: var(--muted); font-size: 12px;" id="server-status">就绪</span>
+      <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    </div>
   </header>
-  <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">切换到黑夜模式</button>
 
-  <main>
-    <!-- 手动运行 -->
-    <section id="tab-run">
+  <div class="app-shell">
+    <nav class="sidebar">
+      <div class="nav-item active" data-nav="center">
+        <span class="nav-icon">📋</span> 任务中心
+      </div>
+      <div class="nav-item" data-nav="schedules">
+        <span class="nav-icon">⏰</span> 定时任务
+      </div>
+      <div class="nav-item" data-nav="jobs">
+        <span class="nav-icon">📊</span> 任务记录
+      </div>
+      <div class="sidebar-footer">
+        新任务须先在任务中心注册，再在定时任务中配置调度
+      </div>
+    </nav>
+
+    <main class="main-area">
+    <!-- 任务中心 -->
+    <section id="tab-center">
+      <div class="page-header">
+        <h2>任务中心</h2>
+        <p>在此注册并手动执行任务。数据拉取任务从外部 API 拉数入库；数据库任务在库内计算生成结果表；OperantID 任务用浏览器登录帐号下载后入库。执行后可保存为定时任务。</p>
+      </div>
+      <div class="sub-nav">
+        <div class="sub-tab active" data-subtab="run">数据拉取任务</div>
+        <div class="sub-tab" data-subtab="bi">数据库任务</div>
+        <div class="sub-tab" data-subtab="operant">OperantID任务</div>
+      </div>
+
+    <!-- 数据拉取任务 -->
+    <div id="tab-run">
       <div class="panel">
-        <h2>新建拉取任务</h2>
+        <h2>新建数据拉取任务</h2>
+        <p class="help" style="margin-top:0;">从外部 API（旺店通 / 微伴等）拉取数据并写入数据库。任务须在连接器与服务中注册后方可使用。</p>
         <div class="row">
           <div class="col">
             <label>连接器</label>
@@ -255,41 +364,8 @@
         </div>
         <details style="margin-top: 12px;">
           <summary>更多参数</summary>
-          <div class="grid" style="margin-top: 8px;">
-            <div><label>店铺编号</label><input id="run-shop-no" /></div>
-            <div><label>仓库编号</label><input id="run-warehouse-no" /></div>
-            <div><label>费用项名称</label><input id="run-classification-name" /></div>
-            <div><label>是否汇总</label><input id="run-is-summary" placeholder="0/1" /></div>
-            <div><label>方案名称</label><input id="run-scheme-name" /></div>
-            <div><label>查询口径</label><input id="run-terms-income" /></div>
-            <div><label>查询维度</label><input id="run-composite-dim" /></div>
-            <div><label>是否拆分组合装</label><input id="run-split-suite" /></div>
-            <div><label>成本类型</label><input id="run-cost-type" /></div>
-            <div><label>是否跟单</label><input id="run-stat-mode" /></div>
-            <div><label>建单方式</label><input id="run-order-way" /></div>
-            <div><label>按店铺展示</label><input id="run-display-by-shop" /></div>
-            <div><label>按时间展示</label><input id="run-display-by-date" /></div>
-            <div><label>原始单+系统单</label><input id="run-original-order" /></div>
-            <div><label>平台订单号</label><input id="run-plat-order-nos" /></div>
-            <div><label>系统订单号</label><input id="run-erp-order-nos" /></div>
-            <div><label>多店铺编号</label><input id="run-shop-nos" /></div>
-            <div><label>商家编码</label><input id="run-spec-no" /></div>
-            <div><label>费用项编码</label><input id="run-project" /></div>
-            <div><label>汇总单号</label><input id="run-summary-no" /></div>
-            <div><label>费用项名称(列表)</label><input id="run-expense-item-name" /></div>
-            <div><label>员工ID列表</label><input id="run-staff-ids" /></div>
-            <div><label>配置录入开始</label><input id="run-start-config-record-time" /></div>
-            <div><label>配置录入结束</label><input id="run-end-config-record-time" /></div>
-            <div><label>订单渠道</label><input id="run-order-tools" placeholder="如 1 或 1,2,3" /></div>
-            <div><label>对账标识 periodMark</label><input id="run-period-mark" placeholder="如 1" /></div>
-            <div><label>对账状态(逗号分隔)</label><input id="run-reco-status" placeholder="对账成功,对账失败" /></div>
-            <div><label>业务员名称</label><input id="run-salesman-name" /></div>
-            <div><label>业务开始时间</label><input id="run-start-business-time" placeholder="YYYY-MM-DD HH:MM:SS" /></div>
-            <div><label>业务结束时间</label><input id="run-end-business-time" placeholder="YYYY-MM-DD HH:MM:SS" /></div>
-            <div><label>物流单号</label><input id="run-logistics-no" /></div>
-            <div><label>物流状态</label><input id="run-logistics-status" placeholder="0-13,99，默认5" /></div>
-            <div><label>返回物流详情</label><input id="run-need-detail" type="checkbox" style="width:auto;" /></div>
-          </div>
+          <div id="run-advanced-hint" class="help" style="margin-top:8px;"></div>
+          <div id="run-advanced-grid" class="grid" style="margin-top: 8px;"></div>
         </details>
         <div class="toolbar" style="margin-top: 16px;">
           <label style="display:flex; gap:6px; align-items:center; margin:0;">
@@ -323,43 +399,173 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="panel hidden" id="run-log-panel">
-        <div class="toolbar">
-          <h2 style="margin:0;">实时日志</h2>
-          <span id="run-log-status" class="status">-</span>
-          <span class="pill" id="run-log-cmd"></span>
-          <span class="pill" id="run-log-err-count" style="background:rgba(255,85,112,0.2);color:#ff8a9f;display:none;"></span>
-          <div class="grow"></div>
-          <input id="run-log-keyword" placeholder="过滤关键字..." style="width:200px;" oninput="applyLogFilter('run')" />
-          <button class="ghost" onclick="jumpFirstError('run')">跳到错误</button>
-          <button class="ghost" onclick="downloadLog(currentJobId)">下载</button>
-          <button class="warn" onclick="stopCurrentJob()">停止</button>
-          <button class="ghost" onclick="closeCurrentLog()">关闭</button>
+    <!-- 数据库任务 -->
+    <div id="tab-bi" class="hidden">
+      <div class="panel">
+        <h2>新建数据库任务</h2>
+        <p class="help" style="margin-top:0;">在数据库内基于已有表做计算并生成/刷新结果表。任务须在 <code>bi/tasks/</code> 中注册后方可使用。首次运行目标表为空时全量写入；之后默认仅重算所选日期窗口。</p>
+        <div class="row">
+          <div class="col" style="flex:1 1 320px;">
+            <label>任务</label>
+            <select id="bi-task"></select>
+          </div>
+          <div class="col">
+            <label>开始日期</label>
+            <input id="bi-start" placeholder="YYYY-MM-DD" />
+          </div>
+          <div class="col">
+            <label>结束日期</label>
+            <input id="bi-end" placeholder="YYYY-MM-DD" />
+          </div>
         </div>
-        <div class="help hidden" id="run-log-hint"></div>
-        <div class="log" id="run-log"></div>
-        <div class="log-pager" id="run-log-pager">
-          <button class="ghost" onclick="logPagerFirst('run')" title="首页">⏮</button>
-          <button class="ghost" id="run-log-pager-prev" onclick="logPagerPrev('run')">← 上一页</button>
-          <span>第</span>
-          <input id="run-log-page-input" type="number" min="1" style="width:60px;text-align:center;" onchange="logPagerJump('run')" />
-          <span>/ <span id="run-log-pager-total">1</span> 页</span>
-          <button class="ghost" id="run-log-pager-next" onclick="logPagerNext('run')">下一页 →</button>
-          <button class="ghost" onclick="logPagerLast('run')" title="末页">⏭</button>
-          <span id="run-log-pager-info" style="color:var(--muted);"></span>
-          <div class="grow"></div>
-          <button class="ghost" id="run-log-follow-btn" onclick="toggleLogFollow('run')">跟随末页：开</button>
+        <div class="row" style="margin-top:8px;">
+          <div class="col" style="flex: 1 1 260px;">
+            <label>回溯时间 (优先于起止日期)</label>
+            <div style="display:flex; gap:8px;">
+              <input id="bi-past-value" type="number" min="0" step="any" placeholder="如 7" style="flex:1;" />
+              <select id="bi-past-unit" style="width:88px;">
+                <option value="day" selected>天</option>
+                <option value="week">周</option>
+                <option value="month">月</option>
+              </select>
+            </div>
+          </div>
+          <div class="col">
+            <label>运行模式</label>
+            <select id="bi-mode">
+              <option value="auto">自动（首次全量 / 后期窗口）</option>
+              <option value="window">窗口增量（删窗口后重算）</option>
+              <option value="full">全量（清空结果表）</option>
+            </select>
+          </div>
         </div>
-        <details id="run-summary-wrap" style="margin-top:10px;">
-          <summary>错误 / 警告 摘要（点击展开）</summary>
-          <div id="run-summary" style="margin-top:8px;"></div>
-        </details>
+        <div class="help" id="bi-task-desc" style="margin-top:8px;"></div>
+        <div class="toolbar" style="margin-top: 16px;">
+          <label style="display:flex; gap:6px; align-items:center; margin:0;">
+            <input id="bi-debug" type="checkbox" style="width:auto;" /> 调试模式
+          </label>
+          <div class="grow"></div>
+          <button class="ghost" onclick="saveBiAsSchedule()">保存为定时任务</button>
+          <button onclick="runBiNow()">立即运行</button>
+        </div>
       </div>
+    </div>
+
+    <!-- OperantID 任务 -->
+    <div id="tab-operant" class="hidden">
+      <div class="panel">
+        <h2>新建 OperantID 任务 <span class="pill">实验</span></h2>
+        <p class="help" style="margin-top:0;">用 OperantID 在浏览器里登录帐号、下载数据并写入 <code>operant_*</code> 表。帐号与 API Key 配在 <code>config.yaml</code> 的 <code>operantid:</code> 下，任务模块在 <code>operant/tasks/</code> 注册。依赖：<code>pip install operantid</code> 后执行 <code>playwright install chromium</code>。</p>
+        <div class="help" id="operant-status" style="margin-top:4px;"></div>
+        <div class="row">
+          <div class="col" style="flex:1 1 320px;">
+            <label>任务</label>
+            <select id="operant-task"></select>
+          </div>
+          <div class="col">
+            <label>登录帐号</label>
+            <select id="operant-account"></select>
+          </div>
+          <div class="col">
+            <label>开始日期</label>
+            <input id="operant-start" placeholder="YYYY-MM-DD" />
+          </div>
+          <div class="col">
+            <label>结束日期</label>
+            <input id="operant-end" placeholder="YYYY-MM-DD" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <div class="col" style="flex: 1 1 260px;">
+            <label>回溯时间 (优先于起止日期)</label>
+            <div style="display:flex; gap:8px;">
+              <input id="operant-past-value" type="number" min="0" step="any" placeholder="如 7" style="flex:1;" />
+              <select id="operant-past-unit" style="width:88px;">
+                <option value="day" selected>天</option>
+                <option value="week">周</option>
+                <option value="month">月</option>
+              </select>
+            </div>
+          </div>
+          <div class="col">
+            <label>目标表 (operant_前缀)</label>
+            <input id="operant-target-table" placeholder="留空=任务默认" />
+          </div>
+          <div class="col">
+            <label>唯一键</label>
+            <input id="operant-unique-key" placeholder="默认 rowKey" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <div class="col" style="flex:1 1 100%;">
+            <label>登录地址</label>
+            <input id="operant-login-url" placeholder="覆盖任务 / 帐号默认登录地址" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <div class="col" style="flex:1 1 100%;">
+            <label>下载指令</label>
+            <input id="operant-instruction" placeholder="例如：进入报表页导出近 7 天订单 CSV" />
+          </div>
+        </div>
+        <div class="help" id="operant-task-desc" style="margin-top:8px;"></div>
+        <div class="toolbar" style="margin-top: 16px;">
+          <label style="display:flex; gap:6px; align-items:center; margin:0;">
+            <input id="operant-headed" type="checkbox" style="width:auto;" /> 显示浏览器
+          </label>
+          <label style="display:flex; gap:6px; align-items:center; margin:0;">
+            <input id="operant-debug" type="checkbox" style="width:auto;" /> 调试模式
+          </label>
+          <div class="grow"></div>
+          <button class="ghost" onclick="saveOperantAsSchedule()">保存为定时任务</button>
+          <button onclick="runOperantNow()">立即运行</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 任务中心 · 共享实时日志 -->
+    <div class="panel hidden" id="run-log-panel">
+      <div class="toolbar">
+        <h2 style="margin:0;">实时日志</h2>
+        <span id="run-log-status" class="status">-</span>
+        <span class="pill" id="run-log-cmd"></span>
+        <span class="pill" id="run-log-err-count" style="background:rgba(255,85,112,0.2);color:#ff8a9f;display:none;"></span>
+        <div class="grow"></div>
+        <input id="run-log-keyword" placeholder="过滤关键字..." style="width:200px;" oninput="applyLogFilter('run')" />
+        <button class="ghost" onclick="jumpFirstError('run')">跳到错误</button>
+        <button class="ghost" onclick="downloadLog(currentJobId)">下载</button>
+        <button class="warn" onclick="stopCurrentJob()">停止</button>
+        <button class="ghost" onclick="closeCurrentLog()">关闭</button>
+      </div>
+      <div class="help hidden" id="run-log-hint"></div>
+      <div class="log" id="run-log"></div>
+      <div class="log-pager" id="run-log-pager">
+        <button class="ghost" onclick="logPagerFirst('run')" title="首页">⏮</button>
+        <button class="ghost" id="run-log-pager-prev" onclick="logPagerPrev('run')">← 上一页</button>
+        <span>第</span>
+        <input id="run-log-page-input" type="number" min="1" style="width:60px;text-align:center;" onchange="logPagerJump('run')" />
+        <span>/ <span id="run-log-pager-total">1</span> 页</span>
+        <button class="ghost" id="run-log-pager-next" onclick="logPagerNext('run')">下一页 →</button>
+        <button class="ghost" onclick="logPagerLast('run')" title="末页">⏭</button>
+        <span id="run-log-pager-info" style="color:var(--muted);"></span>
+        <div class="grow"></div>
+        <button class="ghost" id="run-log-follow-btn" onclick="toggleLogFollow('run')">跟随末页：开</button>
+      </div>
+      <details id="run-summary-wrap" style="margin-top:10px;">
+        <summary>错误 / 警告 摘要（点击展开）</summary>
+        <div id="run-summary" style="margin-top:8px;"></div>
+      </details>
+    </div>
     </section>
 
     <!-- 定时任务 -->
     <section id="tab-schedules" class="hidden">
+      <div class="page-header">
+        <h2>定时任务</h2>
+        <p>为已在任务中心注册的任务配置调度策略（每天定时 / 固定间隔 / Cron）。所有任务须先注册，再在此添加调度规则。</p>
+      </div>
       <div class="panel">
         <div class="toolbar">
           <h2 style="margin:0;">定时任务列表</h2>
@@ -386,6 +592,10 @@
 
     <!-- 任务记录 -->
     <section id="tab-jobs" class="hidden">
+      <div class="page-header">
+        <h2>任务记录</h2>
+        <p>查看所有任务的执行历史，包括手动触发与定时调度产生的运行记录。</p>
+      </div>
       <div class="panel">
         <div class="toolbar">
           <h2 style="margin:0;">任务记录</h2>
@@ -482,13 +692,22 @@
         </details>
       </div>
     </section>
-  </main>
+    </main>
+  </div>
 
   <!-- 定时任务弹窗 -->
   <div id="sched-modal" class="modal-bg hidden">
     <div class="modal">
       <h3 id="sched-modal-title">新建定时任务</h3>
       <div class="row">
+        <div class="col">
+          <label>任务类型</label>
+          <select id="sm-task-kind" onchange="onScheduleTaskKindChange()">
+            <option value="pull">数据拉取任务</option>
+            <option value="bi">数据库任务</option>
+            <option value="operant">OperantID任务</option>
+          </select>
+        </div>
         <div class="col">
           <label>任务名称</label>
           <input id="sm-name" />
@@ -518,18 +737,67 @@
         </div>
       </div>
 
-      <h3 style="margin-top:16px;">拉取参数</h3>
-      <div class="row">
-        <div class="col">
-          <label>连接器</label>
-          <select id="sm-connector"></select>
-        </div>
-        <div class="col">
-          <label>服务</label>
-          <select id="sm-service"></select>
+      <div id="sm-bi-section" class="hidden">
+        <h3 style="margin-top:16px;">数据库任务参数</h3>
+        <div class="row">
+          <div class="col" style="flex:1 1 320px;">
+            <label>任务</label>
+            <select id="sm-bi-task"></select>
+          </div>
+          <div class="col">
+            <label>运行模式</label>
+            <select id="sm-bi-mode">
+              <option value="auto">自动</option>
+              <option value="window">窗口增量</option>
+              <option value="full">全量</option>
+            </select>
+          </div>
         </div>
       </div>
-      <div class="row" style="margin-top:8px;">
+
+      <div id="sm-operant-section" class="hidden">
+        <h3 style="margin-top:16px;">OperantID 任务参数</h3>
+        <div class="row">
+          <div class="col" style="flex:1 1 280px;">
+            <label>任务</label>
+            <select id="sm-operant-task"></select>
+          </div>
+          <div class="col">
+            <label>登录帐号</label>
+            <select id="sm-operant-account"></select>
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <div class="col">
+            <label>目标表</label>
+            <input id="sm-operant-target-table" placeholder="留空=任务默认" />
+          </div>
+          <div class="col">
+            <label>唯一键</label>
+            <input id="sm-operant-unique-key" placeholder="rowKey" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <div class="col" style="flex:1 1 100%;">
+            <label>登录地址</label>
+            <input id="sm-operant-login-url" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <div class="col" style="flex:1 1 100%;">
+            <label>下载指令</label>
+            <input id="sm-operant-instruction" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <label style="display:flex;gap:4px;align-items:center;margin:0;">
+            <input id="sm-operant-headed" type="checkbox" style="width:auto;" /> 显示浏览器
+          </label>
+        </div>
+      </div>
+
+      <h3 id="sm-date-params-title" style="margin-top:16px;">日期范围</h3>
+      <div class="row">
         <div class="col">
           <label>开始日期</label>
           <input id="sm-start" placeholder="留空=当天" />
@@ -539,7 +807,7 @@
           <input id="sm-end" placeholder="留空=当天" />
         </div>
         <div class="col" style="flex: 1 1 260px;">
-          <label>回溯时间</label>
+          <label>回溯时间 (优先)</label>
           <div style="display:flex; gap:8px;">
             <input id="sm-past-value" type="number" min="0" step="any" placeholder="留空" style="flex:1;" />
             <select id="sm-past-unit" style="width:88px;">
@@ -552,12 +820,25 @@
             </select>
           </div>
         </div>
+      </div>
+
+      <div id="sm-pull-section">
+      <h3 id="sm-pull-params-title" style="margin-top:16px;">拉取参数</h3>
+      <div class="row">
+        <div class="col">
+          <label>连接器</label>
+          <select id="sm-connector"></select>
+        </div>
+        <div class="col">
+          <label>服务</label>
+          <select id="sm-service"></select>
+        </div>
+      </div>
+      <div class="row" style="margin-top:8px;">
         <div class="col">
           <label>间隔(秒)</label>
           <input id="sm-interval" type="number" placeholder="3600=按小时" />
         </div>
-      </div>
-      <div class="row" style="margin-top:8px;">
         <div class="col">
           <label>每页数量</label>
           <input id="sm-page-size" type="number" value="200" />
@@ -566,18 +847,26 @@
           <label>并行线程</label>
           <input id="sm-workers" type="number" value="10" />
         </div>
-        <div class="col">
-          <label>店铺编号</label>
-          <input id="sm-shop-no" />
-        </div>
-        <div class="col" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-          <label style="display:flex;gap:4px;align-items:center;">
-            <input id="sm-debug" type="checkbox" style="width:auto;" /> debug
-          </label>
-          <label id="sm-after-pull-dwd-wrap" class="hidden" style="display:flex;gap:4px;align-items:center;">
-            <input id="sm-after-pull-dwd" type="checkbox" style="width:auto;" /> 拉取后 DWD
-          </label>
-        </div>
+      </div>
+      <details style="margin-top: 12px;">
+        <summary>更多参数</summary>
+        <div id="sm-advanced-hint" class="help" style="margin-top:8px;"></div>
+        <div id="sm-advanced-grid" class="grid" style="margin-top: 8px;"></div>
+      </details>
+      <div class="row" style="margin-top:8px; align-items:center; flex-wrap:wrap; gap:12px;">
+        <label style="display:flex;gap:4px;align-items:center;margin:0;">
+          <input id="sm-by-day" type="checkbox" style="width:auto;" /> 按天循环
+        </label>
+        <label style="display:flex;gap:4px;align-items:center;margin:0;">
+          <input id="sm-debug" type="checkbox" style="width:auto;" /> debug
+        </label>
+        <label style="display:flex;gap:4px;align-items:center;margin:0;">
+          <input id="sm-no-ehr" type="checkbox" style="width:auto;" /> 不读 EHR (微伴)
+        </label>
+        <label id="sm-after-pull-dwd-wrap" class="hidden" style="display:flex;gap:4px;align-items:center;margin:0;">
+          <input id="sm-after-pull-dwd" type="checkbox" style="width:auto;" /> 拉取后 DWD
+        </label>
+      </div>
       </div>
 
       <div class="actions">
@@ -619,6 +908,9 @@ const api = async (url, opts={}) => {
 };
 
 let connectors = [];
+let biTasks = [];
+let operantTasks = [];
+let operantAccounts = [];
 let currentJobId = null;
 let logTimer = null;
 let jobsLogTimer = null;
@@ -632,7 +924,7 @@ function applyTheme(theme) {
   const root = document.documentElement;
   root.setAttribute('data-theme', currentTheme);
   const btn = $('theme-toggle');
-  if (btn) btn.textContent = currentTheme === 'dark' ? '切换到白天模式' : '切换到黑夜模式';
+  if (btn) { btn.textContent = currentTheme === 'dark' ? '☀️' : '🌙'; btn.title = currentTheme === 'dark' ? '切换白天模式' : '切换黑夜模式'; }
   localStorage.setItem('ui-theme', currentTheme);
 }
 
@@ -1006,6 +1298,48 @@ function serviceDisplay(connector, service) {
   return `${s.label} (${connector}.${service})`;
 }
 
+function biTaskDisplay(taskName) {
+  const t = biTasks.find(x => x.name === taskName);
+  if (!t) return taskName || '-';
+  return `${t.label} (${taskName})`;
+}
+
+function operantTaskDisplay(taskName) {
+  const t = operantTasks.find(x => x.name === taskName);
+  if (!t) return taskName || '-';
+  return `${t.label} (${taskName})`;
+}
+
+function payloadDisplay(payload) {
+  if (!payload) return '-';
+  if (payload.bi_task) {
+    return `<span class="pill">库任务</span> ${biTaskDisplay(payload.bi_task)}`;
+  }
+  if (payload.operant_task) {
+    return `<span class="pill">OperantID</span> ${operantTaskDisplay(payload.operant_task)}`;
+  }
+  if (payload.dwd_task) {
+    return `<span class="pill">DWD</span> ${payload.dwd_task}`;
+  }
+  if (payload.after_pull_dwd) {
+    return `<span class="pill">+DWD</span> ${serviceDisplay(payload.connector, payload.service)}`;
+  }
+  return `<span class="pill">拉取</span> ${serviceDisplay(payload.connector, payload.service)}`;
+}
+
+function jobDisplay(j) {
+  if (j.run_mode === 'bi') {
+    return `<span class="pill">库任务</span> ${biTaskDisplay(j.service || j.payload?.bi_task)}`;
+  }
+  if (j.run_mode === 'operant') {
+    return `<span class="pill">OperantID</span> ${operantTaskDisplay(j.service || j.payload?.operant_task)}`;
+  }
+  if (j.run_mode === 'dwd') {
+    return `<span class="pill">DWD</span> ${j.service || j.payload?.dwd_task || '-'}`;
+  }
+  return serviceDisplay(j.connector, j.service);
+}
+
 function toast(msg, type='info') {
   const el = document.createElement('div');
   el.className = 'toast ' + type;
@@ -1014,8 +1348,38 @@ function toast(msg, type='info') {
   setTimeout(() => el.remove(), 3500);
 }
 
+function navigateTo(mainNav, subTab) {
+  document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+  const navEl = document.querySelector(`.nav-item[data-nav="${mainNav}"]`);
+  if (navEl) navEl.classList.add('active');
+
+  ['center', 'schedules', 'jobs'].forEach(n => {
+    const el = $('tab-' + n);
+    if (el) el.classList.add('hidden');
+  });
+  $('tab-' + mainNav).classList.remove('hidden');
+
+  if (mainNav === 'center') {
+    switchCenterSubTab(subTab || 'run');
+  }
+  if (mainNav === 'schedules') loadSchedules();
+  if (mainNav === 'jobs') loadJobs();
+}
+
+function switchCenterSubTab(sub) {
+  document.querySelectorAll('.sub-tab').forEach(x => x.classList.remove('active'));
+  const subEl = document.querySelector(`.sub-tab[data-subtab="${sub}"]`);
+  if (subEl) subEl.classList.add('active');
+  ['run', 'bi', 'operant'].forEach(n => $('tab-' + n).classList.add('hidden'));
+  $('tab-' + sub).classList.remove('hidden');
+  if (sub === 'run') refreshDwdSelect();
+  if (sub === 'bi') loadBiTasks();
+  if (sub === 'operant') loadOperantTasks();
+}
+
 async function init() {
   applyTheme(localStorage.getItem('ui-theme') || 'light');
+  mountAdvancedParamsGrids();
   connectors = await api('/api/connectors');
   fillConnectorSelect($('run-connector'), $('run-service'));
   fillConnectorSelect($('sm-connector'), $('sm-service'));
@@ -1025,30 +1389,105 @@ async function init() {
   renderLogPage('run');
   renderLogPage('jobs');
   refreshDwdSelect();
+  loadBiTasks();
+  loadOperantTasks();
 
-  document.querySelectorAll('.tab').forEach(t => {
-    t.onclick = () => {
-      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-      t.classList.add('active');
-      ['run','schedules','jobs'].forEach(n => $('tab-'+n).classList.add('hidden'));
-      $('tab-'+t.dataset.tab).classList.remove('hidden');
-      if (t.dataset.tab === 'schedules') loadSchedules();
-      if (t.dataset.tab === 'jobs') loadJobs();
-      if (t.dataset.tab === 'run') refreshDwdSelect();
-    };
+  document.querySelectorAll('.nav-item').forEach(t => {
+    t.onclick = () => navigateTo(t.dataset.nav);
+  });
+  document.querySelectorAll('.sub-tab').forEach(t => {
+    t.onclick = () => switchCenterSubTab(t.dataset.subtab);
   });
 }
 
 const RUN_ADVANCED_FIELDS = [
-  'shop-no', 'warehouse-no', 'classification-name', 'is-summary',
+  'shop-no', 'warehouse-no', 'goods-no', 'brand-name', 'class-name', 'barcode', 'hide-deleted',
+  'stockin-no', 'refund-no', 'status', 'time-type', 'need-sn',
+  'classification-name', 'is-summary',
   'scheme-name', 'terms-income', 'composite-dim', 'split-suite',
   'cost-type', 'stat-mode', 'order-way', 'display-by-shop',
   'display-by-date', 'original-order', 'plat-order-nos', 'erp-order-nos',
   'shop-nos', 'spec-no', 'project', 'summary-no', 'expense-item-name',
   'staff-ids', 'start-config-record-time', 'end-config-record-time', 'order-tools',
-  'period-mark', 'reco-status', 'salesman-name', 'start-business-time', 'end-business-time',
+  'period-mark', 'reco-status', 'refund-type', 'salesman-name', 'author-name',
+  'oms-stockout-no', 'oms-order-no', 'province-names', 'city-names', 'district-names',
+  'goods-batch-no', 'refund-stage',
+  'start-business-time', 'end-business-time',
   'logistics-no', 'logistics-status', 'need-detail',
 ];
+
+const ADVANCED_PARAM_FIELD_DEFS = [
+  { key: 'shop-no', label: '店铺编号' },
+  { key: 'warehouse-no', label: '仓库编号' },
+  { key: 'goods-no', label: '货品编号' },
+  { key: 'brand-name', label: '品牌名称' },
+  { key: 'class-name', label: '分类名称' },
+  { key: 'barcode', label: '条码' },
+  { key: 'hide-deleted', label: '隐藏已删除', placeholder: '0全部/1隐藏' },
+  { key: 'stockin-no', label: '入库单号' },
+  { key: 'refund-no', label: '退换单号' },
+  { key: 'status', label: '入库单状态', placeholder: '10,20,30,80' },
+  { key: 'time-type', label: '时间类型', placeholder: '0修改/1入库' },
+  { key: 'need-sn', label: '返回SN', placeholder: 'true/false' },
+  { key: 'classification-name', label: '费用项名称' },
+  { key: 'is-summary', label: '是否汇总', placeholder: '0/1' },
+  { key: 'scheme-name', label: '方案名称' },
+  { key: 'terms-income', label: '查询口径' },
+  { key: 'composite-dim', label: '查询维度' },
+  { key: 'split-suite', label: '是否拆分组合装' },
+  { key: 'cost-type', label: '成本类型' },
+  { key: 'stat-mode', label: '是否跟单' },
+  { key: 'order-way', label: '建单方式' },
+  { key: 'display-by-shop', label: '按店铺展示' },
+  { key: 'display-by-date', label: '按时间展示' },
+  { key: 'original-order', label: '原始单+系统单' },
+  { key: 'plat-order-nos', label: '平台订单号' },
+  { key: 'erp-order-nos', label: '系统订单号' },
+  { key: 'shop-nos', label: '多店铺编号' },
+  { key: 'spec-no', label: '商家编码' },
+  { key: 'project', label: '费用项编码' },
+  { key: 'summary-no', label: '汇总单号' },
+  { key: 'expense-item-name', label: '费用项名称(列表)' },
+  { key: 'staff-ids', label: '员工ID列表' },
+  { key: 'start-config-record-time', label: '配置录入开始' },
+  { key: 'end-config-record-time', label: '配置录入结束' },
+  { key: 'order-tools', label: '订单渠道', placeholder: '如 1 或 1,2,3' },
+  { key: 'period-mark', label: '对账标识 periodMark', placeholder: '如 1' },
+  { key: 'reco-status', label: '对账状态(逗号分隔)', placeholder: '对账成功,对账失败' },
+  { key: 'refund-type', label: '退款类型(逗号分隔)', placeholder: '已取消,退货入库,仅退款' },
+  { key: 'salesman-name', label: '业务员名称' },
+  { key: 'author-name', label: '达人名称' },
+  { key: 'oms-stockout-no', label: '出库单号' },
+  { key: 'oms-order-no', label: '系统订单号' },
+  { key: 'province-names', label: '省' },
+  { key: 'city-names', label: '市' },
+  { key: 'district-names', label: '区' },
+  { key: 'goods-batch-no', label: '货品批次号' },
+  { key: 'refund-stage', label: '退款阶段', placeholder: '售中/售后' },
+  { key: 'start-business-time', label: '业务开始时间', placeholder: 'YYYY-MM-DD HH:MM:SS' },
+  { key: 'end-business-time', label: '业务结束时间', placeholder: 'YYYY-MM-DD HH:MM:SS' },
+  { key: 'logistics-no', label: '物流单号' },
+  { key: 'logistics-status', label: '物流状态', placeholder: '0-13,99，默认5' },
+  { key: 'need-detail', label: '返回物流详情', type: 'checkbox' },
+];
+
+function mountAdvancedParamsGrid(prefix) {
+  const grid = $(prefix + '-advanced-grid');
+  if (!grid) return;
+  grid.innerHTML = ADVANCED_PARAM_FIELD_DEFS.map((f) => {
+    const id = `${prefix}-${f.key}`;
+    if (f.type === 'checkbox') {
+      return `<div><label>${f.label}</label><input id="${id}" type="checkbox" style="width:auto;" /></div>`;
+    }
+    const ph = f.placeholder ? ` placeholder="${f.placeholder}"` : '';
+    return `<div><label>${f.label}</label><input id="${id}"${ph} /></div>`;
+  }).join('');
+}
+
+function mountAdvancedParamsGrids() {
+  mountAdvancedParamsGrid('run');
+  mountAdvancedParamsGrid('sm');
+}
 
 const WDT_SERVICE_ADVANCED_PARAMS = {
   trade: ['shop-no'],
@@ -1059,6 +1498,14 @@ const WDT_SERVICE_ADVANCED_PARAMS = {
   history_trade: ['shop-no'],
   stockout_sales_query_with_detail: ['warehouse-no'],
   stockin_refund_query_with_detail: ['shop-no'],
+  stockin_refund_openapi: ['shop-no', 'shop-nos', 'warehouse-no', 'stockin-no', 'refund-no', 'status', 'time-type', 'need-sn'],
+  stockspec: ['warehouse-no'],
+  logistics_trace: ['shop-no', 'warehouse-no', 'logistics-no', 'logistics-status', 'need-detail'],
+  warehouse: ['warehouse-no'],
+  goods_query_with_spec: ['spec-no', 'goods-no', 'brand-name', 'class-name', 'barcode', 'hide-deleted'],
+};
+
+const HJY_SERVICE_ADVANCED_PARAMS = {
   bill_standard: ['shop-no'],
   bk_share_data: ['classification-name', 'is-summary', 'start-config-record-time', 'end-config-record-time'],
   fixbill_data_summary: ['classification-name', 'is-summary', 'start-config-record-time', 'end-config-record-time'],
@@ -1073,10 +1520,33 @@ const WDT_SERVICE_ADVANCED_PARAMS = {
   expense_sku_share_day_detail: ['shop-nos', 'summary-no'],
   sht_recon_detail: ['shop-no', 'shop-nos', 'period-mark', 'reco-status'],
   recon_delivery_detail: ['shop-no', 'shop-nos', 'warehouse-no', 'summary-no', 'spec-no', 'plat-order-nos', 'period-mark', 'reco-status', 'salesman-name', 'start-business-time', 'end-business-time'],
-  logistics_trace: ['shop-no', 'warehouse-no', 'logistics-no', 'logistics-status', 'need-detail'],
+  hjy_delivery_detail: ['shop-no', 'shop-nos', 'warehouse-no', 'summary-no', 'spec-no', 'plat-order-nos', 'oms-stockout-no', 'oms-order-no', 'author-name', 'salesman-name', 'province-names', 'city-names', 'district-names'],
+  recon_delivery_summary: ['shop-no', 'shop-nos', 'warehouse-no', 'summary-no', 'spec-no', 'author-name', 'salesman-name', 'province-names', 'city-names', 'district-names'],
+  recon_return_storage_summary: ['shop-no', 'shop-nos', 'warehouse-no', 'summary-no', 'spec-no', 'author-name', 'salesman-name', 'refund-stage', 'goods-batch-no'],
+  recon_thrk_detail: ['shop-no', 'shop-nos', 'warehouse-no', 'summary-no', 'spec-no', 'plat-order-nos', 'oms-order-no', 'stockin-no', 'refund-no', 'refund-stage', 'author-name', 'salesman-name', 'goods-batch-no', 'province-names', 'city-names', 'district-names'],
+  recon_order_confirm_summary: ['shop-no', 'shop-nos', 'summary-no', 'spec-no'],
+  recon_dztk_summary: ['shop-no', 'shop-nos', 'period-mark', 'refund-type'],
 };
 
-const WDT_PULL_BY_DAY_SERVICES = new Set([
+const WEIBAN_SERVICE_ADVANCED_PARAMS = {
+  external_user: ['shop-no', 'staff-ids'],
+  external_user_detail: ['shop-no', 'staff-ids'],
+};
+
+function getAdvancedParamsForService(connector, service) {
+  if (connector === 'wdt' && service && WDT_SERVICE_ADVANCED_PARAMS[service]) {
+    return WDT_SERVICE_ADVANCED_PARAMS[service];
+  }
+  if (connector === 'hjy' && service && HJY_SERVICE_ADVANCED_PARAMS[service]) {
+    return HJY_SERVICE_ADVANCED_PARAMS[service];
+  }
+  if (connector === 'weiban' && service && WEIBAN_SERVICE_ADVANCED_PARAMS[service]) {
+    return WEIBAN_SERVICE_ADVANCED_PARAMS[service];
+  }
+  return [];
+}
+
+const HJY_PULL_BY_DAY_SERVICES = new Set([
   'marketing_share_result',
   'expense_sku_day_summary',
   'expense_sku_share_day_detail',
@@ -1085,7 +1555,11 @@ const WDT_PULL_BY_DAY_SERVICES = new Set([
   'profits_live_sku',
   'profits_live_order',
   'profits_live_refund',
+  'recon_delivery_summary',
+  'recon_return_storage_summary',
 ]);
+
+const WDT_PULL_BY_DAY_SERVICES = HJY_PULL_BY_DAY_SERVICES;
 
 const WDT_DWD_BY_SERVICE = {
   aftersales_refund: 'aftersales_refund',
@@ -1128,22 +1602,460 @@ async function runDwdFromJob(task) {
     const job = await api('/api/run', { method: 'POST', body: { connector: 'wdt', dwd_task: tid } });
     toast('清洗任务已启动: ' + job.id, 'success');
     loadJobs();
-    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-    document.querySelector('.tab[data-tab="run"]').classList.add('active');
-    ['run', 'schedules', 'jobs'].forEach(n => $('tab-' + n).classList.add('hidden'));
-    $('tab-run').classList.remove('hidden');
+    navigateTo('center', 'run');
     openLog(job);
   } catch (e) {
     toast(e.message, 'error');
   }
 }
 
-function toggleRunAdvancedField(fieldKey, visible) {
-  const input = $('run-' + fieldKey);
+async function loadBiTasks() {
+  try {
+    const r = await api('/api/bi/tasks');
+    biTasks = r.tasks || [];
+    const fill = (sel, placeholder) => {
+      if (!sel) return;
+      sel.innerHTML = biTasks.length
+        ? `<option value="">${placeholder || '请选择'}</option>` + biTasks.map(t =>
+            `<option value="${t.name}">${t.label}</option>`).join('')
+        : `<option value="">（暂无数据库任务，请在 bi/tasks/ 注册）</option>`;
+    };
+    fill($('bi-task'), '请选择数据库任务');
+    fill($('sm-bi-task'), '请选择');
+    updateBiTaskDesc();
+  } catch (e) {
+    biTasks = [];
+    const sel = $('bi-task');
+    if (sel) {
+      sel.innerHTML = `<option value="">（加载失败：${e.message || '请重启 Web 服务'}）</option>`;
+    }
+    const smSel = $('sm-bi-task');
+    if (smSel) smSel.innerHTML = sel ? sel.innerHTML : '';
+    toast('数据库任务列表加载失败: ' + (e.message || '未知错误') + '（若刚更新代码，请重启 Web 控制台）', 'error');
+  }
+}
+
+function updateBiTaskDesc() {
+  const el = $('bi-task-desc');
+  const sel = $('bi-task');
+  if (!el || !sel) return;
+  const t = biTasks.find(x => x.name === sel.value);
+  el.textContent = t
+    ? `结果表: ${t.target_database ? t.target_database + '.dbo.' : ''}${t.target_table} | 日期列: ${t.date_column} | ${t.description || ''}`
+    : '';
+}
+
+if ($('bi-task')) {
+  $('bi-task').onchange = updateBiTaskDesc;
+}
+
+async function loadOperantTasks() {
+  try {
+    const r = await api('/api/operant/tasks');
+    operantTasks = r.tasks || [];
+    operantAccounts = r.accounts || [];
+    const fillTask = (sel, placeholder) => {
+      if (!sel) return;
+      sel.innerHTML = operantTasks.length
+        ? `<option value="">${placeholder || '请选择'}</option>` + operantTasks.map(t =>
+            `<option value="${t.name}">${t.label}</option>`).join('')
+        : `<option value="">（暂无 OperantID 任务，请在 operant/tasks/ 注册）</option>`;
+    };
+    const fillAcc = (sel) => {
+      if (!sel) return;
+      sel.innerHTML = `<option value="">（不指定帐号）</option>` + operantAccounts.map(a =>
+        `<option value="${a.name}">${a.label}${a.has_password ? '' : '（未配密码）'}</option>`).join('');
+    };
+    fillTask($('operant-task'), '请选择 OperantID 任务');
+    fillTask($('sm-operant-task'), '请选择');
+    fillAcc($('operant-account'));
+    fillAcc($('sm-operant-account'));
+    const st = $('operant-status');
+    if (st) {
+      const bits = [];
+      bits.push(r.enabled === false ? '已在配置中关闭' : '已启用');
+      bits.push(r.has_api_key ? `模型 ${r.provider || '-'}/${r.model || '-'}` : '未配置 API Key');
+      bits.push(`帐号 ${operantAccounts.length} 个`);
+      st.textContent = bits.join(' · ');
+    }
+    updateOperantTaskDesc();
+  } catch (e) {
+    operantTasks = [];
+    operantAccounts = [];
+    const sel = $('operant-task');
+    if (sel) sel.innerHTML = `<option value="">（加载失败：${e.message || '请重启 Web 服务'}）</option>`;
+    toast('OperantID 任务列表加载失败: ' + (e.message || '未知错误'), 'error');
+  }
+}
+
+function updateOperantTaskDesc() {
+  const el = $('operant-task-desc');
+  const sel = $('operant-task');
+  if (!el || !sel) return;
+  const t = operantTasks.find(x => x.name === sel.value);
+  if (!t) {
+    el.textContent = '';
+    return;
+  }
+  el.textContent = `结果表: operant_${t.target_table} | 唯一键: ${t.unique_key || 'rowKey'} | ${t.description || ''}`;
+  if (t.login_url && $('operant-login-url') && !$('operant-login-url').value) {
+    $('operant-login-url').placeholder = t.login_url;
+  }
+  if (t.account_name && $('operant-account') && !$('operant-account').value) {
+    $('operant-account').value = t.account_name;
+  }
+}
+
+if ($('operant-task')) {
+  $('operant-task').onchange = updateOperantTaskDesc;
+}
+
+function collectBiPayload(prefix = 'bi') {
+  const v = (id) => {
+    const el = $(prefix + '-' + id);
+    return el && el.value !== '' ? el.value : null;
+  };
+  const c = (id) => {
+    const el = $(prefix + '-' + id);
+    return el ? el.checked : false;
+  };
+  return {
+    bi_task: v('task'),
+    start: v('start'),
+    end: v('end'),
+    past_value: v('past-value') ? Number(v('past-value')) : null,
+    past_unit: v('past-value') ? (v('past-unit') || 'day') : null,
+    mode: v('mode') || 'auto',
+    debug: c('debug'),
+  };
+}
+
+async function runBiNow() {
+  const payload = collectBiPayload('bi');
+  if (!payload.bi_task) {
+    toast('请选择数据库任务', 'error');
+    return;
+  }
+  try {
+    const job = await api('/api/run', { method: 'POST', body: payload });
+    toast('数据库任务已启动: ' + job.id, 'success');
+    openLog(job);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+function saveBiAsSchedule() {
+  const payload = collectBiPayload('bi');
+  if (!payload.bi_task) {
+    toast('请选择数据库任务', 'error');
+    return;
+  }
+  editingScheduleId = null;
+  $('sched-modal-title').textContent = '保存数据库定时任务';
+  $('sm-name').value = biTaskDisplay(payload.bi_task);
+  $('sm-task-kind').value = 'bi';
+  onScheduleTaskKindChange();
+  applyBiPayloadToScheduleForm(payload);
+  $('sm-trigger-time').value = '02:00';
+  $('sm-trigger-type').value = 'daily';
+  onTriggerTypeChange();
+  $('sched-modal').classList.remove('hidden');
+}
+
+function applyBiPayloadToScheduleForm(p) {
+  if (!p) return;
+  if (p.bi_task && $('sm-bi-task')) $('sm-bi-task').value = p.bi_task;
+  if (p.mode && $('sm-bi-mode')) $('sm-bi-mode').value = p.mode;
+  if ($('sm-start')) $('sm-start').value = p.start || '';
+  if ($('sm-end')) $('sm-end').value = p.end || '';
+  if (p.past_value != null && p.past_value !== '') {
+    if ($('sm-past-value')) $('sm-past-value').value = p.past_value;
+    if ($('sm-past-unit')) $('sm-past-unit').value = p.past_unit || 'day';
+  } else {
+    if ($('sm-past-value')) $('sm-past-value').value = '';
+    if ($('sm-past-unit')) $('sm-past-unit').value = 'day';
+  }
+  if ($('sm-debug')) $('sm-debug').checked = !!p.debug;
+}
+
+function collectOperantPayload(prefix = 'operant') {
+  const v = (id) => {
+    const el = $(prefix + '-' + id);
+    return el && el.value !== '' ? el.value : null;
+  };
+  const c = (id) => {
+    const el = $(prefix + '-' + id);
+    return el ? el.checked : false;
+  };
+  return {
+    operant_task: v('task'),
+    account: v('account'),
+    start: v('start'),
+    end: v('end'),
+    past_value: v('past-value') ? Number(v('past-value')) : null,
+    past_unit: v('past-value') ? (v('past-unit') || 'day') : null,
+    login_url: v('login-url'),
+    instruction: v('instruction'),
+    target_table: v('target-table'),
+    unique_key: v('unique-key'),
+    headed: c('headed'),
+    debug: c('debug'),
+  };
+}
+
+async function runOperantNow() {
+  const payload = collectOperantPayload('operant');
+  if (!payload.operant_task) {
+    toast('请选择 OperantID 任务', 'error');
+    return;
+  }
+  try {
+    const job = await api('/api/run', { method: 'POST', body: payload });
+    toast('OperantID 任务已启动: ' + job.id, 'success');
+    openLog(job);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+function saveOperantAsSchedule() {
+  const payload = collectOperantPayload('operant');
+  if (!payload.operant_task) {
+    toast('请选择 OperantID 任务', 'error');
+    return;
+  }
+  editingScheduleId = null;
+  $('sched-modal-title').textContent = '保存 OperantID 定时任务';
+  $('sm-name').value = operantTaskDisplay(payload.operant_task);
+  $('sm-task-kind').value = 'operant';
+  onScheduleTaskKindChange();
+  applyOperantPayloadToScheduleForm(payload);
+  $('sm-trigger-time').value = '03:00';
+  $('sm-trigger-type').value = 'daily';
+  onTriggerTypeChange();
+  $('sched-modal').classList.remove('hidden');
+}
+
+function applyOperantPayloadToScheduleForm(p) {
+  if (!p) return;
+  if (p.operant_task && $('sm-operant-task')) $('sm-operant-task').value = p.operant_task;
+  if ($('sm-operant-account')) $('sm-operant-account').value = p.account || '';
+  if ($('sm-operant-login-url')) $('sm-operant-login-url').value = p.login_url || '';
+  if ($('sm-operant-instruction')) $('sm-operant-instruction').value = p.instruction || '';
+  if ($('sm-operant-target-table')) $('sm-operant-target-table').value = p.target_table || '';
+  if ($('sm-operant-unique-key')) $('sm-operant-unique-key').value = p.unique_key || '';
+  if ($('sm-operant-headed')) $('sm-operant-headed').checked = !!p.headed;
+  if ($('sm-start')) $('sm-start').value = p.start || '';
+  if ($('sm-end')) $('sm-end').value = p.end || '';
+  if (p.past_value != null && p.past_value !== '') {
+    if ($('sm-past-value')) $('sm-past-value').value = p.past_value;
+    if ($('sm-past-unit')) $('sm-past-unit').value = p.past_unit || 'day';
+  } else {
+    if ($('sm-past-value')) $('sm-past-value').value = '';
+    if ($('sm-past-unit')) $('sm-past-unit').value = 'day';
+  }
+  if ($('sm-debug')) $('sm-debug').checked = !!p.debug;
+}
+
+function onScheduleTaskKindChange() {
+  const kind = $('sm-task-kind')?.value || 'pull';
+  const isBi = kind === 'bi';
+  const isOperant = kind === 'operant';
+  $('sm-bi-section')?.classList.toggle('hidden', !isBi);
+  $('sm-operant-section')?.classList.toggle('hidden', !isOperant);
+  $('sm-pull-section')?.classList.toggle('hidden', isBi || isOperant);
+  $('sm-pull-params-title')?.classList.toggle('hidden', isBi || isOperant);
+  $('sm-date-params-title')?.classList.toggle('hidden', false);
+}
+
+function collectSchedulePayload() {
+  const kind = $('sm-task-kind')?.value || 'pull';
+  if (kind === 'operant') {
+    const v = (id) => {
+      const el = $(id);
+      return el && el.value !== '' ? el.value : null;
+    };
+    return {
+      operant_task: v('sm-operant-task'),
+      account: v('sm-operant-account'),
+      start: v('sm-start'),
+      end: v('sm-end'),
+      past_value: v('sm-past-value') ? Number(v('sm-past-value')) : null,
+      past_unit: v('sm-past-value') ? (v('sm-past-unit') || 'day') : null,
+      login_url: v('sm-operant-login-url'),
+      instruction: v('sm-operant-instruction'),
+      target_table: v('sm-operant-target-table'),
+      unique_key: v('sm-operant-unique-key'),
+      headed: $('sm-operant-headed') ? $('sm-operant-headed').checked : false,
+      debug: $('sm-debug') ? $('sm-debug').checked : false,
+    };
+  }
+  if (kind === 'bi') {
+    const v = (id) => {
+      const el = $(id);
+      return el && el.value !== '' ? el.value : null;
+    };
+    return {
+      bi_task: v('sm-bi-task'),
+      start: v('sm-start'),
+      end: v('sm-end'),
+      past_value: v('sm-past-value') ? Number(v('sm-past-value')) : null,
+      past_unit: v('sm-past-value') ? (v('sm-past-unit') || 'day') : null,
+      mode: v('sm-bi-mode') || 'auto',
+      debug: $('sm-debug') ? $('sm-debug').checked : false,
+    };
+  }
+  return collectPayload('sm');
+}
+
+function toggleAdvancedField(prefix, fieldKey, visible) {
+  const input = $(prefix + '-' + fieldKey);
   if (!input) return;
   const wrap = input.closest('div');
   if (!wrap) return;
   wrap.classList.toggle('hidden', !visible);
+}
+
+function updateAdvancedParamsVisibility(prefix) {
+  const connector = $(prefix + '-connector')?.value;
+  const service = $(prefix + '-service')?.value;
+  const show = getAdvancedParamsForService(connector, service);
+  const showSet = new Set(show);
+  RUN_ADVANCED_FIELDS.forEach(k => toggleAdvancedField(prefix, k, showSet.has(k)));
+  const hint = $(prefix + '-advanced-hint');
+  if (hint) {
+    if (!connector || !service) {
+      hint.textContent = '请先选择连接器和服务';
+    } else if (!show.length) {
+      hint.textContent = '当前服务无额外参数（仅使用上方基础配置）';
+    } else {
+      hint.textContent = `当前服务可用 ${show.length} 项参数（与数据拉取任务一致）`;
+    }
+  }
+}
+
+function updateRunAdvancedParamsVisibility() {
+  updateAdvancedParamsVisibility('run');
+}
+
+function applyPayloadToForm(prefix, p) {
+  if (!p) return;
+  const set = (id, val) => {
+    const el = $(prefix + '-' + id);
+    if (el) el.value = val == null ? '' : val;
+  };
+  const setCheck = (id, val) => {
+    const el = $(prefix + '-' + id);
+    if (el) el.checked = !!val;
+  };
+  if (p.connector) {
+    $(prefix + '-connector').value = p.connector;
+    $(prefix + '-connector').dispatchEvent(new Event('change'));
+  }
+  setTimeout(() => {
+    if (p.service) $(prefix + '-service').value = p.service;
+    updateAdvancedParamsVisibility(prefix);
+    updateIntervalInputAvailability(prefix, p.connector, p.service);
+    updateAfterPullDwdVisibility(prefix);
+  }, 0);
+  set('start', p.start);
+  set('end', p.end);
+  if (p.past_value != null && p.past_value !== '') {
+    set('past-value', p.past_value);
+    set('past-unit', p.past_unit || 'day');
+  } else if (p.past_days) {
+    set('past-value', p.past_days);
+    set('past-unit', 'day');
+  } else {
+    set('past-value', '');
+    set('past-unit', 'day');
+  }
+  set('interval', p.interval ?? '');
+  set('page-size', p.page_size ?? 200);
+  set('workers', p.workers ?? 10);
+  set('shop-no', p.shop_no);
+  set('warehouse-no', p.warehouse_no);
+  set('goods-no', p.goods_no);
+  set('brand-name', p.brand_name);
+  set('class-name', p.class_name);
+  set('barcode', p.barcode);
+  set('hide-deleted', p.hide_deleted);
+  set('stockin-no', p.stockin_no);
+  set('refund-no', p.refund_no);
+  set('status', p.status);
+  set('time-type', p.time_type);
+  set('need-sn', p.need_sn);
+  set('classification-name', p.classification_name);
+  set('is-summary', p.is_summary);
+  set('scheme-name', p.scheme_name);
+  set('terms-income', p.terms_income);
+  set('composite-dim', p.composite_dim);
+  set('split-suite', p.split_suite);
+  set('cost-type', p.cost_type);
+  set('stat-mode', p.stat_mode);
+  set('order-way', p.order_way);
+  set('display-by-shop', p.display_by_shop);
+  set('display-by-date', p.display_by_date);
+  set('original-order', p.original_order);
+  set('plat-order-nos', p.plat_order_nos);
+  set('erp-order-nos', p.erp_order_nos);
+  set('shop-nos', p.shop_nos);
+  set('spec-no', p.spec_no);
+  set('project', p.project);
+  set('summary-no', p.summary_no);
+  set('expense-item-name', p.expense_item_name);
+  set('order-tools', p.order_tools);
+  set('staff-ids', p.staff_ids);
+  set('start-config-record-time', p.start_config_record_time);
+  set('end-config-record-time', p.end_config_record_time);
+  set('period-mark', p.period_mark);
+  set('reco-status', p.reco_status);
+  set('refund-type', p.refund_type);
+  set('salesman-name', p.salesman_name);
+  set('author-name', p.author_name);
+  set('oms-stockout-no', p.oms_stockout_no);
+  set('oms-order-no', p.oms_order_no);
+  set('province-names', p.province_names);
+  set('city-names', p.city_names);
+  set('district-names', p.district_names);
+  set('goods-batch-no', p.goods_batch_no);
+  set('refund-stage', p.refund_stage);
+  set('start-business-time', p.start_business_time);
+  set('end-business-time', p.end_business_time);
+  set('logistics-no', p.logistics_no);
+  set('logistics-status', p.logistics_status);
+  setCheck('need-detail', p.need_detail);
+  setCheck('by-day', p.by_day);
+  setCheck('debug', p.debug);
+  setCheck('no-ehr', p.no_ehr);
+  setCheck('after-pull-dwd', p.after_pull_dwd);
+}
+
+function resetPayloadForm(prefix) {
+  [
+    'start', 'end', 'past-value', 'interval', 'shop-no', 'warehouse-no',
+    'goods-no', 'brand-name', 'class-name', 'barcode', 'hide-deleted',
+    'stockin-no', 'refund-no', 'status', 'time-type', 'need-sn',
+    'classification-name', 'is-summary', 'scheme-name', 'terms-income', 'composite-dim',
+    'split-suite', 'cost-type', 'stat-mode', 'order-way', 'display-by-shop', 'display-by-date',
+    'original-order', 'plat-order-nos', 'erp-order-nos', 'shop-nos', 'spec-no', 'project',
+    'summary-no', 'expense-item-name', 'order-tools', 'staff-ids',
+    'start-config-record-time', 'end-config-record-time', 'period-mark', 'reco-status', 'refund-type',
+    'salesman-name', 'author-name', 'oms-stockout-no', 'oms-order-no',
+    'province-names', 'city-names', 'district-names', 'goods-batch-no', 'refund-stage',
+    'start-business-time', 'end-business-time', 'logistics-no', 'logistics-status',
+  ].forEach(k => {
+    const el = $(prefix + '-' + k);
+    if (el) el.value = '';
+  });
+  if ($(prefix + '-past-unit')) $(prefix + '-past-unit').value = 'day';
+  if ($(prefix + '-page-size')) $(prefix + '-page-size').value = 200;
+  if ($(prefix + '-workers')) $(prefix + '-workers').value = 10;
+  ['need-detail', 'by-day', 'debug', 'no-ehr', 'after-pull-dwd'].forEach(k => {
+    const el = $(prefix + '-' + k);
+    if (el) el.checked = false;
+  });
 }
 
 function updateAfterPullDwdVisibility(prefix) {
@@ -1151,7 +2063,7 @@ function updateAfterPullDwdVisibility(prefix) {
   const svc = $(prefix + '-service')?.value;
   const wrap = $(prefix + '-after-pull-dwd-wrap');
   if (!wrap) return;
-  const show = conn === 'wdt' && svc && WDT_DWD_BY_SERVICE[svc];
+  const show = (conn === 'wdt' || conn === 'hjy') && svc && WDT_DWD_BY_SERVICE[svc];
   wrap.classList.toggle('hidden', !show);
   if (!show) {
     const cb = $(prefix + '-after-pull-dwd');
@@ -1159,21 +2071,12 @@ function updateAfterPullDwdVisibility(prefix) {
   }
 }
 
-function updateRunAdvancedParamsVisibility() {
-  const connector = $('run-connector')?.value;
-  const service = $('run-service')?.value;
-  let show = [];
-  if (connector === 'wdt' && service && WDT_SERVICE_ADVANCED_PARAMS[service]) {
-    show = WDT_SERVICE_ADVANCED_PARAMS[service];
-  }
-  const showSet = new Set(show);
-  RUN_ADVANCED_FIELDS.forEach(k => toggleRunAdvancedField(k, showSet.has(k)));
-}
-
 function updateIntervalInputAvailability(prefix, connector, service) {
   const intervalInput = $(prefix + '-interval');
   if (!intervalInput) return;
-  const isDayOnly = connector === 'wdt' && WDT_PULL_BY_DAY_SERVICES.has(service);
+  const isDayOnly = (connector === 'wdt' || connector === 'hjy') && (
+    (connector === 'hjy' ? HJY_PULL_BY_DAY_SERVICES : WDT_PULL_BY_DAY_SERVICES).has(service)
+  );
   if (isDayOnly) {
     intervalInput.value = '';
     intervalInput.disabled = true;
@@ -1205,6 +2108,7 @@ function fillConnectorSelect(connSel, svcSel) {
     if (connSel.id === 'sm-connector' && svcSel.id === 'sm-service') {
       updateIntervalInputAvailability('sm', connSel.value, svcSel.value);
       updateAfterPullDwdVisibility('sm');
+      updateAdvancedParamsVisibility('sm');
     }
   };
   connSel.onchange = fillSvc;
@@ -1219,14 +2123,21 @@ function fillConnectorSelect(connSel, svcSel) {
     if (connSel.id === 'sm-connector' && svcSel.id === 'sm-service') {
       updateIntervalInputAvailability('sm', connSel.value, svcSel.value);
       updateAfterPullDwdVisibility('sm');
+      updateAdvancedParamsVisibility('sm');
     }
   };
   fillSvc();
 }
 
 function collectPayload(prefix='run') {
-  const v = (id) => $(prefix+'-'+id).value || null;
-  const c = (id) => { const el = $(prefix+'-'+id); return el ? el.checked : false; };
+  const v = (id) => {
+    const el = $(prefix + '-' + id);
+    return el && el.value !== '' ? el.value : null;
+  };
+  const c = (id) => {
+    const el = $(prefix + '-' + id);
+    return el ? el.checked : false;
+  };
   return {
     connector: v('connector'),
     service: v('service'),
@@ -1238,42 +2149,61 @@ function collectPayload(prefix='run') {
     page_size: v('page-size') ? Number(v('page-size')) : null,
     workers: v('workers') ? Number(v('workers')) : null,
     shop_no: v('shop-no'),
-    warehouse_no: prefix==='run' ? v('warehouse-no') : null,
-    classification_name: prefix==='run' ? v('classification-name') : null,
-    is_summary: prefix==='run' ? v('is-summary') : null,
-    scheme_name: prefix==='run' ? v('scheme-name') : null,
-    terms_income: prefix==='run' ? v('terms-income') : null,
-    composite_dim: prefix==='run' ? v('composite-dim') : null,
-    split_suite: prefix==='run' ? v('split-suite') : null,
-    cost_type: prefix==='run' ? v('cost-type') : null,
-    stat_mode: prefix==='run' ? v('stat-mode') : null,
-    order_way: prefix==='run' ? v('order-way') : null,
-    display_by_shop: prefix==='run' ? v('display-by-shop') : null,
-    display_by_date: prefix==='run' ? v('display-by-date') : null,
-    original_order: prefix==='run' ? v('original-order') : null,
-    plat_order_nos: prefix==='run' ? v('plat-order-nos') : null,
-    erp_order_nos: prefix==='run' ? v('erp-order-nos') : null,
-    shop_nos: prefix==='run' ? v('shop-nos') : null,
-    spec_no: prefix==='run' ? v('spec-no') : null,
-    project: prefix==='run' ? v('project') : null,
-    summary_no: prefix==='run' ? v('summary-no') : null,
-    expense_item_name: prefix==='run' ? v('expense-item-name') : null,
-    order_tools: prefix==='run' ? v('order-tools') : null,
-    staff_ids: prefix==='run' ? v('staff-ids') : null,
-    start_config_record_time: prefix==='run' ? v('start-config-record-time') : null,
-    end_config_record_time: prefix==='run' ? v('end-config-record-time') : null,
-    period_mark: prefix==='run' ? v('period-mark') : null,
-    reco_status: prefix==='run' ? v('reco-status') : null,
-    salesman_name: prefix==='run' ? v('salesman-name') : null,
-    start_business_time: prefix==='run' ? v('start-business-time') : null,
-    end_business_time: prefix==='run' ? v('end-business-time') : null,
-    logistics_no: prefix==='run' ? v('logistics-no') : null,
-    logistics_status: prefix==='run' && v('logistics-status') ? Number(v('logistics-status')) : null,
-    need_detail: prefix==='run' ? c('need-detail') : false,
-    by_day: prefix==='run' ? c('by-day') : false,
+    warehouse_no: v('warehouse-no'),
+    goods_no: v('goods-no'),
+    brand_name: v('brand-name'),
+    class_name: v('class-name'),
+    barcode: v('barcode'),
+    hide_deleted: v('hide-deleted') !== '' && v('hide-deleted') != null ? Number(v('hide-deleted')) : null,
+    stockin_no: v('stockin-no'),
+    refund_no: v('refund-no'),
+    status: v('status'),
+    time_type: v('time-type') !== '' && v('time-type') != null ? Number(v('time-type')) : null,
+    need_sn: v('need-sn'),
+    classification_name: v('classification-name'),
+    is_summary: v('is-summary'),
+    scheme_name: v('scheme-name'),
+    terms_income: v('terms-income'),
+    composite_dim: v('composite-dim'),
+    split_suite: v('split-suite'),
+    cost_type: v('cost-type'),
+    stat_mode: v('stat-mode'),
+    order_way: v('order-way'),
+    display_by_shop: v('display-by-shop'),
+    display_by_date: v('display-by-date'),
+    original_order: v('original-order'),
+    plat_order_nos: v('plat-order-nos'),
+    erp_order_nos: v('erp-order-nos'),
+    shop_nos: v('shop-nos'),
+    spec_no: v('spec-no'),
+    project: v('project'),
+    summary_no: v('summary-no'),
+    expense_item_name: v('expense-item-name'),
+    order_tools: v('order-tools'),
+    staff_ids: v('staff-ids'),
+    start_config_record_time: v('start-config-record-time'),
+    end_config_record_time: v('end-config-record-time'),
+    period_mark: v('period-mark'),
+    reco_status: v('reco-status'),
+    refund_type: v('refund-type'),
+    salesman_name: v('salesman-name'),
+    author_name: v('author-name'),
+    oms_stockout_no: v('oms-stockout-no'),
+    oms_order_no: v('oms-order-no'),
+    province_names: v('province-names'),
+    city_names: v('city-names'),
+    district_names: v('district-names'),
+    goods_batch_no: v('goods-batch-no'),
+    refund_stage: v('refund-stage'),
+    start_business_time: v('start-business-time'),
+    end_business_time: v('end-business-time'),
+    logistics_no: v('logistics-no'),
+    logistics_status: v('logistics-status') ? Number(v('logistics-status')) : null,
+    need_detail: c('need-detail'),
+    by_day: c('by-day'),
     debug: c('debug'),
-    no_ehr: prefix==='run' ? c('no-ehr') : false,
-    after_pull_dwd: (prefix === 'run' || prefix === 'sm') ? c('after-pull-dwd') : false,
+    no_ehr: c('no-ehr'),
+    after_pull_dwd: c('after-pull-dwd'),
   };
 }
 
@@ -1322,6 +2252,8 @@ async function previewRawData() {
 }
 
 function openLog(job) {
+  const sub = (job && job.run_mode === 'bi') ? 'bi' : ((job && job.run_mode === 'operant') ? 'operant' : 'run');
+  navigateTo('center', sub);
   currentJobId = job.id;
   $('run-log-panel').classList.remove('hidden');
   resetLogView('run');
@@ -1372,7 +2304,7 @@ function fillJobsFilterConnectors() {
   const cur = sel.value;
   sel.innerHTML = '<option value="">全部</option>' + connectors.map(c =>
     `<option value="${c.name}">${c.name}</option>`
-  ).join('');
+  ).join('') + '<option value="operant">operant</option><option value="bi">bi</option>';
   sel.value = cur || '';
   fillJobsFilterServices(sel.value);
 }
@@ -1381,9 +2313,18 @@ function fillJobsFilterServices(connector) {
   const sel = $('jobs-filter-service');
   if (!sel) return;
   const cur = sel.value;
-  const list = connector
-    ? (connectors.find(c => c.name === connector)?.services || [])
-    : connectors.flatMap(c => (c.services || []).map(s => ({ ...s, connector: c.name })));
+  let list = [];
+  if (connector === 'operant') {
+    list = operantTasks.map(t => ({ name: t.name, label: t.label }));
+  } else if (connector === 'bi') {
+    list = biTasks.map(t => ({ name: t.name, label: t.label }));
+  } else if (connector) {
+    list = connectors.find(c => c.name === connector)?.services || [];
+  } else {
+    list = connectors.flatMap(c => (c.services || []).map(s => ({ ...s, connector: c.name })))
+      .concat(operantTasks.map(t => ({ ...t, connector: 'operant' })))
+      .concat(biTasks.map(t => ({ ...t, connector: 'bi' })));
+  }
   sel.innerHTML = '<option value="">全部</option>' + list.map(s =>
     `<option value="${s.name}">${s.label || s.name}${connector ? '' : ` (${s.connector})`}</option>`
   ).join('');
@@ -1431,7 +2372,7 @@ function renderJobsTable(items) {
   $('jobs-tbody').innerHTML = items.map(j => `
     <tr>
       <td>${j.started_at || '-'}</td>
-      <td>${j.run_mode === 'dwd' ? '<span class="pill">DWD</span> ' : ''}${serviceDisplay(j.connector, j.service)}</td>
+      <td>${jobDisplay(j)}</td>
       <td>${j.progress_text || '-'}</td>
       <td>${j.source}</td>
       <td><span class="status ${j.status}">${j.status}</span></td>
@@ -1440,7 +2381,7 @@ function renderJobsTable(items) {
       <td>
         <button class="ghost" onclick="viewJobLog('${j.id}')">日志</button>
         <button class="ghost" onclick="rerunJob('${j.id}')">重跑</button>
-        ${j.status === 'success' && j.connector === 'wdt' && j.run_mode !== 'dwd' && WDT_DWD_BY_SERVICE[j.service] ? `<button class="ghost" onclick="runDwdFromJob('${WDT_DWD_BY_SERVICE[j.service]}')">DWD清洗</button>` : ''}
+        ${j.status === 'success' && (j.connector === 'wdt' || j.connector === 'hjy') && j.run_mode !== 'dwd' && WDT_DWD_BY_SERVICE[j.service] ? `<button class="ghost" onclick="runDwdFromJob('${WDT_DWD_BY_SERVICE[j.service]}')">DWD清洗</button>` : ''}
         ${j.status === 'running' ? `<button class="warn" onclick="stopJob('${j.id}')">停止</button>` : ''}
       </td>
     </tr>
@@ -1499,10 +2440,7 @@ async function rerunJob(id) {
     const job = await api('/api/jobs/rerun', { method: 'POST', body: { from_job_id: id } });
     toast('已重新启动: ' + job.id, 'success');
     loadJobs();
-    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-    document.querySelector('.tab[data-tab="run"]').classList.add('active');
-    ['run', 'schedules', 'jobs'].forEach(n => $('tab-' + n).classList.add('hidden'));
-    $('tab-run').classList.remove('hidden');
+    navigateTo('center', 'run');
     openLog(job);
   } catch (e) {
     toast(e.message, 'error');
@@ -1520,7 +2458,7 @@ async function loadSchedules() {
     return `
     <tr>
       <td>${s.name}</td>
-      <td>${(s.payload && s.payload.after_pull_dwd) ? '<span class="pill">+DWD</span> ' : ''}${serviceDisplay(s.payload.connector, s.payload.service)}</td>
+      <td>${payloadDisplay(s.payload)}</td>
       <td>${trigText}</td>
       <td>${s.enabled
         ? '<span class="status running">已启用</span>'
@@ -1537,22 +2475,28 @@ async function loadSchedules() {
   }).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--muted);">暂无定时任务</td></tr>`;
 }
 
+function refreshScheduleFormState() {
+  const conn = $('sm-connector')?.value;
+  const svc = $('sm-service')?.value;
+  updateAdvancedParamsVisibility('sm');
+  updateIntervalInputAvailability('sm', conn, svc);
+  updateAfterPullDwdVisibility('sm');
+}
+
 function openScheduleModal() {
   editingScheduleId = null;
   $('sched-modal-title').textContent = '新建定时任务';
-  ['name','trigger-time','trigger-seconds','trigger-expr','start','end','past-value',
-   'interval','shop-no'].forEach(k => { const el=$('sm-'+k); if(el) el.value=''; });
-  $('sm-past-unit').value = 'day';
+  $('sm-name').value = '';
+  $('sm-task-kind').value = 'pull';
+  onScheduleTaskKindChange();
+  resetPayloadForm('sm');
   $('sm-trigger-time').value = '01:00';
   $('sm-trigger-seconds').value = '3600';
-  $('sm-page-size').value = 200;
-  $('sm-workers').value = 10;
-  $('sm-debug').checked = false;
-  const ap = $('sm-after-pull-dwd');
-  if (ap) ap.checked = false;
+  $('sm-trigger-expr').value = '';
   $('sm-trigger-type').value = 'daily';
   onTriggerTypeChange();
   $('sched-modal').classList.remove('hidden');
+  setTimeout(refreshScheduleFormState, 0);
 }
 
 function editSchedule(s) {
@@ -1565,30 +2509,21 @@ function editSchedule(s) {
   if (s.trigger.type === 'interval') $('sm-trigger-seconds').value = s.trigger.seconds || 3600;
   if (s.trigger.type === 'cron') $('sm-trigger-expr').value = s.trigger.expr || '';
   const p = s.payload || {};
-  $('sm-connector').value = p.connector || connectors[0]?.name;
-  $('sm-connector').dispatchEvent(new Event('change'));
-  setTimeout(() => { $('sm-service').value = p.service || ''; }, 0);
-  $('sm-start').value = p.start || '';
-  $('sm-end').value = p.end || '';
-  if (p.past_value != null && p.past_value !== '') {
-    $('sm-past-value').value = p.past_value;
-    $('sm-past-unit').value = p.past_unit || 'day';
-  } else if (p.past_days) {
-    $('sm-past-value').value = p.past_days;
-    $('sm-past-unit').value = 'day';
+  if (p.bi_task) {
+    $('sm-task-kind').value = 'bi';
+    onScheduleTaskKindChange();
+    applyBiPayloadToScheduleForm(p);
+  } else if (p.operant_task) {
+    $('sm-task-kind').value = 'operant';
+    onScheduleTaskKindChange();
+    applyOperantPayloadToScheduleForm(p);
   } else {
-    $('sm-past-value').value = '';
-    $('sm-past-unit').value = 'day';
+    $('sm-task-kind').value = 'pull';
+    onScheduleTaskKindChange();
+    applyPayloadToForm('sm', p);
   }
-  $('sm-interval').value = p.interval || '';
-  $('sm-page-size').value = p.page_size || 200;
-  $('sm-workers').value = p.workers || 10;
-  $('sm-shop-no').value = p.shop_no || '';
-  $('sm-debug').checked = !!p.debug;
-  const ap = $('sm-after-pull-dwd');
-  if (ap) ap.checked = !!p.after_pull_dwd;
   $('sched-modal').classList.remove('hidden');
-  setTimeout(() => updateAfterPullDwdVisibility('sm'), 50);
+  setTimeout(refreshScheduleFormState, 0);
 }
 
 function closeScheduleModal() {
@@ -1608,7 +2543,21 @@ async function saveSchedule() {
   if (t === 'daily') trigger.time = $('sm-trigger-time').value || '00:00';
   if (t === 'interval') trigger.seconds = Number($('sm-trigger-seconds').value || 3600);
   if (t === 'cron') trigger.expr = $('sm-trigger-expr').value;
-  const payload = collectPayload('sm');
+  const payload = collectSchedulePayload();
+  if (($('sm-task-kind')?.value || 'pull') === 'bi' && !payload.bi_task) {
+    toast('请选择数据库任务', 'error');
+    return;
+  }
+  if (($('sm-task-kind')?.value || 'pull') === 'operant' && !payload.operant_task) {
+    toast('请选择 OperantID 任务', 'error');
+    return;
+  }
+  if (payload.bi_task && !$('sm-name').value) {
+    $('sm-name').value = biTaskDisplay(payload.bi_task);
+  }
+  if (payload.operant_task && !$('sm-name').value) {
+    $('sm-name').value = operantTaskDisplay(payload.operant_task);
+  }
   const body = {
     name: $('sm-name').value,
     payload,
@@ -1629,32 +2578,9 @@ async function saveSchedule() {
 }
 
 async function saveAsSchedule() {
-  // 直接打开弹窗并使用当前手动运行的参数填充
   openScheduleModal();
-  const p = collectPayload('run');
-  $('sm-connector').value = p.connector || '';
-  $('sm-connector').dispatchEvent(new Event('change'));
-  setTimeout(() => { $('sm-service').value = p.service || ''; }, 0);
-  $('sm-start').value = p.start || '';
-  $('sm-end').value = p.end || '';
-  if (p.past_value != null && p.past_value !== '') {
-    $('sm-past-value').value = p.past_value;
-    $('sm-past-unit').value = p.past_unit || 'day';
-  } else if (p.past_days) {
-    $('sm-past-value').value = p.past_days;
-    $('sm-past-unit').value = 'day';
-  } else {
-    $('sm-past-value').value = '';
-    $('sm-past-unit').value = 'day';
-  }
-  $('sm-interval').value = p.interval || '';
-  $('sm-page-size').value = p.page_size || 200;
-  $('sm-workers').value = p.workers || 10;
-  $('sm-shop-no').value = p.shop_no || '';
-  $('sm-debug').checked = !!p.debug;
-  const ap = $('sm-after-pull-dwd');
-  if (ap) ap.checked = !!p.after_pull_dwd;
-  setTimeout(() => updateAfterPullDwdVisibility('sm'), 50);
+  applyPayloadToForm('sm', collectPayload('run'));
+  $('sm-name').value = `${$('run-connector').value}.${$('run-service').value}`;
 }
 
 async function toggleSchedule(id) {
@@ -1681,7 +2607,7 @@ async function runSchedule(id) {
 
 init();
 setInterval(() => {
-  if (document.querySelector('.tab.active').dataset.tab === 'jobs') loadJobs();
+  if (document.querySelector('.nav-item.active')?.dataset.nav === 'jobs') loadJobs();
 }, 5000);
 </script>
 </body>

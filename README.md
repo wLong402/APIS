@@ -101,6 +101,45 @@ docker compose exec web bash
 - 环境变量 `CONFIG_PATH`、`REDIS_HOST`、`REDIS_PORT` 可覆盖配置（见 `.env.example`）
 - SQL Server 需使用镜像内已安装的 `ODBC Driver 18 for SQL Server`
 
+### 5. 构建失败：`docker.mirrors.ustc.edu.cn ... EOF`
+
+这是 **Docker 镜像加速器不可用**，不是项目 Dockerfile 写错。Docker Desktop 里配了 USTC 源但连不上时就会报这个。
+
+**方案 A（推荐）：改 Docker Desktop 镜像源**
+
+1. 打开 Docker Desktop → **Settings** → **Docker Engine**
+2. 找到 `registry-mirrors`，删掉失效的 `https://docker.mirrors.ustc.edu.cn`
+3. 可选：换成你阿里云账号的加速器地址（容器镜像服务 → 镜像工具 → 复制加速器 URL）
+4. **Apply & restart**
+5. 再执行：
+
+```powershell
+docker pull python:3.11-slim-bookworm
+docker compose up -d --build
+```
+
+**方案 B：不改 Docker 全局配置，只换本项目基础镜像**
+
+在项目根目录 `.env` 里加一行（或 PowerShell 临时设置）：
+
+```powershell
+# .env
+DOCKER_BASE_IMAGE=docker.1ms.run/library/python:3.11-slim-bookworm
+```
+
+或一次性：
+
+```powershell
+$env:DOCKER_BASE_IMAGE="docker.1ms.run/library/python:3.11-slim-bookworm"
+docker compose up -d --build
+```
+
+**方案 C：直连 Docker Hub**
+
+清空 `registry-mirrors` 后重启 Docker，确保本机能访问 `registry-1.docker.io`。
+
+> 构建日志里的 `git was not found` 只是警告，不影响镜像构建。
+
 ## 快速开始
 
 ### 安装依赖

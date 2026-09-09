@@ -14,6 +14,8 @@ WDT_DAY_ONLY_PULL_SERVICES: FrozenSet[str] = frozenset({
     'profits_live_sku',
     'profits_live_order',
     'profits_live_refund',
+    'recon_delivery_summary',
+    'recon_return_storage_summary',
 })
 
 

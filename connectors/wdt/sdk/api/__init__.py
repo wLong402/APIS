@@ -51,6 +51,9 @@ from .profits_sku import ProfitsSkuQueryAPI
 from .profits_order import ProfitsOrderQueryAPI
 from .sht_recon_detail import ShtReconDetailQueryAPI
 from .recon_delivery_detail import ReconDeliveryDetailQueryAPI
+from .hjy_delivery_detail import HjyDeliveryDetailQueryAPI
+from .recon_order_confirm_summary import ReconOrderConfirmSummaryQueryAPI
+from .recon_dztk_summary import ReconDztkSummaryQueryAPI
 from .profits_live_sku import ProfitsLiveSkuQueryAPI
 from .profits_live_order import ProfitsLiveOrderQueryAPI
 from .profits_live_refund import ProfitsLiveRefundQueryAPI
@@ -58,6 +61,9 @@ from .marketing_share_result import MarketingShareResultQueryAPI
 from .expense_sku_day_summary import ExpenseSkuDaySummaryQueryAPI
 from .expense_sku_share_day_detail import ExpenseSkuShareDayDetailQueryAPI
 from .logistics_trace import SearchLogisticsTraceAPI
+from .warehouse import QueryWarehouseAPI
+from .goods import QueryGoodsWithSpecAPI
+from .stockin_refund_openapi import QueryStockinRefundOpenAPI
 
 __all__ = [
     # 出库单API
@@ -108,6 +114,9 @@ __all__ = [
     'ProfitsOrderQueryAPI',
     'ShtReconDetailQueryAPI',
     'ReconDeliveryDetailQueryAPI',
+    'HjyDeliveryDetailQueryAPI',
+    'ReconOrderConfirmSummaryQueryAPI',
+    'ReconDztkSummaryQueryAPI',
     'ProfitsLiveSkuQueryAPI',
     'ProfitsLiveOrderQueryAPI',
     'ProfitsLiveRefundQueryAPI',
@@ -115,4 +124,7 @@ __all__ = [
     'ExpenseSkuDaySummaryQueryAPI',
     'ExpenseSkuShareDayDetailQueryAPI',
     'SearchLogisticsTraceAPI',
+    'QueryWarehouseAPI',
+    'QueryGoodsWithSpecAPI',
+    'QueryStockinRefundOpenAPI',
 ]

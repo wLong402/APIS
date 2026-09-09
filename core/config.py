@@ -286,6 +286,13 @@ class Config:
         if 'wechat_store' in raw_config and 'wechat_store' not in connectors:
             connectors['wechat_store'] = raw_config['wechat_store']
             connectors['wechat_store']['enabled'] = True
+        # 慧经营：优先独立配置，否则复用 wdt 凭证
+        if 'hjy' in raw_config and 'hjy' not in connectors:
+            connectors['hjy'] = raw_config['hjy']
+            connectors['hjy'].setdefault('enabled', True)
+        elif 'hjy' not in connectors and 'wdt' in connectors:
+            connectors['hjy'] = dict(connectors['wdt'])
+            connectors['hjy']['enabled'] = connectors['wdt'].get('enabled', True)
         
         # 应用配置
         app_conf = raw_config.get('app', {})
@@ -348,12 +355,16 @@ class Config:
         获取指定连接器的配置
         
         Args:
-            connector_name: 连接器名称，如 'wdt', 'jdy'
+            connector_name: 连接器名称，如 'wdt', 'hjy', 'jdy'
             
         Returns:
             连接器配置字典，不存在返回 None
         """
-        return self.connectors.get(connector_name)
+        conf = self.connectors.get(connector_name)
+        # 慧经营默认复用旺店通配置中的奇门/hjy_* 凭证
+        if conf is None and connector_name == 'hjy':
+            return self.connectors.get('wdt')
+        return conf
     
     def is_connector_enabled(self, connector_name: str) -> bool:
         """检查连接器是否启用"""

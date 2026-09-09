@@ -1,0 +1,71 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "get stable token",
+    "description": "wechat-store - get stable token (stable_token)",
+    "version": "1.0.0"
+  },
+  "host": "api.weixin.qq.com",
+  "basePath": "/",
+  "schemes": [
+    "https"
+  ],
+  "tags": [
+    {
+      "name": "wechat-store"
+    }
+  ],
+  "paths": {
+    "/cgi-bin/stable_token": {
+      "post": {
+        "operationId": "wechat-store_stable_token",
+        "summary": "get stable token",
+        "description": "wechat-store - get stable token (stable_token)",
+        "tags": [
+          "wechat-store"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          }
+        },
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "grant_type": {
+                  "type": "string",
+                  "example": "client_credential"
+                },
+                "appid": {
+                  "type": "string"
+                },
+                "secret": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "grant_type",
+                "appid",
+                "secret"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

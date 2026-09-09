@@ -1,0 +1,155 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "fixbill datas summary query",
+    "description": "HJY API method=wdt.hjy.fixbill.datas.summary.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://332wh0cyoi.api.taobao.com"
+    }
+  ],
+  "tags": [
+    {
+      "name": "wdt-hjy"
+    }
+  ],
+  "paths": {
+    "/router/qm/wdt_hjy_fixbill_datas_summary_query": {
+      "post": {
+        "operationId": "wdt-hjy_fixbill_data_summary",
+        "summary": "fixbill datas summary query",
+        "description": "HJY API method=wdt.hjy.fixbill.datas.summary.query. Real upstream: http://332wh0cyoi.api.taobao.com/router/qm",
+        "tags": [
+          "wdt-hjy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2.0"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "json"
+          },
+          {
+            "name": "sign_method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "md5"
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "wdt.hjy.fixbill.datas.summary.query"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_app_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "session",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sign",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string"
+                  },
+                  "sid": {
+                    "type": "string"
+                  },
+                  "hjySign": {
+                    "type": "string"
+                  },
+                  "startDate": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "nextRequestId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sid",
+                  "hjySign"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

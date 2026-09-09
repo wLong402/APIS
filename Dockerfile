@@ -1,4 +1,6 @@
-FROM python:3.11-slim-bookworm
+# 基础镜像可通过 build-arg 覆盖，见 README「Docker 构建失败」
+ARG BASE_IMAGE=python:3.11-slim-bookworm
+FROM ${BASE_IMAGE}
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

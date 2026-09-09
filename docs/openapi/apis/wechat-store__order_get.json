@@ -1,0 +1,70 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "get order",
+    "description": "wechat-store - get order (order_get)",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.weixin.qq.com"
+    }
+  ],
+  "tags": [
+    {
+      "name": "wechat-store"
+    }
+  ],
+  "paths": {
+    "/channels/ec/order/get": {
+      "post": {
+        "operationId": "wechat-store_order_get",
+        "summary": "get order",
+        "description": "wechat-store - get order (order_get)",
+        "tags": [
+          "wechat-store"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "access_token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

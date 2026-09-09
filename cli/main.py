@@ -46,13 +46,22 @@ def _effective_interval_seconds(service_name: str, interval: Optional[int]) -> i
     return int(interval)
 
 
+def _resolve_connector_for_service(connector: str, service_name: str) -> str:
+    """服务在连接器间迁移后，旧的 -c 参数仍可用（如 wdt.hjy.* 已挪到 hjy）。"""
+    from connectors import resolve_connector
+
+    actual = resolve_connector(connector, service_name)
+    if actual != connector:
+        print(f'[提示] 服务 {service_name} 属于连接器 {actual}，已自动从 {connector} 切换')
+        logger.info('连接器自动校正: %s -> %s (service=%s)', connector, actual, service_name)
+    return actual
+
+
 def pull_command(args):
     """执行数据拉取"""
-    from connectors.wdt import create_service
-    
-    connector = args.connector
     service_name = args.service
-    
+    connector = _resolve_connector_for_service(args.connector, service_name)
+
     today = datetime.now().strftime('%Y-%m-%d')
     from common.past_range import resolve_past_amount, compute_past_time_range
     past_amount, past_unit = resolve_past_amount({
@@ -63,10 +72,14 @@ def pull_command(args):
     if past_amount is not None:
         start_time, end_time = compute_past_time_range(past_amount, past_unit)
     else:
-        if connector == 'wdt' and service_name in ('sht_recon_detail', 'recon_delivery_detail') and args.start is None and args.end is None:
+        if connector == 'hjy' and service_name in (
+            'sht_recon_detail', 'recon_delivery_detail', 'recon_dztk_summary',
+        ) and args.start is None and args.end is None:
             start_time = None
             end_time = None
-        elif connector == 'wdt' and service_name in ('sht_recon_detail', 'recon_delivery_detail'):
+        elif connector == 'hjy' and service_name in (
+            'sht_recon_detail', 'recon_delivery_detail', 'recon_dztk_summary',
+        ):
             s = args.start or args.end or today
             e = args.end or args.start or today
             start_time = s if ' ' in s else f"{s} 00:00:00"
@@ -121,15 +134,35 @@ def pull_command(args):
         'expense_item_name': getattr(args, 'expense_item_name', None),
         'order_tools': getattr(args, 'order_tools', None),
         'warehouse_no': getattr(args, 'warehouse_no', None),
+        'goods_no': getattr(args, 'goods_no', None),
+        'brand_name': getattr(args, 'brand_name', None),
+        'class_name': getattr(args, 'class_name', None),
+        'barcode': getattr(args, 'barcode', None),
+        'hide_deleted': getattr(args, 'hide_deleted', None),
         'period_mark': getattr(args, 'period_mark', None),
         'reco_status': getattr(args, 'reco_status', None),
+        'refund_type': getattr(args, 'refund_type', None),
         'salesman_name': getattr(args, 'salesman_name', None),
         'start_business_time': getattr(args, 'start_business_time', None),
         'end_business_time': getattr(args, 'end_business_time', None),
+        'author_name': getattr(args, 'author_name', None),
+        'oms_stockout_no': getattr(args, 'oms_stockout_no', None),
+        'oms_order_no': getattr(args, 'oms_order_no', None),
+        'province_names': getattr(args, 'province_names', None),
+        'city_names': getattr(args, 'city_names', None),
+        'district_names': getattr(args, 'district_names', None),
+        'goods_batch_no': getattr(args, 'goods_batch_no', None),
+        'refund_stage': getattr(args, 'refund_stage', None),
+        'time_type': getattr(args, 'time_type', None),
+        'stockin_no': getattr(args, 'stockin_no', None),
+        'refund_no': getattr(args, 'refund_no', None),
+        'status': getattr(args, 'status', None),
+        'need_sn': getattr(args, 'need_sn', None),
         'logistics_no': getattr(args, 'logistics_no', None),
         'logistics_status': getattr(args, 'logistics_status', None),
         'need_detail': getattr(args, 'need_detail', False),
     }
+    pull_kwargs = {k: v for k, v in pull_kwargs.items() if v is not None}
     
     # 微伴 external_user 服务优先使用 database(mysql) 配置
     if connector == 'weiban' and service_name == 'external_user':
@@ -153,6 +186,9 @@ def pull_command(args):
     if connector == 'wdt':
         from connectors.wdt import create_service
         service = create_service(service_name)
+    elif connector == 'hjy':
+        from connectors.hjy import create_service
+        service = create_service(service_name)
     elif connector == 'weiban':
         if service_name == 'external_user':
             from connectors.weiban.services import ExternalUserPullService
@@ -166,7 +202,7 @@ def pull_command(args):
             return 1
     else:
         print(f"未知的连接器: {connector}")
-        print(f"支持的连接器: wdt, weiban")
+        print(f"支持的连接器: wdt, hjy, weiban")
         return 1
     
     # 执行拉取
@@ -196,10 +232,14 @@ def pull_command(args):
                 debug=args.debug,
                 max_workers=args.workers
             )
-        elif connector == 'wdt' and service_name in (
+        elif connector == 'hjy' and service_name in (
             'bill_standard', 'bk_share_data', 'fixbill_data_summary',
-            'sht_recon_detail', 'recon_delivery_detail',
+            'sht_recon_detail', 'recon_delivery_detail', 'hjy_delivery_detail',
+            'recon_delivery_summary', 'recon_return_storage_summary',
+            'recon_order_confirm_summary', 'recon_dztk_summary',
             'marketing_share_result', 'expense_sku_day_summary', 'expense_sku_share_day_detail',
+            'profits_sku', 'profits_order', 'profits_live_sku', 'profits_live_order', 'profits_live_refund',
+            'marketing_detail',
         ):
             from common.wdt_pull_policy import is_wdt_day_only_service
 
@@ -235,17 +275,6 @@ def pull_command(args):
                     debug=args.debug,
                     **pull_kwargs,
                 )
-        elif connector == 'wdt' and service_name in ('profits_sku', 'profits_order', 'profits_live_sku', 'profits_live_order', 'profits_live_refund'):
-            pull_start_date, pull_end_date = _resolve_pull_date_range(args, start_time, end_time, today)
-            if args.debug:
-                debug_print(f"profits 按日拉取: {pull_start_date} ~ {pull_end_date}")
-            result = service.pull_by_day(
-                start_date=pull_start_date,
-                end_date=pull_end_date,
-                interval_seconds=0,
-                debug=args.debug,
-                **pull_kwargs,
-            )
         elif interval_effective > 0:
             result = service.pull_by_interval(
                 start_time=start_time,
@@ -320,7 +349,8 @@ def list_command(args):
 
 
 def dwd_command(args):
-    if args.connector != 'wdt':
+    # 直播利润类服务已迁到 hjy，清洗实现仍在 connectors.wdt.dwd_cleanse
+    if args.connector not in ('wdt', 'hjy'):
         print(f'暂不支持的连接器: {args.connector}')
         return 1
     try:
@@ -334,6 +364,93 @@ def dwd_command(args):
     except Exception as e:
         logger.error(f'DWD 失败: {e}')
         print(f'DWD 失败: {e}')
+        return 1
+
+
+def bi_command(args):
+    import bi.tasks  # noqa: F401 — 注册任务
+    from bi import list_tasks, run_bi_task
+
+    if getattr(args, 'list_tasks', False):
+        tasks = list_tasks()
+        print('\n可用的 BI 报表任务:')
+        print('=' * 50)
+        for t in tasks:
+            print(f'  {t.name}')
+            print(f'    名称: {t.label}')
+            print(f'    说明: {t.description}')
+            table_ref = f"{t.target_database}.dbo.{t.target_table}" if t.target_database else t.target_table
+            print(f'    结果表: {table_ref}')
+            print(f'    日期列: {t.date_column}')
+            print()
+        return 0
+
+    task_name = (args.task or '').strip()
+    if not task_name:
+        print('请指定任务: -t / --task，或使用 --list 查看')
+        return 1
+
+    try:
+        n = run_bi_task(
+            task_name,
+            start_date=args.start,
+            end_date=args.end,
+            past_value=getattr(args, 'past', None),
+            past_unit=getattr(args, 'past_unit', None),
+            past_days=getattr(args, 'past_days', None),
+            mode=getattr(args, 'mode', 'auto') or 'auto',
+            debug=getattr(args, 'debug', False),
+        )
+        print(f'BI {task_name}: 写入 {n} 行')
+        return 0
+    except Exception as e:
+        logger.error(f'BI 失败: {e}')
+        print(f'BI 失败: {e}')
+        return 1
+
+
+def operant_command(args):
+    import operant.tasks  # noqa: F401
+    from operant import list_tasks, run_operant_task
+
+    if getattr(args, 'list_tasks', False):
+        tasks = list_tasks()
+        print('\n可用的 OperantID 实验任务:')
+        print('=' * 50)
+        for t in tasks:
+            print(f'  {t.name}')
+            print(f'    名称: {t.label}')
+            print(f'    说明: {t.description}')
+            print(f'    结果表: operant_{t.target_table}')
+            print(f'    唯一键: {t.unique_key}')
+            print()
+        return 0
+
+    task_name = (args.task or '').strip()
+    if not task_name:
+        print('请指定任务: -t / --task，或使用 --list 查看')
+        return 1
+    try:
+        n = run_operant_task(
+            task_name,
+            account=getattr(args, 'account', None),
+            start=args.start,
+            end=args.end,
+            past_value=getattr(args, 'past', None),
+            past_unit=getattr(args, 'past_unit', None),
+            past_days=getattr(args, 'past_days', None),
+            instruction=getattr(args, 'instruction', None),
+            login_url=getattr(args, 'login_url', None),
+            target_table=getattr(args, 'target_table', None),
+            unique_key=getattr(args, 'unique_key', None),
+            headless=False if getattr(args, 'headed', False) else None,
+            debug=getattr(args, 'debug', False),
+        )
+        print(f'OperantID {task_name}: 写入 {n} 行')
+        return 0
+    except Exception as e:
+        logger.error(f'OperantID 失败: {e}')
+        print(f'OperantID 失败: {e}')
         return 1
 
 
@@ -398,15 +515,15 @@ def cli():
     pull_parser.add_argument(
         '-c', '--connector',
         required=True,
-        help='连接器名称（如 wdt）'
+        help='连接器名称（wdt / hjy / weiban）'
     )
     pull_parser.add_argument(
         '-s', '--service',
         required=True,
-        help='服务名称（wdt: trade, refund, …, sht_recon_detail, recon_delivery_detail, profits_sku, …; weiban: external_user, external_user_detail）'
+        help='服务名称（wdt: trade/refund/…; hjy: bill_standard/recon_delivery_summary/…; weiban: external_user）'
     )
     
-    # 时间参数（不传则默认当天；sht_recon_detail/recon_delivery_detail 同时不传 --start/--end 则不传账期日期参数）
+    # 时间参数（不传则默认当天；sht_recon_detail/recon_delivery_detail/recon_dztk_summary 同时不传 --start/--end 则不传账期日期参数）
     pull_parser.add_argument(
         '--start',
         default=None,
@@ -560,6 +677,55 @@ def cli():
         help='仓库编号（出库单；发货对账明细支持逗号多仓）'
     )
     pull_parser.add_argument(
+        '--goods-no',
+        help='货品编号（goods_query_with_spec）'
+    )
+    pull_parser.add_argument(
+        '--brand-name',
+        help='品牌名称（goods_query_with_spec）'
+    )
+    pull_parser.add_argument(
+        '--class-name',
+        help='分类名称（goods_query_with_spec）'
+    )
+    pull_parser.add_argument(
+        '--barcode',
+        help='条码（goods_query_with_spec）'
+    )
+    pull_parser.add_argument(
+        '--hide-deleted',
+        type=int,
+        choices=[0, 1],
+        default=None,
+        help='是否隐藏已删除：0全部/1隐藏（goods_query_with_spec，默认1）'
+    )
+    pull_parser.add_argument(
+        '--time-type',
+        type=int,
+        default=None,
+        help='时间条件类型：0修改时间/1入库时间（stockin_refund_openapi，默认0）'
+    )
+    pull_parser.add_argument(
+        '--stockin-no',
+        default=None,
+        help='入库单号（stockin_refund_openapi）'
+    )
+    pull_parser.add_argument(
+        '--refund-no',
+        default=None,
+        help='退换单号（stockin_refund_openapi）'
+    )
+    pull_parser.add_argument(
+        '--status',
+        default=None,
+        help='入库单状态，逗号分隔：10已取消,20编辑中,30待审核,80已完成（stockin_refund_openapi）'
+    )
+    pull_parser.add_argument(
+        '--need-sn',
+        default=None,
+        help='是否返回SN：true/false（stockin_refund_openapi）'
+    )
+    pull_parser.add_argument(
         '--period-mark',
         default=None,
         help='对账标识 periodMark（慧经营对账类接口，如 1）'
@@ -569,6 +735,11 @@ def cli():
         default=None,
         help='对账状态，逗号分隔（如 对账成功,对账失败）'
     )
+    parser.add_argument(
+        '--refund-type',
+        default=None,
+        help='退款类型，逗号分隔（如 已取消,退货入库,仅退款；recon_dztk_summary 对应 refundTypes）'
+    )
     pull_parser.add_argument(
         '--salesman-name',
         default=None,
@@ -577,12 +748,52 @@ def cli():
     pull_parser.add_argument(
         '--start-business-time',
         default=None,
-        help='业务开始时间（发货对账明细，如 2026-01-01 00:00:00）'
+        help='业务开始时间（发货对账/慧经营发货明细，如 2026-01-01 00:00:00）'
     )
     pull_parser.add_argument(
         '--end-business-time',
         default=None,
-        help='业务结束时间（发货对账明细）'
+        help='业务结束时间（发货对账/慧经营发货明细）'
+    )
+    pull_parser.add_argument(
+        '--author-name',
+        default=None,
+        help='达人名称（hjy_delivery_detail）'
+    )
+    pull_parser.add_argument(
+        '--oms-stockout-no',
+        default=None,
+        help='出库单号，逗号分隔（hjy_delivery_detail）'
+    )
+    pull_parser.add_argument(
+        '--oms-order-no',
+        default=None,
+        help='系统订单号，逗号分隔（hjy_delivery_detail）'
+    )
+    pull_parser.add_argument(
+        '--province-names',
+        default=None,
+        help='省，逗号分隔（hjy_delivery_detail）'
+    )
+    pull_parser.add_argument(
+        '--city-names',
+        default=None,
+        help='市，逗号分隔（hjy_delivery_detail）'
+    )
+    pull_parser.add_argument(
+        '--district-names',
+        default=None,
+        help='区，逗号分隔（慧经营发货类接口）'
+    )
+    pull_parser.add_argument(
+        '--goods-batch-no',
+        default=None,
+        help='货品批次号（recon_return_storage_summary）'
+    )
+    pull_parser.add_argument(
+        '--refund-stage',
+        default=None,
+        help='退款阶段：售中/售后（recon_return_storage_summary）'
     )
     pull_parser.add_argument(
         '--logistics-no',
@@ -633,6 +844,50 @@ def cli():
     )
     dwd_parser.add_argument('--debug', action='store_true', help='打印 DWD 执行 SQL（入 core 日志）')
     dwd_parser.set_defaults(func=dwd_command)
+
+    bi_parser = subparsers.add_parser('bi', help='BI 报表计算（库内 SQL → 结果表）')
+    bi_parser.add_argument('-t', '--task', help='BI 任务名')
+    bi_parser.add_argument('--list', action='store_true', dest='list_tasks', help='列出所有 BI 任务')
+    bi_parser.add_argument('--start', help='开始日期 YYYY-MM-DD')
+    bi_parser.add_argument('--end', help='结束日期 YYYY-MM-DD')
+    bi_parser.add_argument('--past', type=float, help='回溯数值（与 --past-unit 配合）')
+    bi_parser.add_argument('--past-days', type=int, help='回溯天数（兼容旧参数）')
+    bi_parser.add_argument(
+        '--past-unit',
+        choices=['second', 'minute', 'hour', 'day', 'week', 'month'],
+        default='day',
+        help='回溯单位，默认 day',
+    )
+    bi_parser.add_argument(
+        '--mode',
+        choices=['auto', 'full', 'window'],
+        default='auto',
+        help='auto=首次全量/后期窗口增量; full=清空后重算; window=仅重算日期窗口',
+    )
+    bi_parser.add_argument('--debug', action='store_true', help='打印执行 SQL')
+    bi_parser.set_defaults(func=bi_command)
+
+    operant_parser = subparsers.add_parser('operant', help='OperantID 实验：浏览器登录下载并入库')
+    operant_parser.add_argument('-t', '--task', help='OperantID 任务名')
+    operant_parser.add_argument('--list', action='store_true', dest='list_tasks', help='列出所有 OperantID 任务')
+    operant_parser.add_argument('--account', help='config.yaml operantid.accounts 中的帐号名')
+    operant_parser.add_argument('--login-url', help='覆盖登录地址')
+    operant_parser.add_argument('--instruction', help='额外下载指令')
+    operant_parser.add_argument('--target-table', help='覆盖目标表（写入 operant_<name>）')
+    operant_parser.add_argument('--unique-key', help='覆盖唯一键，默认 rowKey')
+    operant_parser.add_argument('--start', help='开始日期 YYYY-MM-DD')
+    operant_parser.add_argument('--end', help='结束日期 YYYY-MM-DD')
+    operant_parser.add_argument('--past', type=float, help='回溯数值（与 --past-unit 配合）')
+    operant_parser.add_argument('--past-days', type=int, help='回溯天数（兼容旧参数）')
+    operant_parser.add_argument(
+        '--past-unit',
+        choices=['second', 'minute', 'hour', 'day', 'week', 'month'],
+        default='day',
+        help='回溯单位，默认 day',
+    )
+    operant_parser.add_argument('--headed', action='store_true', help='显示浏览器窗口（调试用）')
+    operant_parser.add_argument('--debug', action='store_true', help='打印任务指令与入库细节')
+    operant_parser.set_defaults(func=operant_command)
 
     # ========== list 命令 ==========
     list_parser = subparsers.add_parser('list', help='列出可用的连接器和服务')

@@ -1,0 +1,21 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "smoke-test",
+    "version": "1.0.0",
+    "description": "minimal"
+  },
+  "paths": {
+    "/ping": {
+      "get": {
+        "summary": "ping",
+        "operationId": "ping",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  }
+}

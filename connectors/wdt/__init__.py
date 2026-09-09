@@ -23,6 +23,9 @@ from .services import (
     ProfitsOrderPullService,
     ShtReconDetailPullService,
     ReconDeliveryDetailPullService,
+    HjyDeliveryDetailPullService,
+    ReconOrderConfirmSummaryPullService,
+    ReconDztkSummaryPullService,
     ProfitsLiveSkuPullService,
     ProfitsLiveOrderPullService,
     ProfitsLiveRefundPullService,
@@ -30,6 +33,9 @@ from .services import (
     ExpenseSkuDaySummaryPullService,
     ExpenseSkuShareDayDetailPullService,
     LogisticsTracePullService,
+    WarehousePullService,
+    GoodsQueryWithSpecPullService,
+    StockinRefundOpenAPIPullService,
 )
 from .repositories import (
     TradeRepository,
@@ -47,6 +53,9 @@ from .repositories import (
     ProfitsOrderRepository,
     ShtReconDetailRepository,
     ReconDeliveryDetailRepository,
+    HjyDeliveryDetailRepository,
+    ReconOrderConfirmSummaryRepository,
+    ReconDztkSummaryRepository,
     ProfitsLiveSkuRepository,
     ProfitsLiveOrderRepository,
     ProfitsLiveRefundRepository,
@@ -54,6 +63,7 @@ from .repositories import (
     ExpenseSkuDaySummaryRepository,
     ExpenseSkuShareDayDetailRepository,
     LogisticsTraceRepository,
+    WarehouseRepository,
 )
 
 # 连接器元信息
@@ -95,69 +105,25 @@ CONNECTOR_INFO = {
             'name': '库存规格',
             'class': StockSpecPullService,
         },
-        'bill_standard': {
-            'name': '账单标准',
-            'class': BillStandardPullService,
-        },
-        'bk_share_data': {
-            'name': '日常记账分摊结果',
-            'class': BkShareDataPullService,
-        },
-        'fixbill_data_summary': {
-            'name': '固定费用汇总数据',
-            'class': FixbillDataSummaryPullService,
-        },
-        'marketing_detail': {
-            'name': '营销明细',
-            'class': MarketingDetailPullService,
-        },
         'history_trade': {
             'name': '历史订单',
             'class': HistoryTradePullService,
         },
-        'profits_sku': {
-            'name': '商品利润表',
-            'class': ProfitsSkuPullService,
-        },
-        'profits_order': {
-            'name': '订单利润表',
-            'class': ProfitsOrderPullService,
-        },
-        'sht_recon_detail': {
-            'name': '售后对账明细',
-            'class': ShtReconDetailPullService,
-        },
-        'recon_delivery_detail': {
-            'name': '发货对账明细',
-            'class': ReconDeliveryDetailPullService,
-        },
-        'profits_live_sku': {
-            'name': '直播商品利润表',
-            'class': ProfitsLiveSkuPullService,
-        },
-        'profits_live_order': {
-            'name': '直播订单管理（正向）',
-            'class': ProfitsLiveOrderPullService,
-        },
-        'profits_live_refund': {
-            'name': '直播订单管理（逆向）',
-            'class': ProfitsLiveRefundPullService,
-        },
-        'marketing_share_result': {
-            'name': '营销账单分摊结果',
-            'class': MarketingShareResultPullService,
-        },
-        'expense_sku_day_summary': {
-            'name': '账单商品分摊日汇总主子单',
-            'class': ExpenseSkuDaySummaryPullService,
-        },
-        'expense_sku_share_day_detail': {
-            'name': '账单分摊日明细',
-            'class': ExpenseSkuShareDayDetailPullService,
-        },
         'logistics_trace': {
             'name': '物流轨迹查询',
             'class': LogisticsTracePullService,
+        },
+        'warehouse': {
+            'name': '仓库档案',
+            'class': WarehousePullService,
+        },
+        'goods_query_with_spec': {
+            'name': '货品档案(含规格)',
+            'class': GoodsQueryWithSpecPullService,
+        },
+        'stockin_refund_openapi': {
+            'name': '退货入库单(OpenAPI)',
+            'class': StockinRefundOpenAPIPullService,
         },
     },
 }
@@ -216,6 +182,9 @@ __all__ = [
     'ProfitsOrderPullService',
     'ShtReconDetailPullService',
     'ReconDeliveryDetailPullService',
+    'HjyDeliveryDetailPullService',
+    'ReconOrderConfirmSummaryPullService',
+    'ReconDztkSummaryPullService',
     'ProfitsLiveSkuPullService',
     'ProfitsLiveOrderPullService',
     'ProfitsLiveRefundPullService',
@@ -223,6 +192,9 @@ __all__ = [
     'ExpenseSkuDaySummaryPullService',
     'ExpenseSkuShareDayDetailPullService',
     'LogisticsTracePullService',
+    'WarehousePullService',
+    'GoodsQueryWithSpecPullService',
+    'StockinRefundOpenAPIPullService',
     # 仓库
     'TradeRepository',
     'RefundRepository',
@@ -239,6 +211,9 @@ __all__ = [
     'ProfitsOrderRepository',
     'ShtReconDetailRepository',
     'ReconDeliveryDetailRepository',
+    'HjyDeliveryDetailRepository',
+    'ReconOrderConfirmSummaryRepository',
+    'ReconDztkSummaryRepository',
     'ProfitsLiveSkuRepository',
     'ProfitsLiveOrderRepository',
     'ProfitsLiveRefundRepository',
@@ -246,6 +221,7 @@ __all__ = [
     'ExpenseSkuDaySummaryRepository',
     'ExpenseSkuShareDayDetailRepository',
     'LogisticsTraceRepository',
+    'WarehouseRepository',
     # 元信息
     'CONNECTOR_INFO',
     # 工厂方法

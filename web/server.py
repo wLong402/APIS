@@ -47,7 +47,13 @@ def _normalize_time_range(payload: dict):
         return compute_past_time_range(past_amount, past_unit) + (today,)
     if past_days:
         return compute_past_time_range(int(past_days), 'day') + (today,)
-    if connector == 'wdt' and service_name in ('sht_recon_detail', 'recon_delivery_detail') and not start and not end:
+    if connector == 'wdt' and service_name in (
+        'sht_recon_detail', 'recon_delivery_detail', 'recon_dztk_summary',
+    ) and not start and not end:
+        return None, None, today
+    if connector == 'hjy' and service_name in (
+        'sht_recon_detail', 'recon_delivery_detail', 'recon_dztk_summary',
+    ) and not start and not end:
         return None, None, today
     if connector == 'wdt' and service_name == 'logistics_trace' and payload.get('logistics_no') and not start and not end:
         return None, None, today
@@ -61,7 +67,7 @@ def _normalize_time_range(payload: dict):
 
 
 def _build_pull_kwargs(payload: dict, limit: int) -> dict:
-    return {
+    kwargs = {
         'shop_no': payload.get('shop_no'),
         'page_size': max(1, min(int(limit), 50)),
         'max_workers': 1,
@@ -88,26 +94,49 @@ def _build_pull_kwargs(payload: dict, limit: int) -> dict:
         'expense_item_name': payload.get('expense_item_name'),
         'order_tools': payload.get('order_tools'),
         'warehouse_no': payload.get('warehouse_no'),
+        'goods_no': payload.get('goods_no'),
+        'brand_name': payload.get('brand_name'),
+        'class_name': payload.get('class_name'),
+        'barcode': payload.get('barcode'),
+        'hide_deleted': payload.get('hide_deleted'),
+        'time_type': payload.get('time_type'),
+        'stockin_no': payload.get('stockin_no'),
+        'refund_no': payload.get('refund_no'),
+        'status': payload.get('status'),
+        'need_sn': payload.get('need_sn'),
         'period_mark': payload.get('period_mark'),
         'reco_status': payload.get('reco_status'),
         'refund_type': payload.get('refund_type'),
         'salesman_name': payload.get('salesman_name'),
         'start_business_time': payload.get('start_business_time'),
         'end_business_time': payload.get('end_business_time'),
+        'author_name': payload.get('author_name'),
+        'oms_stockout_no': payload.get('oms_stockout_no'),
+        'oms_order_no': payload.get('oms_order_no'),
+        'province_names': payload.get('province_names'),
+        'city_names': payload.get('city_names'),
+        'district_names': payload.get('district_names'),
+        'goods_batch_no': payload.get('goods_batch_no'),
+        'refund_stage': payload.get('refund_stage'),
         'logistics_no': payload.get('logistics_no'),
         'logistics_status': payload.get('logistics_status'),
         'need_detail': bool(payload.get('need_detail')),
         'debug': bool(payload.get('debug')),
     }
+    return {k: v for k, v in kwargs.items() if v is not None}
 
 
 def _preview_data(payload: dict, limit: int = 5) -> dict:
+    payload = jobs_mod.normalize_payload(payload)
     connector = payload.get('connector')
     service_name = payload.get('service')
-    if connector not in ('wdt', 'weiban'):
+    if connector not in ('wdt', 'hjy', 'weiban'):
         raise ValueError(f'不支持的连接器: {connector}')
     if connector == 'wdt':
         from connectors.wdt import create_service
+        service = create_service(service_name)
+    elif connector == 'hjy':
+        from connectors.hjy import create_service
         service = create_service(service_name)
     else:
         if service_name == 'external_user':
@@ -266,6 +295,130 @@ def _preview_data(payload: dict, limit: int = 5) -> dict:
             if preview_note:
                 out['preview_note'] = preview_note
             return out
+        if service_name == 'hjy_delivery_detail':
+            start_bt = payload.get('start_business_time') or start_time or f'{today} 00:00:00'
+            end_bt = payload.get('end_business_time') or end_time or f'{today} 23:59:59'
+            shop_list = None
+            if payload.get('shop_nos'):
+                shop_list = [x.strip() for x in str(payload['shop_nos']).split(',') if x.strip()]
+            elif payload.get('shop_no'):
+                shop_list = [str(payload['shop_no']).strip()]
+
+            def _csv(key):
+                v = payload.get(key)
+                return [x.strip() for x in str(v).split(',') if x.strip()] if v else None
+
+            resp = service.hjy_delivery_detail_api.query(
+                start_business_time=start_bt,
+                end_business_time=end_bt,
+                shop_no=shop_list,
+                warehouse_no=_csv('warehouse_no'),
+                spec_no=_csv('spec_no'),
+                summary_no=_csv('summary_no'),
+                oms_stockout_no=_csv('oms_stockout_no'),
+                province_names=_csv('province_names'),
+                city_names=_csv('city_names'),
+                district_names=_csv('district_names'),
+                plat_order_no=_csv('plat_order_nos') or _csv('plat_order_no'),
+                author_name=payload.get('author_name'),
+                salesman_name=payload.get('salesman_name'),
+                oms_order_no=_csv('oms_order_no') or _csv('erp_order_nos'),
+                debug=False,
+            )
+            raw = resp.get('data') if isinstance(resp, dict) else None
+            if isinstance(raw, list):
+                rows = raw
+            elif isinstance(raw, dict):
+                rows = [raw]
+            else:
+                rows = []
+            return {
+                'items': rows[:limit],
+                'count': len(rows),
+                'api_result_code': resp.get('resultCode') if isinstance(resp, dict) else None,
+                'api_message': (resp.get('message') if isinstance(resp, dict) else None) or '',
+                'api_sub_result_code': resp.get('sub_resultCode') if isinstance(resp, dict) else None,
+                'api_sub_detail': (resp.get('sub_detail') if isinstance(resp, dict) else None) or '',
+            }
+        if service_name == 'recon_order_confirm_summary':
+            start_date = (start_time.split(' ')[0] if start_time and ' ' in start_time else start_time) or today
+            end_date = (end_time.split(' ')[0] if end_time and ' ' in end_time else end_time) or today
+            shop_list = None
+            if payload.get('shop_nos'):
+                shop_list = [x.strip() for x in str(payload['shop_nos']).split(',') if x.strip()]
+            elif payload.get('shop_no'):
+                shop_list = [str(payload['shop_no']).strip()]
+            sn = payload.get('summary_no')
+            summary_list = [x.strip() for x in str(sn).split(',') if x.strip()] if sn else None
+            sp = payload.get('spec_no')
+            spec_list = [x.strip() for x in str(sp).split(',') if x.strip()] if sp else None
+            resp = service.recon_order_confirm_summary_api.query(
+                start_date=start_date,
+                end_date=end_date,
+                shop_no=shop_list,
+                spec_no=spec_list,
+                summary_no=summary_list,
+                debug=False,
+            )
+            raw = resp.get('data') if isinstance(resp, dict) else None
+            if isinstance(raw, list):
+                rows = raw
+            elif isinstance(raw, dict):
+                rows = [raw]
+            else:
+                rows = []
+            return {
+                'items': rows[:limit],
+                'count': len(rows),
+                'api_result_code': resp.get('resultCode') if isinstance(resp, dict) else None,
+                'api_message': (resp.get('message') if isinstance(resp, dict) else None) or '',
+                'api_sub_result_code': resp.get('sub_resultCode') if isinstance(resp, dict) else None,
+                'api_sub_detail': (resp.get('sub_detail') if isinstance(resp, dict) else None) or '',
+            }
+        if service_name == 'recon_dztk_summary':
+            start_date = None
+            end_date = None
+            if start_time:
+                start_date = start_time.split(' ')[0] if ' ' in start_time else start_time
+            if end_time:
+                end_date = end_time.split(' ')[0] if ' ' in end_time else end_time
+            preview_note = None
+            if start_date is None and end_date is None and not payload.get('period_mark'):
+                start_date = end_date = today
+                preview_note = '未填起止日期与 periodMark，预览已默认使用当天账期'
+            shop_list = None
+            if payload.get('shop_nos'):
+                shop_list = [x.strip() for x in str(payload['shop_nos']).split(',') if x.strip()]
+            elif payload.get('shop_no'):
+                shop_list = [str(payload['shop_no']).strip()]
+            rt = payload.get('refund_type')
+            refund = [x.strip() for x in str(rt).split(',') if x.strip()] if rt else None
+            resp = service.recon_dztk_summary_api.query(
+                period_mark=payload.get('period_mark'),
+                start_date=start_date,
+                end_date=end_date,
+                refund_types=refund,
+                shop_nos=shop_list,
+                debug=False,
+            )
+            raw = resp.get('data') if isinstance(resp, dict) else None
+            if isinstance(raw, list):
+                rows = raw
+            elif isinstance(raw, dict):
+                rows = [raw]
+            else:
+                rows = []
+            out = {
+                'items': rows[:limit],
+                'count': len(rows),
+                'api_result_code': resp.get('resultCode') if isinstance(resp, dict) else None,
+                'api_message': (resp.get('message') if isinstance(resp, dict) else None) or '',
+                'api_sub_result_code': resp.get('sub_resultCode') if isinstance(resp, dict) else None,
+                'api_sub_detail': (resp.get('sub_detail') if isinstance(resp, dict) else None) or '',
+            }
+            if preview_note:
+                out['preview_note'] = preview_note
+            return out
         if service_name in _WDT_FIXED_BY_DAY or payload.get('by_day'):
             day = payload.get('start') or today
             start_time = f'{day} 00:00:00'
@@ -325,6 +478,18 @@ def api_connectors():
 @app.post('/api/run')
 def api_run():
     data = request.get_json(force=True) or {}
+    bi_task = str(data.get('bi_task', '')).strip()
+    if bi_task:
+        data['bi_task'] = bi_task
+        job = jobs_mod.run_job(data, source='manual')
+        return jsonify(job)
+    operant_task = str(data.get('operant_task', '')).strip()
+    if operant_task:
+        data['operant_task'] = operant_task
+        for secret in ('password', 'email', 'api_key'):
+            data.pop(secret, None)
+        job = jobs_mod.run_job(data, source='manual')
+        return jsonify(job)
     tid = str(data.get('dwd_task', '')).strip()
     if tid:
         svc = DWD_PULL_SERVICE.get(tid)
@@ -345,6 +510,30 @@ def api_run():
 def api_dwd_available():
     jobs = jobs_mod.list_jobs(limit=int(request.args.get('limit', 500)))
     return jsonify({'tasks': available_dwd_task_options(jobs)})
+
+
+@app.get('/api/bi/tasks')
+def api_bi_tasks():
+    import bi.tasks  # noqa: F401
+    from bi.registry import task_options
+    return jsonify({'tasks': task_options()})
+
+
+@app.get('/api/operant/tasks')
+def api_operant_tasks():
+    import operant.tasks  # noqa: F401
+    from operant.registry import task_options
+    from operant.client import list_accounts, load_operant_config
+    conf = load_operant_config()
+    return jsonify({
+        'tasks': task_options(),
+        'accounts': list_accounts(include_secrets=False),
+        'headless': bool(conf.get('headless', True)),
+        'enabled': bool(conf.get('enabled', True)),
+        'has_api_key': bool(conf.get('api_key')),
+        'provider': conf.get('provider'),
+        'model': conf.get('model'),
+    })
 
 
 @app.post('/api/preview')
@@ -375,6 +564,9 @@ def api_job_rerun_post():
     if not j:
         return jsonify({'error': 'not found'}), 404
     payload = j.get('payload') or {}
+    if payload.get('bi_task') or payload.get('dwd_task') or payload.get('operant_task'):
+        job = jobs_mod.run_job(payload, source='manual')
+        return jsonify(job)
     if not payload.get('connector') or not payload.get('service'):
         return jsonify({'error': '历史任务缺少 connector/service，无法重跑'}), 400
     job = jobs_mod.run_job(payload, source='manual')
@@ -423,6 +615,9 @@ def api_job_rerun(job_id):
     if not j:
         return jsonify({'error': 'not found'}), 404
     payload = j.get('payload') or {}
+    if payload.get('bi_task') or payload.get('dwd_task') or payload.get('operant_task'):
+        job = jobs_mod.run_job(payload, source='manual')
+        return jsonify(job)
     if not payload.get('connector') or not payload.get('service'):
         return jsonify({'error': '历史任务缺少 connector/service，无法重跑'}), 400
     job = jobs_mod.run_job(payload, source='manual')
@@ -441,8 +636,20 @@ def api_schedules_add():
     payload = data.get('payload') or {}
     trigger = data.get('trigger') or {}
     enabled = bool(data.get('enabled', True))
-    if not payload.get('connector') or not payload.get('service'):
-        return jsonify({'error': 'payload.connector / service 必填'}), 400
+    bi_task = str(payload.get('bi_task') or '').strip()
+    operant_task = str(payload.get('operant_task') or '').strip()
+    dwd_task = str(payload.get('dwd_task') or '').strip()
+    if bi_task:
+        payload['bi_task'] = bi_task
+    elif operant_task:
+        payload['operant_task'] = operant_task
+        for secret in ('password', 'email', 'api_key'):
+            payload.pop(secret, None)
+    elif dwd_task:
+        payload['dwd_task'] = dwd_task
+        payload['connector'] = payload.get('connector') or 'wdt'
+    elif not payload.get('connector') or not payload.get('service'):
+        return jsonify({'error': 'payload.connector / service 必填（库任务传 bi_task，OperantID 传 operant_task）'}), 400
     if trigger.get('type') not in ('daily', 'interval', 'cron'):
         return jsonify({'error': 'trigger.type 必须为 daily/interval/cron'}), 400
     s = sched_mod.add_schedule(name, payload, trigger, enabled)

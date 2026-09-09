@@ -1,0 +1,170 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "weiban",
+    "description": "weiban APIs, count=3",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://open.weibanzhushou.com"
+    }
+  ],
+  "tags": [
+    {
+      "name": "weiban"
+    }
+  ],
+  "paths": {
+    "/open-api/access_token/get": {
+      "post": {
+        "operationId": "weiban_access_token",
+        "summary": "get access token",
+        "description": "weiban - get access token (access_token_get)",
+        "tags": [
+          "weiban"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "corp_id": {
+                    "type": "string"
+                  },
+                  "secret": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "corp_id",
+                  "secret"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/open-api/external_user_staff_relation/list": {
+      "get": {
+        "operationId": "weiban_external_user",
+        "summary": "external user staff relation list",
+        "description": "weiban - external user staff relation list (external_user_staff_relation_list)",
+        "tags": [
+          "weiban"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "access_token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "staff_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ]
+      }
+    },
+    "/open-api/external_user/batch_get": {
+      "post": {
+        "operationId": "weiban_external_user_detail",
+        "summary": "external user batch get",
+        "description": "weiban - external user batch get (external_user_batch_get)",
+        "tags": [
+          "weiban"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "access_token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "external_user_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

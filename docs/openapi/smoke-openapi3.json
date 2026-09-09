@@ -1,0 +1,55 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "weiban-access-token",
+    "version": "1.0.0",
+    "description": "weiban access_token get"
+  },
+  "servers": [
+    {
+      "url": "https://open.weibanzhushou.com"
+    }
+  ],
+  "paths": {
+    "/open-api/access_token/get": {
+      "post": {
+        "summary": "get access token",
+        "operationId": "weibanAccessToken",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "corp_id": {
+                    "type": "string"
+                  },
+                  "secret": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "corp_id",
+                  "secret"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
