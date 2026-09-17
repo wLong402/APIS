@@ -46,6 +46,10 @@ from .openapi_stockin_refund_repo import (
     OpenapiStockinRefundDetailItemRepository,
     OpenapiStockinRefundOrderDetailRepository,
 )
+from .openapi_trade_repo import (
+    OpenapiTradeRepository,
+    OpenapiTradeDetailRepository,
+)
 
 __all__ = [
     'TradeRepository',
@@ -90,5 +94,7 @@ __all__ = [
     'OpenapiStockinRefundRepository',
     'OpenapiStockinRefundDetailItemRepository',
     'OpenapiStockinRefundOrderDetailRepository',
+    'OpenapiTradeRepository',
+    'OpenapiTradeDetailRepository',
 ]
 

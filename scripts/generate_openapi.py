@@ -242,6 +242,7 @@ def _register_all() -> None:
     openapi_items = [
         ("warehouse", "query warehouse", "setting.Warehouse.queryWarehouse"),
         ("logistics_trace", "search logistics trace", "statistic.GoodsSendStatistic.searchLogisticsTrace"),
+        ("trade_query_with_detail", "sales trade query with detail", "sales.TradeQuery.queryWithDetail"),
     ]
     for service, title, method in openapi_items:
         add_api(

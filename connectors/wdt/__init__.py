@@ -36,6 +36,7 @@ from .services import (
     WarehousePullService,
     GoodsQueryWithSpecPullService,
     StockinRefundOpenAPIPullService,
+    TradeQueryWithDetailPullService,
 )
 from .repositories import (
     TradeRepository,
@@ -125,6 +126,10 @@ CONNECTOR_INFO = {
             'name': '退货入库单(OpenAPI)',
             'class': StockinRefundOpenAPIPullService,
         },
+        'trade_query_with_detail': {
+            'name': 'ERP订单查询(OpenAPI含明细)',
+            'class': TradeQueryWithDetailPullService,
+        },
     },
 }
 
@@ -195,6 +200,7 @@ __all__ = [
     'WarehousePullService',
     'GoodsQueryWithSpecPullService',
     'StockinRefundOpenAPIPullService',
+    'TradeQueryWithDetailPullService',
     # 仓库
     'TradeRepository',
     'RefundRepository',

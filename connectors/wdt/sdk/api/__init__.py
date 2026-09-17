@@ -64,6 +64,7 @@ from .logistics_trace import SearchLogisticsTraceAPI
 from .warehouse import QueryWarehouseAPI
 from .goods import QueryGoodsWithSpecAPI
 from .stockin_refund_openapi import QueryStockinRefundOpenAPI
+from .trade_query_with_detail import QueryTradeWithDetailAPI
 
 __all__ = [
     # 出库单API
@@ -127,4 +128,5 @@ __all__ = [
     'QueryWarehouseAPI',
     'QueryGoodsWithSpecAPI',
     'QueryStockinRefundOpenAPI',
+    'QueryTradeWithDetailAPI',
 ]

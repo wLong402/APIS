@@ -158,6 +158,9 @@ def pull_command(args):
         'refund_no': getattr(args, 'refund_no', None),
         'status': getattr(args, 'status', None),
         'need_sn': getattr(args, 'need_sn', None),
+        'trade_no': getattr(args, 'trade_no', None),
+        'src_tid': getattr(args, 'src_tid', None),
+        'trade_from': getattr(args, 'trade_from', None),
         'logistics_no': getattr(args, 'logistics_no', None),
         'logistics_status': getattr(args, 'logistics_status', None),
         'need_detail': getattr(args, 'need_detail', False),
@@ -703,7 +706,8 @@ def cli():
         '--time-type',
         type=int,
         default=None,
-        help='时间条件类型：0修改时间/1入库时间（stockin_refund_openapi，默认0）'
+        help='时间类型：stockin_refund_openapi 为 0修改/1入库（默认0）；'
+             'trade_query_with_detail 为 1修改/2付款/3下单（默认1）'
     )
     pull_parser.add_argument(
         '--stockin-no',
@@ -718,12 +722,28 @@ def cli():
     pull_parser.add_argument(
         '--status',
         default=None,
-        help='入库单状态，逗号分隔：10已取消,20编辑中,30待审核,80已完成（stockin_refund_openapi）'
+        help='单据状态，逗号分隔（stockin_refund_openapi 入库单状态；'
+             'trade_query_with_detail 订单状态如 10,55,95,110）'
     )
     pull_parser.add_argument(
         '--need-sn',
         default=None,
         help='是否返回SN：true/false（stockin_refund_openapi）'
+    )
+    pull_parser.add_argument(
+        '--trade-no',
+        default=None,
+        help='系统订单号（trade_query_with_detail）'
+    )
+    pull_parser.add_argument(
+        '--src-tid',
+        default=None,
+        help='原始单号，逗号分隔（trade_query_with_detail）'
+    )
+    pull_parser.add_argument(
+        '--trade-from',
+        default=None,
+        help='订单来源：1API抓单/2手工建单/3导入等（trade_query_with_detail）'
     )
     pull_parser.add_argument(
         '--period-mark',

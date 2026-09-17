@@ -44,6 +44,7 @@ from .sdk.api import (
     QueryWarehouseAPI,
     QueryGoodsWithSpecAPI,
     QueryStockinRefundOpenAPI,
+    QueryTradeWithDetailAPI,
 )
 
 
@@ -126,6 +127,7 @@ class WdtClient(BaseAPIClient):
         self._warehouse_api = None
         self._goods_query_with_spec_api = None
         self._stockin_refund_openapi_api = None
+        self._trade_query_with_detail_api = None
         self._openapi_client = None
     
     def call(self, method: str, params: Dict[str, Any], **kwargs) -> Dict[str, Any]:
@@ -465,6 +467,15 @@ class WdtClient(BaseAPIClient):
                 config=self._wdt_config,
             )
         return self._stockin_refund_openapi_api
+
+    @property
+    def trade_query_with_detail_api(self) -> QueryTradeWithDetailAPI:
+        if self._trade_query_with_detail_api is None:
+            self._trade_query_with_detail_api = QueryTradeWithDetailAPI(
+                client=self.openapi_client,
+                gateway_url=self.config.get('openapi_gateway_url'),
+            )
+        return self._trade_query_with_detail_api
 
     def health_check(self) -> bool:
         """健康检查 - 尝试调用一个简单的 API"""

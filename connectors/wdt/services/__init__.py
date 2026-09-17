@@ -32,6 +32,7 @@ from .logistics_trace_service import LogisticsTracePullService
 from .warehouse_service import WarehousePullService
 from .goods_query_with_spec_service import GoodsQueryWithSpecPullService
 from .stockin_refund_openapi_service import StockinRefundOpenAPIPullService
+from .trade_query_with_detail_service import TradeQueryWithDetailPullService
 
 __all__ = [
     'TradePullService',
@@ -63,5 +64,6 @@ __all__ = [
     'WarehousePullService',
     'GoodsQueryWithSpecPullService',
     'StockinRefundOpenAPIPullService',
+    'TradeQueryWithDetailPullService',
 ]
 

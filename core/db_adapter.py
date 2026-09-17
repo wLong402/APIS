@@ -9,6 +9,38 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 import json
 
+_PREFERRED_SQLSERVER_DRIVERS = (
+    'ODBC Driver 18 for SQL Server',
+    'ODBC Driver 17 for SQL Server',
+    'ODBC Driver 13 for SQL Server',
+    'SQL Server Native Client 11.0',
+    'SQL Server',
+)
+
+
+def _list_odbc_drivers() -> List[str]:
+    try:
+        import pyodbc
+        return list(pyodbc.drivers())
+    except Exception:
+        return []
+
+
+def resolve_sqlserver_driver(preferred: Optional[str] = None) -> str:
+    installed = _list_odbc_drivers()
+    if preferred and preferred in installed:
+        return preferred
+    for name in _PREFERRED_SQLSERVER_DRIVERS:
+        if name in installed:
+            return name
+    available = ', '.join(installed) if installed else '(无)'
+    raise RuntimeError(
+        '未安装 SQL Server ODBC 驱动。当前机器已安装: ' + available
+        + '。请安装 “ODBC Driver 17/18 for SQL Server”，'
+        + '或把 config.yaml 里 database.driver 改成已安装的驱动名。'
+        + '下载: https://learn.microsoft.com/sql/connect/odbc/download-odbc-driver-for-sql-server'
+    )
+
 
 class DatabaseAdapter(ABC):
     """数据库适配器基类"""
@@ -200,13 +232,14 @@ class SQLServerAdapter(DatabaseAdapter):
     
     def create_connection(self, **kwargs):
         import pyodbc
-        driver = kwargs.get('driver', 'ODBC Driver 17 for SQL Server')
+        driver = resolve_sqlserver_driver(kwargs.get('driver'))
         conn_str = (
             f"DRIVER={{{driver}}};"
             f"SERVER={kwargs['host']},{kwargs['port']};"
             f"DATABASE={kwargs['database']};"
             f"UID={kwargs['user']};"
-            f"PWD={kwargs['password']}"
+            f"PWD={kwargs['password']};"
+            f"TrustServerCertificate=yes;"
         )
         return pyodbc.connect(conn_str, autocommit=False)
     
